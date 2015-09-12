@@ -1,0 +1,42 @@
+body {
+  font-family: sans-serif;
+}
+
+.button.primary {
+  color: white;
+  font-size: 16px;
+  line-height: 56px;
+  margin-bottom: 10px;
+  padding-left: 56px;
+  background-position: 14px 14px;
+  background-size: 28px 28px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+  display: block;
+  text-decoration: none;
+  width: 224px;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+  -webkit-font-smoothing: antialiased;
+}
+
+.button.feedly {
+  background-color: #87BD4D;
+  background-image: url('/assets/images/login_feedly.png');
+}
+
+.button.aol {
+  background-color: #4F9DDB;
+  background-image: url('/assets/images/login_aol.png');
+}
+
+.button.digg {
+  background-color: #010101;
+  background-image: url('/assets/images/login_digg.png');
+}
+
+.button.inoreader {
+  background-color: #30517E;
+  background-image: url('/assets/images/login_inoreader.png');
+}

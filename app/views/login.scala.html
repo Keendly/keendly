@@ -1,0 +1,26 @@
+@()
+
+@main("Keendly") {
+<script type='text/javascript' src='@routes.Assets.at("javascripts/login.js")'></script>
+@*************************************
+ *<img src="/images/login-feedly-logo@2x.png" style="display:block; padding-left:15px; padding-top:15px" width="80" height="23">
+ *************************************@
+<div style="max-width: 400px; margin-left: auto; margin-right:auto">
+@*************************************
+ *   <img src="/images/login-devices@2x.png" width="400" height="200" style="margin-top:40px; width:400px; display:block; margin-left: auto; margin-right:auto">
+ *   <div id="feedlyBanner">
+ *       Sign in to personalize your feedly<br>
+ *       and access it from everywhere.
+ *   </div>
+ *************************************@
+    <form action="@routes.Application.loginFeedly()" method="POST" id="formFeedly">
+    </form>
+    <a class="button primary feedly" id="feedly_login">Continue with <b>Feedly</b></a>
+    <a class="button primary aol" href="https://www.facebook.com/v2.0/dialog/oauth?client_id=129765800430121&amp;redirect_uri=https%3A%2F%2Fsandbox.feedly.com%2Fv3%2Fauth%2Fcallback&amp;state=AjAGW2R7ImkiOiJzYW5kYm94IiwiciI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA4MCIsInAiOiJGYWNlYm9vayJ9&amp;response_type=code&amp;scope=public_profile,email,user_likes&amp;display=popup">Continue with <b>AOL Reader</b></a>
+    <a class="button primary digg" href="https://www.facebook.com/v2.0/dialog/oauth?client_id=129765800430121&amp;redirect_uri=https%3A%2F%2Fsandbox.feedly.com%2Fv3%2Fauth%2Fcallback&amp;state=AjAGW2R7ImkiOiJzYW5kYm94IiwiciI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA4MCIsInAiOiJGYWNlYm9vayJ9&amp;response_type=code&amp;scope=public_profile,email,user_likes&amp;display=popup">Continue with <b>Digg Reader</b></a>
+    <a class="button primary inoreader" href="https://www.facebook.com/v2.0/dialog/oauth?client_id=129765800430121&amp;redirect_uri=https%3A%2F%2Fsandbox.feedly.com%2Fv3%2Fauth%2Fcallback&amp;state=AjAGW2R7ImkiOiJzYW5kYm94IiwiciI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA4MCIsInAiOiJGYWNlYm9vayJ9&amp;response_type=code&amp;scope=public_profile,email,user_likes&amp;display=popup">Continue with <b>InoReader</b></a>
+@*************************************
+ *<a style="color:#B4B4B4; display:block; margin-top: 14px; text-align:center" href="https://plus.google.com/u/1/communities/113648582731838175643/stream/7f5dccbf-9eba-4315-97fa-61e5c32d4d28" target="new">Need help logging in?</a> -->
+ *************************************@
+</div>
+}
