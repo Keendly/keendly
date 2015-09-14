@@ -1,5 +1,5 @@
-@()
+@()(implicit session: play.mvc.Http.Session)
 
 @main("Keendly") {
-HELLO
+    @session.get("user")
 }

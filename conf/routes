@@ -3,13 +3,13 @@
 # ~~~~
 
 # Home page
-GET     /                           controllers.Application.index()
-POST    /person                     controllers.Application.addPerson()
-GET     /persons                    controllers.Application.getPersons
+GET     /                           controllers.MainController.index()
+POST    /person                     controllers.MainController.addPerson()
+GET     /persons                    controllers.MainController.getPersons
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
 
-GET     /login                      controllers.Application.login()
-POST    /loginFeedly                controllers.Application.loginFeedly()
-GET     /home                       controllers.Application.home()
+GET     /login                      controllers.MainController.login()
+GET     /feedlyCallback             controllers.MainController.feedlyCallback(code: String, error: String)
+GET     /home                       controllers.SecuredController.home()
