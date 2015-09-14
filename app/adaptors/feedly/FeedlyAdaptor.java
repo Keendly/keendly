@@ -3,6 +3,7 @@ package adaptors.feedly;
 import adaptors.Adaptor;
 import adaptors.auth.Tokens;
 import adaptors.auth.User;
+import adaptors.exception.ApiException;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.http.HttpStatus;
 import play.libs.F.Promise;
@@ -50,8 +51,7 @@ public class FeedlyAdaptor extends Adaptor {
                         String accessToken = node.findValue("access_token").asText();
                         return new Tokens(refreshToken, accessToken);
                     } else {
-                        // todo log to sentry
-                        throw new RuntimeException(response.asJson().asText());
+                        throw new ApiException(response.getStatus(), response.getBody());
                     }
                 });
     }
@@ -82,8 +82,7 @@ public class FeedlyAdaptor extends Adaptor {
                             return doGetNoRefresh(url, tokens, callback);
                         });
                     } else {
-                        // todo log to sentry, handle in generic way
-                        throw new RuntimeException(response.getBody());
+                        throw new ApiException(response.getStatus(), response.getBody());
                     }
                 });
     }
@@ -92,7 +91,13 @@ public class FeedlyAdaptor extends Adaptor {
         return WS.url(url)
                 .setHeader("Authorization", "OAuth " + tokens.getAccessToken())
                 .get()
-                .map(response -> callback.apply(response));
+                .map(response -> {
+                    if (ok(response)){
+                        return callback.apply(response);
+                    } else {
+                        throw new ApiException(response.getStatus(), response.getBody());
+                    }
+                });
     }
 
     private Promise<String> refreshAccessToken(String refreshToken){
@@ -109,8 +114,7 @@ public class FeedlyAdaptor extends Adaptor {
                         JsonNode node = response.asJson();
                         return node.findValue("access_token").asText();
                     } else {
-                        // todo log to sentry, handle in generic way
-                        throw new RuntimeException(response.asJson().asText());
+                        throw new ApiException(response.getStatus(), response.getBody());
                     }
                 });
     }

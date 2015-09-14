@@ -6,9 +6,11 @@ import adaptors.Provider;
 import adaptors.auth.Tokens;
 import models.Person;
 import org.apache.commons.lang3.StringUtils;
+import play.Logger;
 import play.data.Form;
 import play.db.jpa.JPA;
 import play.db.jpa.Transactional;
+import play.i18n.Messages;
 import play.libs.F.Promise;
 import play.mvc.Controller;
 import play.mvc.Result;
@@ -17,11 +19,9 @@ import views.html.login;
 import java.util.List;
 
 import static play.libs.Json.*;
+import static controllers.Constants.*;
 
 public class MainController extends Controller {
-
-    private static final String SESSION_AUTH = "auth";
-    private static final String SESSION_USER = "user";
 
     public Result index() {
         /*  HACK for feedly sandbox - doesn't support custom callback urls
@@ -37,8 +37,8 @@ public class MainController extends Controller {
 
     public Promise<Result> feedlyCallback(String code, String error){
         if (StringUtils.isNotBlank(error)){
-            // TODO log error to sentry
-            flash("error", "couldn't login"); // TODO translation
+            Logger.error("Error got in feedly callback: {}", error);
+            flash(FLASH_ERROR, Messages.get("login.error"));
             return Promise.pure(redirect(routes.MainController.login()));
         } else {
             Promise<Tokens> tokensFuture = Adaptors.getByProvider(Provider.FEEDLY).getTokens(code);
@@ -47,7 +47,8 @@ public class MainController extends Controller {
                 session(SESSION_AUTH, toJson(tokens).toString());
                 return redirect(routes.SecuredController.home());
             }).recover(exception -> {
-                flash("error", "couldn't exchange code for token, redirecting to login"); // TODO translation
+                Logger.error("Error exchanging code for refresh token", exception);
+                flash(FLASH_ERROR, Messages.get("login.error"));
                 return redirect(routes.MainController.login());
             });
         }
@@ -73,8 +74,9 @@ public class MainController extends Controller {
                 session(SESSION_AUTH, toJson(tokens).toString());
                 return redirect(routes.SecuredController.home());
             }).recover(exception -> {
+                Logger.error("Error getting user profile", exception);
                 session(SESSION_AUTH, StringUtils.EMPTY);// clear session auth since it didn't work
-                flash("error", "couldn't get user profile, try again"); // TODO translation
+                flash(FLASH_ERROR, Messages.get("login.error"));
                 return ok(login.render(flash()));
             });
         }
