@@ -47,8 +47,8 @@ public class FeedlyAdaptor extends Adaptor {
                 .map(response -> {
                     if (ok(response)) {
                         JsonNode node = response.asJson();
-                        String refreshToken = node.findValue("refresh_token").asText();
-                        String accessToken = node.findValue("access_token").asText();
+                        String refreshToken = node.get("refresh_token").asText();
+                        String accessToken = node.get("access_token").asText();
                         return new Tokens(refreshToken, accessToken);
                     } else {
                         throw new ApiException(response.getStatus(), response.getBody());
@@ -61,8 +61,9 @@ public class FeedlyAdaptor extends Adaptor {
         return doGet(feedlyUrl + "/profile", tokens, response -> {
             User user = new User();
             JsonNode node = response.asJson();
-            user.setUserName(node.findValue("id").asText());
-            user.setUserName(node.findValue("email").asText());
+            System.out.println(node.toString());
+            user.setId(node.get("id").asText());
+            user.setUserName(node.get("email").asText());
             return user;
         });
     }
@@ -112,7 +113,7 @@ public class FeedlyAdaptor extends Adaptor {
                 .map(response -> {
                     if (ok(response)) {
                         JsonNode node = response.asJson();
-                        return node.findValue("access_token").asText();
+                        return node.get("access_token").asText();
                     } else {
                         throw new ApiException(response.getStatus(), response.getBody());
                     }

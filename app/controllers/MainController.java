@@ -45,7 +45,7 @@ public class MainController extends Controller {
             return tokensFuture.map(tokens -> {
                 tokens.setProvider(Provider.FEEDLY);
                 session(SESSION_AUTH, toJson(tokens).toString());
-                return redirect(routes.SecuredController.home());
+                return redirect(routes.MainController.login());
             }).recover(exception -> {
                 Logger.error("Error exchanging code for refresh token", exception);
                 flash(FLASH_ERROR, Messages.get("login.error"));
@@ -66,16 +66,19 @@ public class MainController extends Controller {
         String tokensString = session(SESSION_AUTH);
         if (StringUtils.isNotEmpty(tokensString)){
             Tokens tokens = fromJson(parse(tokensString), Tokens.class);
+            String accessToken = tokens.getAccessToken();
             Adaptor adaptor = Adaptors.getByProvider(tokens.getProvider());
             return adaptor.getUser(tokens).map(user -> {
                 session(SESSION_USER, toJson(user).toString());
-                // this is to store new access token, in case it got refreshed,
-                // TODO detect when changed and set only if then
-                session(SESSION_AUTH, toJson(tokens).toString());
+                // if access token got changed (refreshed), set it in session cookie
+                if (tokens.getAccessToken().equals(accessToken)){
+                    session(SESSION_AUTH, toJson(tokens).toString());
+                }
                 return redirect(routes.SecuredController.home());
             }).recover(exception -> {
                 Logger.error("Error getting user profile", exception);
-                session(SESSION_AUTH, StringUtils.EMPTY);// clear session auth since it didn't work
+                // clear auth info in session, since they didn't work
+                session(SESSION_AUTH, StringUtils.EMPTY);
                 flash(FLASH_ERROR, Messages.get("login.error"));
                 return ok(login.render(flash()));
             });
