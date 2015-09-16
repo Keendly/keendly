@@ -1,14 +1,10 @@
-import org.junit.*;
+import org.junit.Test;
+import play.libs.F.Callback;
+import play.test.TestBrowser;
 
-import play.mvc.*;
-import play.test.*;
-import play.libs.F.*;
-
+import static org.hamcrest.core.StringContains.containsString;
+import static org.junit.Assert.assertThat;
 import static play.test.Helpers.*;
-import static org.junit.Assert.*;
-import static org.hamcrest.CoreMatchers.*;
-
-import static org.fluentlenium.core.filter.FilterConstructor.*;
 
 public class IntegrationTest {
 

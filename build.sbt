@@ -6,7 +6,9 @@ lazy val root = (project in file(".")).enablePlugins(PlayJava)
 
 libraryDependencies ++= Seq(
   javaJpa,
-  "org.hibernate" % "hibernate-entitymanager" % "4.3.7.Final"
+  "org.hibernate" % "hibernate-entitymanager" % "4.3.7.Final",
+  "org.powermock" % "powermock-api-mockito" % "1.6.2",
+  "org.powermock" % "powermock-module-junit4" % "1.6.2"
 )
 
 libraryDependencies ++= Seq(

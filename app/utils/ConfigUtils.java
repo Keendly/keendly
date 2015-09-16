@@ -2,9 +2,9 @@ package utils;
 
 import play.Play;
 
-public class PlayUtils {
+public class ConfigUtils {
 
-    public static String configParam(String key){
+    public static String parameter(String key){
         return Play.application().configuration().getString(key);
     }
 }

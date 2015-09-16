@@ -13,9 +13,21 @@ import play.libs.ws.WSResponse;
 
 import java.util.function.Function;
 
-import static utils.PlayUtils.configParam;
+import static utils.ConfigUtils.parameter;
 
 public class FeedlyAdaptor extends Adaptor {
+
+    enum FeedlyParam {
+        URL("feedly.url"),
+        CLIENT_ID("feedly.client_id"),
+        CLIENT_SECRET("feedly.client_secret"),
+        REDIRECT_URL("feedly.redirect_uri");
+
+        String value;
+        FeedlyParam(String value){
+            this.value = value;
+        }
+    }
 
     private static String feedlyUrl;
     private static String clientId;
@@ -27,10 +39,10 @@ public class FeedlyAdaptor extends Adaptor {
     }
 
     private static void init(){
-        feedlyUrl = configParam("feedly.url");
-        clientId = configParam("feedly.client_id");
-        clientSecret = configParam("feedly.client_secret");
-        redirectUri = configParam("feedly.redirect_uri");
+        feedlyUrl = parameter(FeedlyParam.URL.value);
+        clientId = parameter(FeedlyParam.CLIENT_ID.value);
+        clientSecret = parameter(FeedlyParam.CLIENT_SECRET.value);
+        redirectUri = parameter(FeedlyParam.REDIRECT_URL.value);
     }
 
     @Override
@@ -61,7 +73,6 @@ public class FeedlyAdaptor extends Adaptor {
         return doGet(feedlyUrl + "/profile", tokens, response -> {
             User user = new User();
             JsonNode node = response.asJson();
-            System.out.println(node.toString());
             user.setId(node.get("id").asText());
             user.setUserName(node.get("email").asText());
             return user;
@@ -72,13 +83,13 @@ public class FeedlyAdaptor extends Adaptor {
         Promise<WSResponse> res = WS.url(url)
                 .setHeader("Authorization", "OAuth " + tokens.getAccessToken())
                 .get();
-        return (Promise<T>) res
-                .map(response -> {
+        return res
+                .flatMap(response -> {
                     if (ok(response)) {
-                        return callback.apply(response);
+                        return Promise.pure(callback.apply(response));
                     } else if (unauthorized(response)) {
                         Promise token = refreshAccessToken(tokens.getRefreshToken());
-                        return token.map(newToken -> {
+                        return token.flatMap(newToken -> {
                             tokens.setAccessToken((String) newToken);
                             return doGetNoRefresh(url, tokens, callback);
                         });
@@ -88,12 +99,12 @@ public class FeedlyAdaptor extends Adaptor {
                 });
     }
 
-    private Promise<?> doGetNoRefresh(String url, Tokens tokens, Function callback){
+    private <T> Promise<T> doGetNoRefresh(String url, Tokens tokens, Function<WSResponse, T> callback){
         return WS.url(url)
                 .setHeader("Authorization", "OAuth " + tokens.getAccessToken())
                 .get()
                 .map(response -> {
-                    if (ok(response)){
+                    if (ok(response)) {
                         return callback.apply(response);
                     } else {
                         throw new ApiException(response.getStatus(), response.getBody());
