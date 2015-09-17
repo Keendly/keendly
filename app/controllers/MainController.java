@@ -14,6 +14,7 @@ import play.i18n.Messages;
 import play.libs.F.Promise;
 import play.mvc.Controller;
 import play.mvc.Result;
+import utils.SessionUtils;
 import views.html.login;
 
 import java.util.List;
@@ -41,9 +42,10 @@ public class MainController extends Controller {
             flash(FLASH_ERROR, Messages.get("login.error"));
             return Promise.pure(redirect(routes.MainController.login()));
         } else {
-            Promise<Tokens> tokensFuture = Adaptors.getByProvider(Provider.FEEDLY).getTokens(code);
+            Promise<Tokens> tokensFuture =
+                    Adaptors.getByProvider(Provider.FEEDLY).getTokens(code);
             return tokensFuture.map(tokens -> {
-                tokens.setProvider(Provider.FEEDLY);
+                session(SESSION_PROVIDER, Provider.FEEDLY.name());
                 session(SESSION_AUTH, toJson(tokens).toString());
                 return redirect(routes.MainController.login());
             }).recover(exception -> {
@@ -63,11 +65,10 @@ public class MainController extends Controller {
     }
 
     public Promise<Result> login(){
-        String tokensString = session(SESSION_AUTH);
-        if (StringUtils.isNotEmpty(tokensString)){
-            Tokens tokens = fromJson(parse(tokensString), Tokens.class);
+        Tokens tokens = SessionUtils.findTokens(session());
+        if (tokens != null){
             String accessToken = tokens.getAccessToken();
-            Adaptor adaptor = Adaptors.getByProvider(tokens.getProvider());
+            Adaptor adaptor = SessionUtils.findAdaptor(session());
             return adaptor.getUser(tokens).map(user -> {
                 session(SESSION_USER, toJson(user).toString());
                 // if access token got changed (refreshed), set it in session cookie
@@ -84,6 +85,11 @@ public class MainController extends Controller {
             });
         }
         return Promise.pure(ok(login.render(flash())));
+    }
+
+    public Result logout(){
+        session().clear();
+        return redirect(routes.MainController.index());
     }
 
     @Transactional

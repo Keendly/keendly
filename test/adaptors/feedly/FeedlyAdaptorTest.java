@@ -58,7 +58,7 @@ public class FeedlyAdaptorTest {
                         "\"token_type\":\"Bearer\"," +
                         "\"provider\":\"GooglePlus\"" +
                 "}";
-        mockPOST("/auth/token", HttpStatus.SC_OK, json);
+        mockPOST("/auth/token", json, HttpStatus.SC_OK);
 
         // when
         Promise<Tokens> tokensPromise = feedlyAdaptor.getTokens("doesnt_matter");
@@ -73,7 +73,7 @@ public class FeedlyAdaptorTest {
     @Test(expected = ApiException.class)
     public void getTokenByCode_notOkFeedlyResponse(){
         // given
-        mockPOST("/auth/token", HttpStatus.SC_INTERNAL_SERVER_ERROR, StringUtils.EMPTY);
+        mockPOST("/auth/token", StringUtils.EMPTY, HttpStatus.SC_INTERNAL_SERVER_ERROR);
 
         // when
         Promise<Tokens> tokensPromise = feedlyAdaptor.getTokens("doesnt_matter");
@@ -88,7 +88,7 @@ public class FeedlyAdaptorTest {
                         "\"id\":\"12345\"," +
                         "\"email\":\"test@keendly.com\"" +
                 "}";
-        mockGET("/profile", HttpStatus.SC_OK, json);
+        mockGET("/profile", json, HttpStatus.SC_OK);
 
         // when
         Promise<User> userPromise = feedlyAdaptor.getUser(new Tokens());
@@ -103,7 +103,7 @@ public class FeedlyAdaptorTest {
     @Test(expected = ApiException.class)
     public void getUser_notOkFeedlyResponse(){
         // given
-        mockGET("/profile", HttpStatus.SC_INTERNAL_SERVER_ERROR, StringUtils.EMPTY);
+        mockGET("/profile", StringUtils.EMPTY, HttpStatus.SC_INTERNAL_SERVER_ERROR);
 
         // when
         Promise<User> userPromise = feedlyAdaptor.getUser(new Tokens());
@@ -113,13 +113,18 @@ public class FeedlyAdaptorTest {
     @Test
     public void getUser_accessTokenExpired(){
         // given
-        mockGET("/profile", HttpStatus.SC_UNAUTHORIZED, StringUtils.EMPTY);
+        String json =
+                "{" +
+                        "\"id\":\"12345\"," +
+                        "\"email\":\"test@keendly.com\"" +
+                "}";
+        mockGET("/profile", json, HttpStatus.SC_UNAUTHORIZED, HttpStatus.SC_OK); // unauthorized at first, then OK
 
         String refreshTokenResponse =
                 "{" +
                         "\"access_token\":\"newAccessToken\"" +
                 "}";
-        mockPOST("/auth/token", HttpStatus.SC_OK, refreshTokenResponse);
+        mockPOST("/auth/token", refreshTokenResponse, HttpStatus.SC_OK);
         Tokens tokens = new Tokens();
 
         // when
@@ -135,24 +140,24 @@ public class FeedlyAdaptorTest {
     @Test(expected = ApiException.class)
     public void getUser_refreshTokenExpired(){
         // given
-        mockGET("/profile", HttpStatus.SC_UNAUTHORIZED, StringUtils.EMPTY);
-        mockPOST("/auth/token", HttpStatus.SC_UNAUTHORIZED, StringUtils.EMPTY);
+        mockGET("/profile", StringUtils.EMPTY, HttpStatus.SC_UNAUTHORIZED);
+        mockPOST("/auth/token", StringUtils.EMPTY, HttpStatus.SC_UNAUTHORIZED);
 
         // when
         Promise<User> userPromise = feedlyAdaptor.getUser(new Tokens());
         userPromise.get(1000);
     }
 
-    private void mockPOST(String url, int status, String content){
+    private void mockPOST(String url, String content, int status){
         WSRequest request = request();
-        WSResponse response = response(status, content);
+        WSResponse response = response(content, status);
         when(request.post(any(JsonNode.class))).thenReturn(Promise.pure(response));
         PowerMockito.when(WS.url(FEEDLY_URL + url)).thenReturn(request);
     }
 
-    private void mockGET(String url, int status, String content){
+    private void mockGET(String url, String content, Integer status, Integer... nextStatuses){
         WSRequest request = request();
-        WSResponse response = response(status, content);
+        WSResponse response = response(content, status, nextStatuses);
         when(request.get()).thenReturn(Promise.pure(response));
         PowerMockito.when(WS.url(FEEDLY_URL + url)).thenReturn(request);
     }
@@ -163,13 +168,12 @@ public class FeedlyAdaptorTest {
         return request;
     }
 
-    private WSResponse response(int status, String content){
+    private WSResponse response(String content, int status, Integer... nextStatuses){
         WSResponse response = mock(WSResponse.class);
-        when(response.getStatus()).thenReturn(status);
+        when(response.getStatus()).thenReturn(status, nextStatuses);
         if (StringUtils.isNotEmpty(content)){
             when(response.asJson()).thenReturn(Json.parse(content));
         }
         return response;
     }
-
 }

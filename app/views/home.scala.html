@@ -1,5 +1,6 @@
-@()(implicit session: play.mvc.Http.Session)
+@(subscriptions: List[adaptors.auth.Subscription])(implicit session: play.mvc.Http.Session)
 
 @main("Keendly") {
     @session.get("user")
+    @subscriptions
 }

@@ -1,6 +1,7 @@
 package adaptors.feedly;
 
 import adaptors.Adaptor;
+import adaptors.auth.Subscription;
 import adaptors.auth.Tokens;
 import adaptors.auth.User;
 import adaptors.exception.ApiException;
@@ -11,6 +12,8 @@ import play.libs.Json;
 import play.libs.ws.WS;
 import play.libs.ws.WSResponse;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Function;
 
 import static utils.ConfigUtils.parameter;
@@ -57,7 +60,7 @@ public class FeedlyAdaptor extends Adaptor {
         return WS.url(feedlyUrl + "/auth/token")
                 .post(json)
                 .map(response -> {
-                    if (ok(response)) {
+                    if (isOk(response.getStatus())) {
                         JsonNode node = response.asJson();
                         String refreshToken = node.get("refresh_token").asText();
                         String accessToken = node.get("access_token").asText();
@@ -79,15 +82,39 @@ public class FeedlyAdaptor extends Adaptor {
         });
     }
 
+    @Override
+    public Promise<List<Subscription>> getSubscriptions(Tokens tokens){
+        return doGet(feedlyUrl + "/subscriptions", tokens, response -> {
+            List<Subscription> subscriptions = new ArrayList<>();
+            JsonNode json = response.asJson();
+            if (json.isArray()){
+                for (JsonNode item : json){
+                    subscriptions.add(mapFromJson(item));
+                }
+            } else {
+                subscriptions.add(mapFromJson(json));
+            }
+            return subscriptions;
+        });
+    }
+
+    private Subscription mapFromJson(JsonNode json){
+        Subscription subscription = new Subscription();
+        subscription.setId(json.get("id").asText());
+        subscription.setTitle(json.get("title").asText());
+        return subscription;
+    }
+
     private <T> Promise<T> doGet(String url, Tokens tokens, Function<WSResponse, T> callback){
         Promise<WSResponse> res = WS.url(url)
                 .setHeader("Authorization", "OAuth " + tokens.getAccessToken())
                 .get();
         return res
                 .flatMap(response -> {
-                    if (ok(response)) {
+                    int status = response.getStatus();
+                    if (isOk(status)) {
                         return Promise.pure(callback.apply(response));
-                    } else if (unauthorized(response)) {
+                    } else if (isUnauthorized(status)) {
                         Promise token = refreshAccessToken(tokens.getRefreshToken());
                         return token.flatMap(newToken -> {
                             tokens.setAccessToken((String) newToken);
@@ -104,7 +131,7 @@ public class FeedlyAdaptor extends Adaptor {
                 .setHeader("Authorization", "OAuth " + tokens.getAccessToken())
                 .get()
                 .map(response -> {
-                    if (ok(response)) {
+                    if (isOk(response.getStatus())) {
                         return callback.apply(response);
                     } else {
                         throw new ApiException(response.getStatus(), response.getBody());
@@ -122,7 +149,7 @@ public class FeedlyAdaptor extends Adaptor {
         return WS.url(feedlyUrl + "/auth/token")
                 .post(json)
                 .map(response -> {
-                    if (ok(response)) {
+                    if (isOk(response.getStatus())) {
                         JsonNode node = response.asJson();
                         return node.get("access_token").asText();
                     } else {
@@ -131,13 +158,12 @@ public class FeedlyAdaptor extends Adaptor {
                 });
     }
 
-    private boolean ok(WSResponse response){
-        return response.getStatus() == HttpStatus.SC_OK;
+    private boolean isOk(int status){
+        return status == HttpStatus.SC_OK;
     }
 
-    private boolean unauthorized(WSResponse response){
-        if (response.getStatus() == HttpStatus.SC_UNAUTHORIZED ||
-                response.getStatus() == HttpStatus.SC_FORBIDDEN){
+    private boolean isUnauthorized(int status){
+        if (status == HttpStatus.SC_UNAUTHORIZED || status == HttpStatus.SC_FORBIDDEN){
             return true;
         }
         return false;
