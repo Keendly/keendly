@@ -1,6 +1,83 @@
 @(subscriptions: List[adaptors.auth.Subscription])(implicit session: play.mvc.Http.Session)
 
 @main("Keendly") {
-    @session.get("user")
-    @subscriptions
+<nav>
+    <div class="nav-wrapper container">
+        <a href="#!" class="brand-logo">Logo</a>
+        <a href="#" data-activates="mobile-demo" class="button-collapse"><i class="material-icons">menu</i></a>
+        <ul class="right hide-on-med-and-down">
+            <li><a href="sass.html">Home</a></li>
+            <li><a href="badges.html">History</a></li>
+            <li><a href="collapsible.html">Settings</a></li>
+        </ul>
+        <ul class="side-nav" id="mobile-demo">
+            <li><a href="sass.html">Home</a></li>
+            <li><a href="badges.html">History</a></li>
+            <li><a href="collapsible.html">Settings</a></li>
+        </ul>
+    </div>
+</nav>
+
+<script type='text/javascript' src='@routes.Assets.at("javascripts/home.js")'></script>
+<div class="container" id="subs-container">
+<form>
+    <a class="waves-effect waves-light btn modal-trigger" id="deliver_now" href="#modal1">Deliver now</a>
+    <a class="waves-effect waves-light btn" id="schedule_delivery">Schedule delivery</a>
+    <table class="highlight" id="subscriptions">
+        <thead>
+        <tr>
+            <th></th>
+            <th>Title</th>
+            <th>Scheduled</th>
+            <th>Last delivery</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        @for((s, index) <- subscriptions.zipWithIndex){
+        <tr>
+            <td><input type="checkbox" class="filled-in" id="sub@index" name="@s.getId()" /><label  for="sub@index"></label></td>
+            <td>@s.getTitle()</td>
+            <td></td>
+            <td></td>
+        </tr>
+        }
+        </tbody>
+    </table>
+</form>
+</div>
+
+<div id="modal1" class="modal">
+    <div class="modal-content" id="deliver_form">
+        <h4>Deliver feeds</h4>
+        <!-- Switch -->
+        <div class="switch">
+            <label>
+                Simple
+                <input type="checkbox" id="mode">
+                <span class="lever"></span>
+                Detailed
+            </label>
+        </div>
+        <p>
+            <input type="checkbox" class="filled-in" id="include_images"/>
+            <label for="include_images">Include images</label>
+        </p>
+        <p>
+            <input type="checkbox" class="filled-in" id="mark_as_read" checked="checked"/>
+            <label for="mark_as_read">Mark as read</label>
+        </p>
+        <p>
+            <input type="checkbox" class="filled-in" id="full" checked="checked"/>
+            <label for="full">Full article</label>
+        </p>
+        <ul class="collection" id="feed_list">
+        </ul>
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class="modal-action modal-close waves-effect waves-red btn-flat">Cancel</a>
+        <a href="#!" class="modal-action waves-effect waves-green btn-flat" id="deliver_button">Deliver</a>
+    </div>
+</div>
+
 }
