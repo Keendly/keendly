@@ -40,3 +40,15 @@ body {
   background-color: #30517E;
   background-image: url('/assets/images/login_inoreader.png');
 }
+
+#subscriptions label {
+  height: 15px;
+}
+
+#subs-container {
+  padding-top: 20px;
+}
+
+.modal {
+  width: 700px;
+}
