@@ -11,7 +11,8 @@ libraryDependencies ++= Seq(
   "org.hibernate" % "hibernate-entitymanager" % "4.3.7.Final",
   "org.powermock" % "powermock-api-mockito" % "1.6.2",
   "org.powermock" % "powermock-module-junit4" % "1.6.2",
-  "de.jetwick" % "snacktory" % "1.2.1-keendly-SNAPSHOT"
+  "de.jetwick" % "snacktory" % "1.2.1-keendly-SNAPSHOT",
+  "com.jindle" % "jindle" % "0.0.1-SNAPSHOT"
 )
 
 libraryDependencies ++= Seq(
@@ -24,3 +25,5 @@ routesGenerator := InjectedRoutesGenerator
 
 // needed to allow remote debugging
 fork in run := false
+
+fork in run := true
