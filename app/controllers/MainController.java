@@ -2,7 +2,7 @@ package controllers;
 
 import adaptors.Adaptor;
 import adaptors.Adaptors;
-import adaptors.Provider;
+import models.Provider;
 import adaptors.auth.Tokens;
 import models.Person;
 import org.apache.commons.lang3.StringUtils;

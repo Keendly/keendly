@@ -1,6 +1,7 @@
 package adaptors.feedly;
 
 import adaptors.Adaptor;
+import adaptors.auth.Entry;
 import adaptors.auth.Subscription;
 import adaptors.auth.Tokens;
 import adaptors.auth.User;
@@ -12,9 +13,14 @@ import play.libs.Json;
 import play.libs.ws.WS;
 import play.libs.ws.WSResponse;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static utils.ConfigUtils.parameter;
 
@@ -98,9 +104,106 @@ public class FeedlyAdaptor extends Adaptor {
         });
     }
 
+    @Override
+    public Promise<Map<String, List<Entry>>> getUnread(List<String> feedIds, Tokens tokens){
+        return doGet(feedlyUrl + "/markers/counts", tokens, response -> {
+            JsonNode json = response.asJson();
+            Map<String, Promise<List<Entry>>> resultsPromises = new HashMap<>();
+            for (JsonNode feedCount : json.get("unreadcounts")){
+                String feedId = feedCount.get("id").asText();
+                if (feedIds.contains(feedId)){
+                    int count = feedCount.get("count").asInt();
+                    Promise<List<Entry>> entries = getUnread(feedId, count, tokens);
+                    resultsPromises.put(feedId, entries);
+                }
+            }
+            return resultsPromises.entrySet().stream().collect(Collectors.toMap(
+                    entry -> entry.getKey(), entry -> entry.getValue().get(timeoutInSeconds, TimeUnit.SECONDS)));
+        });
+    }
+
+    private Promise<List<Entry>> getUnread(String feedId, int count, Tokens tokens) {
+        return doGet(feedlyUrl + "/streams/" + urlEncode(feedId) + "/contents?count=100", tokens,
+                response -> {
+                    List<Entry> entries = new ArrayList<>();
+                    for (JsonNode item : response.asJson().get("items")){
+                        if (item.get("unread").asBoolean()){
+                            String url = null;
+                            String originId = item.get("originId").asText();
+                            if (isURL(originId)){
+                                url = originId;
+                            } else {
+                                for (JsonNode alternate : item.get("alternate")){
+                                    if (alternate.get("type").asText().equals("text/html")){
+                                        url = alternate.get("href").asText();
+                                    }
+                                }
+                            }
+                            if (url != null){
+                                Entry entry = new Entry();
+                                entry.setUrl(url);
+                                entry.setTitle(asText(item, "title"));
+                                entry.setAuthor(asText(item, "author"));
+                                entry.setPublished(asDate(item, "published"));
+                                entry.setContent(extractContent(item));
+                                entries.add(entry);
+                            }
+                            if (entries.size() >= count){
+                                break;
+                            }
+                        }
+                    }
+                    return entries;
+        });
+    }
+
+    private String extractContent(JsonNode item){
+        if (item.get("content") != null && item.get("content").get("content") != null){
+            return item.get("content").get("content").asText();
+        } else if (item.get("summary") != null && item.get("summary").get("content") != null){
+            return item.get("summary").get("content").asText();
+        }
+        return null;
+    }
+
+    private static String urlEncode(String s){
+        try {
+            return URLEncoder.encode(s, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static boolean isURL(String s){
+        try {
+            new URL(s);
+            return true;
+        } catch (MalformedURLException e) {
+            return false;
+        }
+    }
+
+    private static String asText(JsonNode node, String field){
+        JsonNode j = node.get(field);
+        if (j != null){
+            return j.asText();
+        }
+        return null;
+    }
+
+    private static Date asDate(JsonNode node, String field){
+        JsonNode j = node.get(field);
+        if (j != null){
+            Date d = new Date();
+            d.setTime(j.asLong());
+            return d;
+        }
+        return null;
+    }
+
     private Subscription mapFromJson(JsonNode json){
         Subscription subscription = new Subscription();
-        subscription.setId(json.get("id").asText());
+        subscription.setFeedId(json.get("id").asText());
         subscription.setTitle(json.get("title").asText());
         return subscription;
     }

@@ -36,7 +36,7 @@
         <tbody>
         @for((s, index) <- subscriptions.zipWithIndex){
         <tr>
-            <td><input type="checkbox" class="filled-in" id="sub@index" name="@s.getId()" /><label  for="sub@index"></label></td>
+            <td><input type="checkbox" class="filled-in" id="sub@index" name="@s.getFeedId()" /><label  for="sub@index"></label></td>
             <td>@s.getTitle()</td>
             <td></td>
             <td></td>

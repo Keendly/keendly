@@ -1,6 +1,7 @@
 package adaptors;
 
 import adaptors.feedly.FeedlyAdaptor;
+import models.Provider;
 
 public class Adaptors {
 

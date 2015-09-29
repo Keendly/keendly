@@ -3,7 +3,7 @@ package adaptors.auth;
 public class Subscription {
 
     private String title;
-    private String id;
+    private String feedId;
 
     public String getTitle() {
         return title;
@@ -13,11 +13,11 @@ public class Subscription {
         this.title = title;
     }
 
-    public String getId() {
-        return id;
+    public String getFeedId() {
+        return feedId;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setFeedId(String id) {
+        this.feedId = id;
     }
 }
