@@ -39,6 +39,7 @@ $ ->
             # todo disable deliver button
 
     $('#deliver_button').click ->
+        $('#progress').show()
         form = $('#deliver_form')
         mode = form.find('#mode')
         request = new Object()
@@ -68,4 +69,8 @@ $ ->
             contentType: 'application/json; charset=utf-8',
             dataType: 'json',
             success: ->
+                $('#progress').hide()
                 alert('success')
+            error: ->
+                $('#progress').hide()
+                alert('error')

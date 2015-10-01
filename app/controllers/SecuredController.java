@@ -10,17 +10,23 @@ import com.jindle.model.Book;
 import com.jindle.model.Section;
 import controllers.request.DeliveryRequest;
 import controllers.request.FeedDeliveryRequest;
-import de.jetwick.snacktory.HtmlFetcher;
+import de.jetwick.snacktory.ArticleTextExtractor;
 import de.jetwick.snacktory.JResult;
+import mail.EmailSender;
+import org.apache.http.HttpStatus;
 import play.libs.F.Promise;
 import play.libs.Json;
+import play.libs.ws.WS;
 import play.mvc.Controller;
 import play.mvc.Result;
 import play.mvc.With;
+import utils.ConfigUtils;
 import utils.SessionUtils;
 import views.html.home;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -43,42 +49,57 @@ public class SecuredController extends Controller {
         Tokens tokens = SessionUtils.findTokens(session());
         Adaptor adaptor = SessionUtils.findAdaptor(session());
         return adaptor.getUnread(extractIds(request.feeds), tokens)
-                .map(unread -> {
-                    for (Map.Entry<String, List<Entry>> entries : unread.entrySet()) {
-                        if (getFeedRequest(request, entries.getKey()).fullArticle) {
-                            HtmlFetcher fetcher = new HtmlFetcher();
-                            for (Entry entry : entries.getValue()) {
-                                int timeOutMillis = 10 * 1000;
-                                JResult result = fetcher.fetchAndExtract(entry.getUrl(), timeOutMillis, true);
-                                if (result.getText() != null) {
-                                    entry.setContent(result.getText());
-                                }
-                            }
-                        }
-                    }
-                    Book.BookBuilder bookBuilder = Book.builder();
-                    List<Section> sections = new ArrayList<>();
-                    bookBuilder.title("radek");
-                    for (FeedDeliveryRequest feed : request.feeds){
-                        Section.SectionBuilder s = Section.builder();
-                        s.title(feed.title);
-                        List<Article> articles = new ArrayList<>();
-                        for (Entry entry : unread.get(feed.id)){
-                            Article.ArticleBuilder b = Article.builder();
-                            b.author(entry.getAuthor());
-                            b.title(entry.getTitle());
-                            b.date(entry.getPublished());
-                            b.content(entry.getContent());
-                            articles.add(b.build());
-                        }
-                        s.articles(articles);
-                        sections.add(s.build());
-                    }
-                    bookBuilder.sections(sections);
-                    bookBuilder.language("en-gb").creator("keendly").subject("news").date("2015-01-01");
-                    String s = new Generator("/tmp", "/home/radek/software/kindlegen/kindlegen").generate(bookBuilder.build());
+                .flatMap(unread ->
+                                fetchArticles(unread, request).map(ret -> {
+                                    Book.BookBuilder bookBuilder = initBookBuilder();
+                                    List<Section> sections = new ArrayList<>();
+                                    bookBuilder.title("radek");
+                                    for (FeedDeliveryRequest feed : request.feeds) {
+                                        Section.SectionBuilder s = Section.builder();
+                                        s.title(feed.title);
+                                        List<Article> articles = new ArrayList<>();
+                                        for (Entry entry : unread.get(feed.id)) {
+                                            articles.add(convertToArticle(entry));
+                                        }
+                                        s.articles(articles);
+                                        sections.add(s.build());
+                                    }
+                                    bookBuilder.sections(sections);
+                                    String filePath = new Generator(ConfigUtils.parameter("temp.directory"),
+                                            ConfigUtils.parameter("kindlegen.path")).generate(bookBuilder.build());
 
-                    return ok(s);
+                                    try {
+                                        new EmailSender().sendFile(filePath, "moomeen@kindle.com");
+                                    } catch (Exception e){
+                                        return internalServerError(Json.toJson("error"));
+                                    }
+                                    return ok(Json.toJson("ok"));
+                                })
+                );
+    }
+
+    private Promise fetchArticles(Map<String, List<Entry>> entries, DeliveryRequest request){
+        List<Promise<Entry>> promises = new ArrayList<>();
+        for (Map.Entry<String, List<Entry>> entry : entries.entrySet()){
+            if (getFeedRequest(request, entry.getKey()).fullArticle) {
+                for (Entry entry1 : entry.getValue()) {
+                    Promise<Entry> promise = fetchEntryContent(entry1);
+                    promises.add(promise);
+                }
+            }
+        }
+        return Promise.sequence(promises);
+    }
+
+    private Promise<Entry> fetchEntryContent(Entry entry){
+        return WS.url(entry.getUrl())
+                .get().map(res -> {
+                    if (res.getStatus() == HttpStatus.SC_OK){
+                        ArticleTextExtractor extractor = new ArticleTextExtractor();
+                        JResult result = extractor.extractContent(res.getBody());
+                        entry.setContent(result.getText());
+                    }
+                    return entry;
                 });
     }
 
@@ -93,5 +114,24 @@ public class SecuredController extends Controller {
 
     private List<String> extractIds(List<FeedDeliveryRequest> feeds){
         return feeds.stream().map(feed -> feed.id).collect(Collectors.toList());
+    }
+
+    private Article convertToArticle(Entry entry){
+        Article.ArticleBuilder b = Article.builder();
+        b.author(entry.getAuthor());
+        b.title(entry.getTitle());
+        b.date(entry.getPublished());
+        b.content(entry.getContent());
+        return b.build();
+    }
+
+    private Book.BookBuilder initBookBuilder(){
+        Book.BookBuilder b = Book.builder();
+        b.language("en-gb").creator("keendly").subject("news").date(today());
+        return b;
+    }
+
+    private String today(){
+        return new SimpleDateFormat("yyyy-MM-dd").format(new Date());
     }
 }
