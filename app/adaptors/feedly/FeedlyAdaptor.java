@@ -24,6 +24,8 @@ import static utils.ConfigUtils.parameter;
 
 public class FeedlyAdaptor extends Adaptor {
 
+    private static final int MAX_ARTICLES_PER_FEED = 100;
+
     enum FeedlyParam {
         URL("feedly.url"),
         CLIENT_ID("feedly.client_id"),
@@ -128,7 +130,8 @@ public class FeedlyAdaptor extends Adaptor {
         });
     }
 
-    private Promise<Map<String, List<Entry>>> getUnread(String feedId, int count, Tokens tokens, String continuation) {
+    private Promise<Map<String, List<Entry>>> getUnread(String feedId, int unreadCount, Tokens tokens, String continuation) {
+        int count = unreadCount > MAX_ARTICLES_PER_FEED ? MAX_ARTICLES_PER_FEED : unreadCount; // TODO inform user
         String url = feedlyUrl + "/streams/" + urlEncode(feedId) + "/contents";
         url = continuation == null ? url : url + "?continuation=" + continuation;
         return doGetFlat(url, tokens,
@@ -168,7 +171,7 @@ public class FeedlyAdaptor extends Adaptor {
                         boolean hasContinuation = continuationNode != null;
                         if (hasContinuation){
                             Promise<Map<String, List<Entry>>> nextPagePromise =
-                                    getUnread(feedId, count - ret.size(), tokens, continuationNode.asText());
+                                    getUnread(feedId, count - ret.get(feedId).size(), tokens, continuationNode.asText());
                             return nextPagePromise.map(nextPage -> {
                                 ret.get(feedId).addAll(nextPage.get(feedId));
                                 return ret;
