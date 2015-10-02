@@ -18,9 +18,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static utils.ConfigUtils.parameter;
 
@@ -106,55 +104,79 @@ public class FeedlyAdaptor extends Adaptor {
 
     @Override
     public Promise<Map<String, List<Entry>>> getUnread(List<String> feedIds, Tokens tokens){
-        return doGet(feedlyUrl + "/markers/counts", tokens, response -> {
+        return doGetFlat(feedlyUrl + "/markers/counts", tokens, response -> {
             JsonNode json = response.asJson();
-            Map<String, Promise<List<Entry>>> resultsPromises = new HashMap<>();
-            for (JsonNode feedCount : json.get("unreadcounts")){
+            List<Promise<Map<String, List<Entry>>>> resultsPromises = new ArrayList<>();
+            for (JsonNode feedCount : json.get("unreadcounts")) {
                 String feedId = feedCount.get("id").asText();
-                if (feedIds.contains(feedId)){
+                if (feedIds.contains(feedId)) {
                     int count = feedCount.get("count").asInt();
-                    Promise<List<Entry>> entries = getUnread(feedId, count, tokens);
-                    resultsPromises.put(feedId, entries);
+                    Promise<Map<String, List<Entry>>> entries = getUnread(feedId, count, tokens, null);
+                    resultsPromises.add(entries);
                 }
             }
-            return resultsPromises.entrySet().stream().collect(Collectors.toMap(
-                    entry -> entry.getKey(), entry -> entry.getValue().get(timeoutInSeconds, TimeUnit.SECONDS)));
+
+            return Promise.sequence(resultsPromises).map(ret -> {
+                Map<String, List<Entry>> entries = new HashMap<>();
+                for (Map<String, List<Entry>> entry : ret) {
+                    for (Map.Entry<String, List<Entry>> mapEntry : entry.entrySet()) {
+                        entries.put(mapEntry.getKey(), mapEntry.getValue());
+                    }
+                }
+                return entries;
+            });
         });
     }
 
-    private Promise<List<Entry>> getUnread(String feedId, int count, Tokens tokens) {
-        return doGet(feedlyUrl + "/streams/" + urlEncode(feedId) + "/contents?count=100", tokens,
+    private Promise<Map<String, List<Entry>>> getUnread(String feedId, int count, Tokens tokens, String continuation) {
+        String url = feedlyUrl + "/streams/" + urlEncode(feedId) + "/contents";
+        url = continuation == null ? url : url + "?continuation=" + continuation;
+        return doGetFlat(url, tokens,
                 response -> {
                     List<Entry> entries = new ArrayList<>();
-                    for (JsonNode item : response.asJson().get("items")){
-                        if (item.get("unread").asBoolean()){
-                            String url = null;
+                    for (JsonNode item : response.asJson().get("items")) {
+                        if (item.get("unread").asBoolean()) {
+                            String articleUrl = null;
                             String originId = item.get("originId").asText();
-                            if (isURL(originId)){
-                                url = originId;
+                            if (isURL(originId)) {
+                                articleUrl = originId;
                             } else {
-                                for (JsonNode alternate : item.get("alternate")){
-                                    if (alternate.get("type").asText().equals("text/html")){
-                                        url = alternate.get("href").asText();
+                                for (JsonNode alternate : item.get("alternate")) {
+                                    if (alternate.get("type").asText().equals("text/html")) {
+                                        articleUrl = alternate.get("href").asText();
                                     }
                                 }
                             }
-                            if (url != null){
+                            if (articleUrl != null) {
                                 Entry entry = new Entry();
-                                entry.setUrl(url);
+                                entry.setUrl(articleUrl);
                                 entry.setTitle(asText(item, "title"));
                                 entry.setAuthor(asText(item, "author"));
                                 entry.setPublished(asDate(item, "published"));
                                 entry.setContent(extractContent(item));
                                 entries.add(entry);
                             }
-                            if (entries.size() >= count){
+                            if (entries.size() >= count) {
                                 break;
                             }
                         }
                     }
-                    return entries;
-        });
+                    Map<String, List<Entry>> ret = new HashMap<>();
+                    ret.put(feedId, entries);
+                    if (ret.size() < count) {
+                        JsonNode continuationNode = response.asJson().get("continuation");
+                        boolean hasContinuation = continuationNode != null;
+                        if (hasContinuation){
+                            Promise<Map<String, List<Entry>>> nextPagePromise =
+                                    getUnread(feedId, count - ret.size(), tokens, continuationNode.asText());
+                            return nextPagePromise.map(nextPage -> {
+                                ret.get(feedId).addAll(nextPage.get(feedId));
+                                return ret;
+                            });
+                        }
+                    }
+                    return Promise.pure(ret);
+                });
     }
 
     private String extractContent(JsonNode item){
@@ -217,6 +239,27 @@ public class FeedlyAdaptor extends Adaptor {
                     int status = response.getStatus();
                     if (isOk(status)) {
                         return Promise.pure(callback.apply(response));
+                    } else if (isUnauthorized(status)) {
+                        Promise token = refreshAccessToken(tokens.getRefreshToken());
+                        return token.flatMap(newToken -> {
+                            tokens.setAccessToken((String) newToken);
+                            return doGetNoRefresh(url, tokens, callback);
+                        });
+                    } else {
+                        throw new ApiException(response.getStatus(), response.getBody());
+                    }
+                });
+    }
+
+    private <T> Promise<T> doGetFlat(String url, Tokens tokens, Function<WSResponse, Promise<T>> callback){
+        Promise<WSResponse> res = WS.url(url)
+                .setHeader("Authorization", "OAuth " + tokens.getAccessToken())
+                .get();
+        return res
+                .flatMap(response -> {
+                    int status = response.getStatus();
+                    if (isOk(status)) {
+                        return callback.apply(response);
                     } else if (isUnauthorized(status)) {
                         Promise token = refreshAccessToken(tokens.getRefreshToken());
                         return token.flatMap(newToken -> {
