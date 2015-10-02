@@ -17,4 +17,5 @@ public abstract class Adaptor {
     public abstract Promise<User> getUser(Tokens tokens);
     public abstract Promise<List<Subscription>> getSubscriptions(Tokens tokens);
     public abstract Promise<Map<String, List<Entry>>> getUnread(List<String> feedIds, Tokens tokens);
+    public abstract Promise markAsRead(List<String> feedIds, Tokens tokens);
 }

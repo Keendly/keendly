@@ -191,6 +191,19 @@ public class FeedlyAdaptor extends Adaptor {
         return null;
     }
 
+    public Promise markAsRead(List<String> feedIds, Tokens tokens){
+        Map<String, Object> data = new HashMap<>();
+        data.put("action", "markAsRead");
+        data.put("feedIds", feedIds);
+        data.put("asOf", String.valueOf(System.currentTimeMillis()));
+        data.put("type", "feeds");
+
+        JsonNode content = Json.toJson(data);
+        return doPost(feedlyUrl + "/markers", tokens, content, response -> "OK");
+    }
+
+
+
     private static String urlEncode(String s){
         try {
             return URLEncoder.encode(s, "UTF-8");
@@ -231,6 +244,43 @@ public class FeedlyAdaptor extends Adaptor {
         subscription.setFeedId(json.get("id").asText());
         subscription.setTitle(json.get("title").asText());
         return subscription;
+    }
+
+    private <T> Promise<T> doPost(String url, Tokens tokens, JsonNode content, Function<WSResponse, T> callback){
+        Promise<WSResponse> res = WS.url(url)
+                .setHeader("Authorization", "OAuth " + tokens.getAccessToken())
+                .setContentType("application/json")
+                .post(content);
+        return res
+                .flatMap(response -> {
+                    int status = response.getStatus();
+                    if (isOk(status)) {
+                        return Promise.pure(callback.apply(response));
+                    } else if (isUnauthorized(status)) {
+                        Promise token = refreshAccessToken(tokens.getRefreshToken());
+                        return token.flatMap(newToken -> {
+                            tokens.setAccessToken((String) newToken);
+                            return doPostNoRefresh(url, tokens, content, callback);
+                        });
+                    } else {
+                        throw new ApiException(response.getStatus(), response.getBody());
+                    }
+                });
+    }
+
+    private <T> Promise<T> doPostNoRefresh(String url, Tokens tokens, JsonNode content,
+                                           Function<WSResponse, T> callback) {
+        return WS.url(url)
+                .setHeader("Authorization", "OAuth " + tokens.getAccessToken())
+                .setContentType("application/json")
+                .post(content)
+                .map(response -> {
+                    if (isOk(response.getStatus())) {
+                        return callback.apply(response);
+                    } else {
+                        throw new ApiException(response.getStatus(), response.getBody());
+                    }
+                });
     }
 
     private <T> Promise<T> doGet(String url, Tokens tokens, Function<WSResponse, T> callback){

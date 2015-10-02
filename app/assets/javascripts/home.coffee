@@ -59,7 +59,7 @@ $ ->
                 feedRequest.title = feed.attr('title')
                 feedRequest.includeImages = includeImages.is(":checked")
                 feedRequest.fullArticle = fullArticle.is(":checked")
-                feedRequest.markAsRead = fullArticle.is(":checked")
+                feedRequest.markAsRead = markAsRead.is(":checked")
                 request.feeds.push(feedRequest)
 
         $.ajax

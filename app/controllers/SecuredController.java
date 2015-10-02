@@ -72,6 +72,10 @@ public class SecuredController extends Controller {
                                     } catch (Exception e){
                                         return internalServerError(Json.toJson("error"));
                                     }
+
+                                    adaptor.markAsRead(extractIdsToMarkAsRead(request.feeds), tokens).map(res -> {
+                                      return "a";
+                                    });
                                     return ok(Json.toJson("ok"));
                                 })
                 );
@@ -113,6 +117,10 @@ public class SecuredController extends Controller {
 
     private List<String> extractIds(List<FeedDeliveryRequest> feeds){
         return feeds.stream().map(feed -> feed.id).collect(Collectors.toList());
+    }
+
+    private List<String> extractIdsToMarkAsRead(List<FeedDeliveryRequest> feeds){
+        return feeds.stream().filter(feed -> feed.markAsRead).map(feed -> feed.id).collect(Collectors.toList());
     }
 
     private Article convertToArticle(Entry entry){
