@@ -51,9 +51,8 @@ public class SecuredController extends Controller {
         return adaptor.getUnread(extractIds(request.feeds), tokens)
                 .flatMap(unread ->
                                 fetchArticles(unread, request).map(ret -> {
-                                    Book.BookBuilder bookBuilder = initBookBuilder();
+                                    Book.BookBuilder bookBuilder = initBookBuilder(request);
                                     List<Section> sections = new ArrayList<>();
-                                    bookBuilder.title("radek");
                                     for (FeedDeliveryRequest feed : request.feeds) {
                                         Section.SectionBuilder s = Section.builder();
                                         s.title(feed.title);
@@ -125,8 +124,13 @@ public class SecuredController extends Controller {
         return b.build();
     }
 
-    private Book.BookBuilder initBookBuilder(){
+    private Book.BookBuilder initBookBuilder(DeliveryRequest request){
         Book.BookBuilder b = Book.builder();
+        if (request.feeds.size() == 1){
+            b.title(request.feeds.get(0).title);
+        } else {
+            b.title("Articles"); // TODO translated
+        }
         b.language("en-gb").creator("keendly").subject("news").date(today());
         return b;
     }
