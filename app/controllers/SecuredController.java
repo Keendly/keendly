@@ -57,11 +57,13 @@ public class SecuredController extends Controller {
                                         Section.SectionBuilder s = Section.builder();
                                         s.title(feed.title);
                                         List<Article> articles = new ArrayList<>();
-                                        for (Entry entry : unread.get(feed.id)) {
-                                            articles.add(convertToArticle(entry));
+                                        if (unread.containsKey(feed.id)){
+                                            for (Entry entry : unread.get(feed.id)) {
+                                                articles.add(convertToArticle(entry));
+                                            }
+                                            s.articles(articles);
+                                            sections.add(s.build());
                                         }
-                                        s.articles(articles);
-                                        sections.add(s.build());
                                     }
                                     bookBuilder.sections(sections);
                                     String filePath = new Generator(ConfigUtils.parameter("temp.directory"),
