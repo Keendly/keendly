@@ -21,8 +21,16 @@
 <script type='text/javascript' src='@routes.Assets.at("javascripts/home.js")'></script>
 <div class="container" id="subs-container">
 <form>
-    <a class="waves-effect waves-light btn modal-trigger" id="deliver_now" href="#modal1">Deliver now</a>
-    <a class="waves-effect waves-light btn" id="schedule_delivery">Schedule delivery</a>
+    <div class="row">
+        <div class="col s6">
+            <a class="waves-effect waves-light btn modal-trigger" id="deliver_now" href="#modal1">Deliver now</a>
+            <a class="waves-effect waves-light btn" id="schedule_delivery">Schedule delivery</a>
+        </div>
+        <div class="input-field col offset-s3 s3" id="search">
+            <input id="search_box" type="search" required>
+            <label for="search_box"><i class="material-icons">search</i></label>
+        </div>
+    </div>
     <table class="highlight" id="subscriptions">
         <thead>
         <tr>
@@ -37,7 +45,7 @@
         @for((s, index) <- subscriptions.zipWithIndex){
         <tr>
             <td><input type="checkbox" class="filled-in" id="sub@index" name="@s.getFeedId()" /><label  for="sub@index"></label></td>
-            <td>@s.getTitle()</td>
+            <td class="feed_title">@s.getTitle()</td>
             <td></td>
             <td></td>
         </tr>

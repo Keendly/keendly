@@ -49,6 +49,10 @@ body {
   padding-top: 20px;
 }
 
-.modal {
-  width: 700px;
+#search {
+  margin-top: -5px
+}
+
+#search label {
+  transform: translateY(0)
 }

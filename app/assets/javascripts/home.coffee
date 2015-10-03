@@ -74,3 +74,17 @@ $ ->
             error: ->
                 $('#progress').hide()
                 alert('error')
+
+    $("#search_box").keyup ->
+        filter = $(this).val()
+        subscriptions = $('#subscriptions').find('tr')
+        subscriptionsLength = subscriptions.length
+        for i in [0...subscriptionsLength]
+            subscription = subscriptions.eq(i)
+            columns = subscription.find('td')
+            if columns.length > 0
+                text = columns.eq(1).text()
+                if text.search(new RegExp(filter, "i")) < 0
+                    subscription.hide()
+                else
+                    subscription.show();
