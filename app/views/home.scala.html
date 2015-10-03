@@ -22,11 +22,11 @@
 <div class="container" id="subs-container">
 <form>
     <div class="row">
-        <div class="col s6">
+        <div class="col s12 m6">
             <a class="waves-effect waves-light btn modal-trigger" id="deliver_now" href="#modal1">Deliver now</a>
-            <a class="waves-effect waves-light btn" id="schedule_delivery">Schedule delivery</a>
+            <a class="waves-effect waves-light btn" id="schedule_delivery">Schedule</a>
         </div>
-        <div class="input-field col offset-s3 s3" id="search">
+        <div class="input-field col offset-m3 s12 m3" id="search">
             <input id="search_box" type="search" required>
             <label for="search_box"><i class="material-icons">search</i></label>
         </div>
@@ -37,7 +37,7 @@
             <th></th>
             <th>Title</th>
             <th>Scheduled</th>
-            <th>Last delivery</th>
+            <th class="hide-on-small-only" >Last delivery</th>
         </tr>
         </thead>
 
@@ -47,7 +47,7 @@
             <td><input type="checkbox" class="filled-in" id="sub@index" name="@s.getFeedId()" /><label  for="sub@index"></label></td>
             <td class="feed_title">@s.getTitle()</td>
             <td></td>
-            <td></td>
+            <td class="hide-on-small-only" ></td>
         </tr>
         }
         </tbody>
