@@ -29,7 +29,7 @@ $ ->
         if $('#feed_list').children().length == 0
             alert('nothing to deliver')
         else
-            $('#modal1').openModal();
+            $('#deliver_modal').openModal();
    
     $(document).on 'click', '.self_remove', (event) ->
         $(@).parent().parent().remove()

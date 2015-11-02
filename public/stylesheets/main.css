@@ -56,3 +56,7 @@ body {
 #search label {
   transform: translateY(0)
 }
+
+.modal {
+  max-width: 700px
+}

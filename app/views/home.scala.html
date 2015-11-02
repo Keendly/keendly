@@ -23,7 +23,7 @@
 <form>
     <div class="row">
         <div class="col s12 m6">
-            <a class="waves-effect waves-light btn modal-trigger" id="deliver_now" href="#modal1">Deliver now</a>
+            <a class="waves-effect waves-light btn modal-trigger" id="deliver_now" href="#deliver_modal">Deliver now</a>
             <a class="waves-effect waves-light btn" id="schedule_delivery">Schedule</a>
         </div>
         <div class="input-field col offset-m3 s12 m3" id="search">
@@ -55,14 +55,14 @@
 </form>
 </div>
 
-<div id="modal1" class="modal">
+<div id="deliver_modal" class="modal">
     <div class="modal-content" id="deliver_form">
         <h4>Deliver feeds</h4>
         <div class="progress" id="progress" style="display: none">
             <div class="indeterminate"></div>
         </div>
         <!-- Switch -->
-        <div class="switch">
+        <div class="switch right-align">
             <label>
                 Simple
                 <input type="checkbox" id="mode">

@@ -70,7 +70,7 @@ public class SecuredController extends Controller {
                                             ConfigUtils.parameter("kindlegen.path")).generate(bookBuilder.build());
 
                                     try {
-                                        new EmailSender().sendFile(filePath, "moomeen@kindle.com");
+                                        new EmailSender().sendFile(filePath, "moomeen@gmail.com");
                                     } catch (Exception e){
                                         return internalServerError(Json.toJson("error"));
                                     }

@@ -202,8 +202,6 @@ public class FeedlyAdaptor extends Adaptor {
         return doPost(feedlyUrl + "/markers", tokens, content, response -> "OK");
     }
 
-
-
     private static String urlEncode(String s){
         try {
             return URLEncoder.encode(s, "UTF-8");
