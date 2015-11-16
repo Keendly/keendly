@@ -7,6 +7,7 @@ import adaptors.auth.Tokens;
 import adaptors.auth.User;
 import adaptors.exception.ApiException;
 import com.fasterxml.jackson.databind.JsonNode;
+import models.Provider;
 import org.apache.http.HttpStatus;
 import play.libs.F.Promise;
 import play.libs.Json;
@@ -70,7 +71,7 @@ public class FeedlyAdaptor extends Adaptor {
                         JsonNode node = response.asJson();
                         String refreshToken = node.get("refresh_token").asText();
                         String accessToken = node.get("access_token").asText();
-                        return new Tokens(refreshToken, accessToken);
+                        return new Tokens(refreshToken, accessToken, Provider.FEEDLY);
                     } else {
                         throw new ApiException(response.getStatus(), response.getBody());
                     }

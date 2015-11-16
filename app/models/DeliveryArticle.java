@@ -2,19 +2,20 @@ package models;
 
 import javax.persistence.*;
 
-public class DeliveryArticle {
+@Entity
+public class DeliveryArticle extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy= GenerationType.AUTO)
-    public String id;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    public long id;
 
-    @Column
+    @Column(nullable = false)
     public String url;
 
-    @Column
+    @Column(nullable = false)
     public String title;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name="delivery_item_id", referencedColumnName="id")
+    @JoinColumn(name = "delivery_item_id", referencedColumnName = "id")
     public DeliveryItem deliveryItem;
 }

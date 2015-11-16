@@ -3,16 +3,23 @@ package models;
 import javax.persistence.*;
 
 @Entity
-public class User {
+@Table(name = "KeendlyUser", uniqueConstraints = @UniqueConstraint(columnNames = {"provider", "provider_id"}))
+public class User extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy= GenerationType.AUTO)
-    public String id;
+    public long id;
 
-    @Column
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     public Provider provider;
 
-    @Column(name = "provider_id")
+    @Column(name = "provider_id", nullable = false)
     public String providerId;
+
+    @Column
+    public String email;
+
+    @Column(name = "delivery_email")
+    public String deliveryEmail;
 }

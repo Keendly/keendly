@@ -2,12 +2,12 @@ package controllers;
 
 import adaptors.Adaptor;
 import adaptors.Adaptors;
-import models.Provider;
 import adaptors.auth.Tokens;
-import models.Person;
+import dao.UserDao;
+import models.Provider;
+import models.User;
 import org.apache.commons.lang3.StringUtils;
 import play.Logger;
-import play.data.Form;
 import play.db.jpa.JPA;
 import play.db.jpa.Transactional;
 import play.i18n.Messages;
@@ -17,12 +17,12 @@ import play.mvc.Result;
 import utils.SessionUtils;
 import views.html.login;
 
-import java.util.List;
-
-import static play.libs.Json.*;
 import static controllers.Constants.*;
+import static play.libs.Json.toJson;
 
 public class MainController extends Controller {
+
+    private UserDao userDao = new UserDao();
 
     public Result index() {
         /*  HACK for feedly sandbox - doesn't support custom callback urls
@@ -64,15 +64,22 @@ public class MainController extends Controller {
         return null;
     }
 
+    @Transactional
     public Promise<Result> login(){
         Tokens tokens = SessionUtils.findTokens(session());
         if (tokens != null){
             String accessToken = tokens.getAccessToken();
             Adaptor adaptor = SessionUtils.findAdaptor(session());
             return adaptor.getUser(tokens).map(user -> {
+                JPA.withTransaction(() -> {
+                    User existingUser = userDao.findByProviderId(user.getId(), tokens.getProvider());
+                    if (existingUser == null){
+                        userDao.createUser(user.getId(), tokens.getProvider(), user.getUserName());
+                    }
+                });
                 session(SESSION_USER, toJson(user).toString());
                 // if access token got changed (refreshed), set it in session cookie
-                if (tokens.getAccessToken().equals(accessToken)){
+                if (!tokens.getAccessToken().equals(accessToken)){
                     session(SESSION_AUTH, toJson(tokens).toString());
                 }
                 return redirect(routes.SecuredController.home());
@@ -90,18 +97,5 @@ public class MainController extends Controller {
     public Result logout(){
         session().clear();
         return redirect(routes.MainController.index());
-    }
-
-    @Transactional
-    public Result addPerson() {
-        Person person = Form.form(Person.class).bindFromRequest().get();
-        JPA.em().persist(person);
-        return redirect(routes.MainController.index());
-    }
-
-    @Transactional(readOnly = true)
-    public Result getPersons() {
-        List<Person> persons = (List<Person>) JPA.em().createQuery("select p from Person p").getResultList();
-        return ok(toJson(persons));
     }
 }

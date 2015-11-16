@@ -1,3 +1,6 @@
+import play.routes.compiler.InjectedRoutesGenerator
+import play.sbt.PlayJava
+
 name := """keendly"""
 
 version := "1.0-SNAPSHOT"
@@ -11,9 +14,7 @@ libraryDependencies ++= Seq(
   "org.hibernate" % "hibernate-entitymanager" % "4.3.7.Final",
   "org.powermock" % "powermock-api-mockito" % "1.6.2",
   "org.powermock" % "powermock-module-junit4" % "1.6.2",
-//  "de.jetwick" % "snacktory" % "1.2.1-keendly-SNAPSHOT",
-//  "com.jindle" % "jindle" % "0.0.1-SNAPSHOT",
-  "com.sendgrid" % "sendgrid-java" % "2.2.1"
+  "postgresql" % "postgresql" % "9.1-901.jdbc4"
 )
 
 libraryDependencies ++= Seq(

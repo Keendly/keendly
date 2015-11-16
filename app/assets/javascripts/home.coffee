@@ -4,39 +4,30 @@ $ ->
     #$('.modal-trigger').leanModal()
 
     $('#deliver_now').click ->
-        $('#feed_list').empty()
-        $('#feed_list').show()
-        $('#empty_div').remove()
-        subscriptions = $('#subscriptions').find('tr')
-        subscriptionsLength = subscriptions.length
-        for i in [0...subscriptionsLength]
-            subscription = subscriptions.eq(i)
-            columns = subscription.find('td')
-            if columns.length > 0
-                checkbox = columns.eq(0).find('.filled-in')
-                if checkbox.is(':checked')
-                    feed_id = checkbox.attr('name')
-                    title = columns.eq(1).text()
-                    $('#feed_list')
-                        .append("<li class='collection-item'>
-                                    <div feed_id='#{feed_id}' title='#{title}'>
-                                        #{title}
-                                        <a href='#!' class='secondary-content self_remove'>
-                                            <i class='material-icons'>clear</i>
-                                        </a>
-                                    </div>
-                                </li>")
-        if $('#feed_list').children().length == 0
+        feedList = $('#feed_list')
+        clearFeedList(feedList)
+        fillWithSelectedSubscriptions(feedList)
+        if feedList.children().length == 0
             alert('nothing to deliver')
         else
             $('#deliver_modal').openModal();
-   
+
+    $('#schedule_delivery').click ->
+        feedList = $('#schedule_feed_list')
+        clearFeedList(feedList)
+        fillWithSelectedSubscriptions(feedList)
+        if feedList.children().length == 0
+            alert('nothing to deliver')
+        else
+            $('#schedule_modal').openModal();
+
     $(document).on 'click', '.self_remove', (event) ->
-        $(@).parent().parent().remove()
-        if $('#feed_list').children().length == 0
-            $('#feed_list').parent().append('<div id="empty_div">empty</div>') #todo nice message
-            $('#feed_list').hide()
+        list = $(@).parent().parent().parent()
+        if list.children().length == 1
+            list.parent().append('<div class="empty_div">empty</div>') #todo nice message
+            list.hide()
             # todo disable deliver button
+        $(@).parent().parent().remove()
 
     $('#deliver_button').click ->
         $('#progress').show()
@@ -88,3 +79,29 @@ $ ->
                     subscription.hide()
                 else
                     subscription.show();
+
+fillWithSelectedSubscriptions = (elementToFill) ->
+    subscriptions = $('#subscriptions').find('tr')
+    subscriptionsLength = subscriptions.length
+    for i in [0...subscriptionsLength]
+        subscription = subscriptions.eq(i)
+        columns = subscription.find('td')
+        if columns.length > 0
+            checkbox = columns.eq(0).find('.filled-in')
+            if checkbox.is(':checked')
+                feed_id = checkbox.attr('name')
+                title = columns.eq(1).text()
+                elementToFill
+                    .append("<li class='collection-item'>
+                                <div feed_id='#{feed_id}' title='#{title}'>
+                                    #{title}
+                                    <a href='#!' class='secondary-content self_remove'>
+                                        <i class='material-icons'>clear</i>
+                                    </a>
+                                </div>
+                            </li>")
+
+clearFeedList = (list) ->
+    list.empty()
+    list.show()
+    $('.empty_div').remove()

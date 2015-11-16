@@ -13,9 +13,10 @@ public class Tokens {
 
     }
 
-    public Tokens(String refreshToken, String accessToken){
+    public Tokens(String refreshToken, String accessToken, Provider provider){
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
+        this.provider = provider;
     }
 
     public String getRefreshToken() {
