@@ -6,19 +6,31 @@ import play.libs.F.Promise;
 import play.mvc.Controller;
 import play.mvc.Result;
 import play.mvc.With;
+import sun.util.calendar.ZoneInfo;
 import utils.SessionUtils;
 import views.html.home;
+
+import java.time.zone.ZoneRulesProvider;
+import java.util.Map;
+import java.util.TreeMap;
+
 
 @With(SecuredAction.class)
 public class SecuredController extends Controller {
 
+    private static Map<String, Integer> zones = new TreeMap<>();
+    static {
+        for (String zone : ZoneRulesProvider.getAvailableZoneIds()){
+            zones.put(zone, ZoneInfo.getTimeZone(zone).getOffset(System.currentTimeMillis())/1000/60/60);
+        }
+    }
+
     public Promise<Result> home(){
         Tokens tokens = SessionUtils.findTokens(session());
         Adaptor adaptor = SessionUtils.findAdaptor(session());
-        return adaptor.getSubscriptions(tokens).map(subscriptions ->
-
-            ok(home.render(subscriptions, session()))
-        );
+        return adaptor.getSubscriptions(tokens).map(subscriptions -> {
+            return ok(home.render(subscriptions, zones, session()));
+        });
     }
 
 //    public Promise<Result> deliver(){

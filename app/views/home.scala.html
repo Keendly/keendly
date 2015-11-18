@@ -1,4 +1,4 @@
-@(subscriptions: List[adaptors.auth.Subscription])(implicit session: play.mvc.Http.Session)
+@(subscriptions: List[adaptors.auth.Subscription], timezones: Map[String, Integer])(implicit session: play.mvc.Http.Session)
 
 @main("Keendly") {
 <nav>
@@ -108,22 +108,31 @@
         </div>
         <p>
             <input type="checkbox" class="filled-in" id="schedule_include_images"/>
-            <label for="include_images">Include images</label>
+            <label for="schedule_include_images">Include images</label>
         </p>
         <p>
             <input type="checkbox" class="filled-in" id="schedule_mark_as_read" checked="checked"/>
-            <label for="mark_as_read">Mark as read</label>
+            <label for="schedule_mark_as_read">Mark as read</label>
         </p>
         <p>
             <input type="checkbox" class="filled-in" id="schedule_full" checked="checked"/>
-            <label for="full">Full article</label>
+            <label for="schedule_full">Full article</label>
         </p>
+        <p>
+            <label>Timezone</label>
+            <select id="timezones" class="browser-default">
+                @for((key, value) <- timezones){
+                    <option value="@key" offset="@value">@key</option>
+                }
+            </select>
+        </p>
+
         <ul class="collection" id="schedule_feed_list">
         </ul>
     </div>
     <div class="modal-footer">
         <a href="#!" class="modal-action modal-close waves-effect waves-red btn-flat">Cancel</a>
-        <a href="#!" class="modal-action waves-effect waves-green btn-flat" id="schdule_button">Schedule</a>
+        <a href="#!" class="modal-action waves-effect waves-green btn-flat" id="schedule_button">Schedule</a>
     </div>
 </div>
 

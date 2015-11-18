@@ -1,8 +1,8 @@
 $ ->
     # init materialize components
     $(".button-collapse").sideNav()
-    #$('.modal-trigger').leanModal()
 
+    presetTimezone()
     $('#deliver_now').click ->
         feedList = $('#feed_list')
         clearFeedList(feedList)
@@ -105,3 +105,11 @@ clearFeedList = (list) ->
     list.empty()
     list.show()
     $('.empty_div').remove()
+
+presetTimezone = ->
+    tz = jstz.determine();
+    timezones = $('#timezones').find('option')
+    for i in [0...timezones.length]
+        timezone = timezones[i]
+        if timezone.value == tz.name()
+            timezone.selected = "selected"
