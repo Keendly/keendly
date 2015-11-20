@@ -1,169 +1,194 @@
-@(subscriptions: List[adaptors.auth.Subscription], timezones: Map[String, Integer])(implicit session: play.mvc.Http.Session)
+@(subscriptions: List[adaptors.auth.Subscription], zones: Map[String, Integer])(implicit session: play.mvc.Http.Session)
 
 @main("Keendly") {
-<nav>
-    <div class="nav-wrapper container">
-        <a href="#!" class="brand-logo">Logo</a>
-        <a href="#" data-activates="mobile-demo" class="button-collapse"><i class="material-icons">menu</i></a>
-        <ul class="right hide-on-med-and-down">
-            <li><a href="sass.html">Home</a></li>
-            <li><a href="badges.html">History</a></li>
-            <li><a href="collapsible.html">Settings</a></li>
-        </ul>
-        <ul class="side-nav" id="mobile-demo">
-            <li><a href="sass.html">Home</a></li>
-            <li><a href="badges.html">History</a></li>
-            <li><a href="collapsible.html">Settings</a></li>
-        </ul>
-    </div>
-</nav>
+  <nav>
+      <div class="nav-wrapper container">
+          <a href="#!" class="brand-logo">Logo</a>
+          <a href="#" data-activates="mobile-demo" class="button-collapse"><i class="material-icons">menu</i></a>
+          <ul class="right hide-on-med-and-down">
+              <li><a href="sass.html">Home</a></li>
+              <li><a href="badges.html">History</a></li>
+              <li><a href="collapsible.html">Settings</a></li>
+          </ul>
+          <ul class="side-nav" id="mobile-demo">
+              <li><a href="sass.html">Home</a></li>
+              <li><a href="badges.html">History</a></li>
+              <li><a href="collapsible.html">Settings</a></li>
+          </ul>
+      </div>
+  </nav>
 
-<script type='text/javascript' src='@routes.Assets.at("javascripts/home.js")'></script>
-<div class="container" id="subs-container">
-<form>
-    <div class="row">
-        <div class="col s12 m6">
-            <a class="waves-effect waves-light btn modal-trigger" id="deliver_now" href="#deliver_modal">Deliver now</a>
-            <a class="waves-effect waves-light btn modal-trigger" id="schedule_delivery" href="#schedule_modal">Schedule</a>
-        </div>
-        <div class="input-field col offset-m3 s12 m3" id="search">
-            <input id="search_box" type="search" required>
-            <label for="search_box"><i class="material-icons">search</i></label>
-        </div>
-    </div>
-    <table class="highlight" id="subscriptions">
-        <thead>
-        <tr>
-            <th></th>
-            <th>Title</th>
-            <th>Scheduled</th>
-            <th class="hide-on-small-only" >Last delivery</th>
-        </tr>
-        </thead>
+  <script type='text/javascript' src='@routes.Assets.at("javascripts/home.js")'></script>
+  <div class="container" id="subs-container">
+  <form>
+      <div class="row">
+          <div class="col s12 m6">
+              <a class="waves-effect waves-light btn modal-trigger" id="deliver_now" href="#deliver_modal">Deliver now</a>
+              <a class="waves-effect waves-light btn modal-trigger" id="schedule_delivery" href="#schedule_modal">Schedule</a>
+          </div>
+          <div class="input-field col offset-m3 s12 m3" id="search">
+              <input id="search_box" type="search" required>
+              <label for="search_box"><i class="material-icons">search</i></label>
+          </div>
+      </div>
+      <table class="highlight" id="subscriptions">
+          <thead>
+          <tr>
+              <th></th>
+              <th>Title</th>
+              <th>Scheduled</th>
+              <th class="hide-on-small-only" >Last delivery</th>
+          </tr>
+          </thead>
 
-        <tbody>
-        @for((s, index) <- subscriptions.zipWithIndex){
-        <tr>
-            <td><input type="checkbox" class="filled-in" id="sub@index" name="@s.getFeedId()" /><label  for="sub@index"></label></td>
-            <td class="feed_title">@s.getTitle()</td>
-            <td></td>
-            <td class="hide-on-small-only" ></td>
-        </tr>
-        }
-        </tbody>
-    </table>
-</form>
-</div>
+          <tbody>
+          @for((s, index) <- subscriptions.zipWithIndex){
+          <tr>
+              <td><input type="checkbox" class="filled-in" id="sub@index" name="@s.getFeedId()" /><label  for="sub@index"></label></td>
+              <td class="feed_title">@s.getTitle()</td>
+              <td></td>
+              <td class="hide-on-small-only" ></td>
+          </tr>
+          }
+          </tbody>
+      </table>
+  </form>
+  </div>
 
-<div id="deliver_modal" class="modal">
-    <div class="modal-content" id="deliver_form">
-        <h4>Deliver feeds</h4>
-        <div class="progress" id="progress" style="display: none">
-            <div class="indeterminate"></div>
-        </div>
-        <!-- Switch -->
-        <div class="switch right-align">
-            <label>
-                Simple
-                <input type="checkbox" id="mode">
-                <span class="lever"></span>
-                Detailed
-            </label>
-        </div>
-        <p>
-            <input type="checkbox" class="filled-in" id="include_images"/>
-            <label for="include_images">Include images</label>
-        </p>
-        <p>
-            <input type="checkbox" class="filled-in" id="mark_as_read" checked="checked"/>
-            <label for="mark_as_read">Mark as read</label>
-        </p>
-        <p>
-            <input type="checkbox" class="filled-in" id="full" checked="checked"/>
-            <label for="full">Full article</label>
-        </p>
-        <ul class="collection" id="feed_list">
-        </ul>
-    </div>
-    <div class="modal-footer">
-        <a href="#!" class="modal-action modal-close waves-effect waves-red btn-flat">Cancel</a>
-        <a href="#!" class="modal-action waves-effect waves-green btn-flat" id="deliver_button">Deliver</a>
-    </div>
-</div>
+  @deliverModal
+  @scheduleModal(zones)
+}
 
-<div id="schedule_modal" class="modal">
-    <div class="modal-content" id="schedule_form">
-        <h4>Schedule delivery</h4>
-        <div class="progress" id="deliver_progress" style="display: none">
-            <div class="indeterminate"></div>
-        </div>
-        <!-- Switch -->
-        <div class="switch right-align">
-            <label>
-                Simple
-                <input type="checkbox" id="schedule_mode">
-                <span class="lever"></span>
-                Detailed
-            </label>
-        </div>
-        <p>
-            <input type="checkbox" class="filled-in" id="schedule_include_images"/>
-            <label for="schedule_include_images">Include images</label>
-        </p>
-        <p>
-            <input type="checkbox" class="filled-in" id="schedule_mark_as_read" checked="checked"/>
-            <label for="schedule_mark_as_read">Mark as read</label>
-        </p>
-        <p>
-            <input type="checkbox" class="filled-in" id="schedule_full" checked="checked"/>
-            <label for="schedule_full">Full article</label>
-        </p>
-        <p>
-            <label>What time you want your feed to be delivered?</label>
-            <select id="times" class="browser-default">
-                <option>12:00 AM</option>
-                <option>01:00 AM</option>
-                <option>02:00 AM</option>
-                <option>03:00 AM</option>
-                <option>04:00 AM</option>
-                <option>05:00 AM</option>
-                <option>06:00 AM</option>
-                <option>07:00 AM</option>
-                <option>08:00 AM</option>
-                <option>09:00 AM</option>
-                <option>10:00 AM</option>
-                <option>11:00 AM</option>
-                <option>12:00 PM</option>
-                <option>01:00 PM</option>
-                <option>02:00 PM</option>
-                <option>03:00 PM</option>
-                <option>04:00 PM</option>
-                <option>05:00 PM</option>
-                <option>06:00 PM</option>
-                <option>07:00 PM</option>
-                <option>08:00 PM</option>
-                <option>09:00 PM</option>
-                <option>10:00 PM</option>
-                <option>11:00 PM</option>
-            </select>
-        </p>
-        <p>
-            <label>What timezone are you in?</label>
-            <select id="timezones" class="browser-default">
-                @for((key, value) <- timezones){
-                    <option value="@key" offset="@value">@key</option>
-                }
-            </select>
-        </p>
-        <label>Feed included in the delivery:</label>
-        <ul class="collection" id="schedule_feed_list">
-        </ul>
-    </div>
-    <div class="modal-footer">
-        <a href="#!" class="modal-action modal-close waves-effect waves-red btn-flat">Cancel</a>
-        <a href="#!" class="modal-action waves-effect waves-green btn-flat" id="schedule_button">Schedule</a>
-    </div>
-</div>
+@deliverModal = {
+  <div id="deliver_modal" class="modal">
+      <div class="modal-content" id="deliver_form">
+          <h4>Deliver feeds</h4>
+          <div class="progress" id="progress" style="display: none">
+              <div class="indeterminate"></div>
+          </div>
+          @switch("mode")
+          <div id="simple">
+            @includeImages("include_images")
+            @markAsRead("mark_as_read")
+            @fullArticle("full_article")
+            <ul class="collection" id="feed_list">
+            </ul>
+          </div>
+          <div id="detailed" style="display: none">
+            <ul class="collection" id="detailed_feed_list">
+            </ul>
+          </div>
+      </div>
+      <div class="modal-footer">
+          <a href="#!" class="modal-action modal-close waves-effect waves-red btn-flat">Cancel</a>
+          <a href="#!" class="modal-action waves-effect waves-green btn-flat" id="deliver_button">Deliver</a>
+      </div>
+  </div>
+}
+
+@scheduleModal(zones: Map[String, Integer]) = {
+  <div id="schedule_modal" class="modal">
+      <div class="modal-content" id="schedule_form">
+          <h4>Schedule delivery</h4>
+          <div class="progress" id="deliver_progress" style="display: none">
+              <div class="indeterminate"></div>
+          </div>
+          @switch("schedule_mode")
+          <div id="schedule_simple">
+            @includeImages("schedule_include_images")
+            @markAsRead("schedule_mark_as_read")
+            @fullArticle("schedule_full")
+            @times("times")
+            @timezones("timezones", zones)
+            <label>Feeds included in the delivery:</label>
+            <ul class="collection" id="schedule_feed_list">
+            </ul>
+          </div>
+          <div id="schedule_detailed" style="display: none">
+            @times("times")
+            @timezones("timezones", zones)
+            <label>Feeds included in the delivery:</label>
+            <ul class="collection" id="detailed_schedule_feed_list">
+            </ul>
+          </div>
 
 
+      </div>
+      <div class="modal-footer">
+          <a href="#!" class="modal-action modal-close waves-effect waves-red btn-flat">Cancel</a>
+          <a href="#!" class="modal-action waves-effect waves-green btn-flat" id="schedule_button">Schedule</a>
+      </div>
+  </div>
+}
+
+@times(id: String) = {
+  <p>
+      <label>What time you want your feed to be delivered?</label>
+      <select id="@id" class="browser-default">
+          <option>12:00 AM</option>
+          <option>01:00 AM</option>
+          <option>02:00 AM</option>
+          <option>03:00 AM</option>
+          <option>04:00 AM</option>
+          <option>05:00 AM</option>
+          <option>06:00 AM</option>
+          <option>07:00 AM</option>
+          <option>08:00 AM</option>
+          <option>09:00 AM</option>
+          <option>10:00 AM</option>
+          <option>11:00 AM</option>
+          <option>12:00 PM</option>
+          <option>01:00 PM</option>
+          <option>02:00 PM</option>
+          <option>03:00 PM</option>
+          <option>04:00 PM</option>
+          <option>08:00 PM</option>
+          <option>09:00 PM</option>
+          <option>10:00 PM</option>
+          <option>11:00 PM</option>
+      </select>
+  </p>
+}
+
+@timezones(id: String, zones: Map[String, Integer]) = {
+  <p>
+      <label>What is your timezone?</label>
+      <select id="@id" class="browser-default">
+          @for((key, value) <- zones){
+              <option value="@key" offset="@value">@key</option>
+          }
+      </select>
+  </p>
+}
+
+@switch(id: String) = {
+  <div class="switch right-align">
+      <label>
+          Simple
+          <input type="checkbox" id="@id">
+          <span class="lever"></span>
+          Detailed
+      </label>
+  </div>
+}
+
+@includeImages(id: String) = {
+  <p>
+      <input type="checkbox" class="filled-in" id="@id"/>
+      <label for="include_images">Include images</label>
+  </p>
+}
+
+@markAsRead(id: String) = {
+  <p>
+      <input type="checkbox" class="filled-in" id="@id" checked="checked"/>
+      <label for="mark_as_read">Mark as read</label>
+  </p>
+}
+
+@fullArticle(id: String) = {
+  <p>
+      <input type="checkbox" class="filled-in" id="@id" checked="checked"/>
+      <label for="full">Full article</label>
+  </p>
 }

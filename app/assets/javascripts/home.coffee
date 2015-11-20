@@ -6,7 +6,7 @@ $ ->
     $('#deliver_now').click ->
         feedList = $('#feed_list')
         clearFeedList(feedList)
-        fillWithSelectedSubscriptions(feedList)
+        fillWithSelectedSubscriptions(feedList, false)
         if feedList.children().length == 0
             alert('nothing to deliver')
         else
@@ -15,7 +15,7 @@ $ ->
     $('#schedule_delivery').click ->
         feedList = $('#schedule_feed_list')
         clearFeedList(feedList)
-        fillWithSelectedSubscriptions(feedList)
+        fillWithSelectedSubscriptions(feedList, false)
         if feedList.children().length == 0
             alert('nothing to deliver')
         else
@@ -80,7 +80,37 @@ $ ->
                 else
                     subscription.show();
 
-fillWithSelectedSubscriptions = (elementToFill) ->
+    $('#mode').change ->
+        feedList = $('#feed_list')
+        detailedFeedList = $('#detailed_feed_list')
+        checked = $('#mode').is(':checked')
+        if checked
+          clearFeedList(detailedFeedList)
+          fillWithSelectedSubscriptions(detailedFeedList, true)
+          $('#detailed').show()
+          $('#simple').hide()
+        else
+          clearFeedList(feedList)
+          fillWithSelectedSubscriptions(feedList, false)
+          $('#detailed').hide()
+          $('#simple').show()
+
+    $('#schedule_mode').change ->
+        feedList = $('#schedule_feed_list')
+        detailedFeedList = $('#detailed_schedule_feed_list')
+        checked = $('#schedule_mode').is(':checked')
+        if checked
+          clearFeedList(detailedFeedList)
+          fillWithSelectedSubscriptions(detailedFeedList, true)
+          $('#schedule_detailed').show()
+          $('#schedule_simple').hide()
+        else
+          clearFeedList(feedList)
+          fillWithSelectedSubscriptions(feedList, false)
+          $('#schedule_detailed').hide()
+          $('#schedule_simple').show()
+
+fillWithSelectedSubscriptions = (elementToFill, detailed) ->
     subscriptions = $('#subscriptions').find('tr')
     subscriptionsLength = subscriptions.length
     for i in [0...subscriptionsLength]
@@ -91,15 +121,36 @@ fillWithSelectedSubscriptions = (elementToFill) ->
             if checkbox.is(':checked')
                 feed_id = checkbox.attr('name')
                 title = columns.eq(1).text()
-                elementToFill
-                    .append("<li class='collection-item'>
-                                <div feed_id='#{feed_id}' title='#{title}'>
-                                    #{title}
-                                    <a href='#!' class='secondary-content self_remove'>
-                                        <i class='material-icons'>clear</i>
-                                    </a>
-                                </div>
-                            </li>")
+                if detailed
+                  elementToFill
+                      .append("<li class='collection-item'>
+                                  <div feed_id='#{feed_id}' title='#{title}'>
+                                      #{title}
+                                      <a href='#!' class='secondary-content self_remove'>
+                                          <i class='material-icons'>clear</i>
+                                      </a>
+                                      <p>
+                                        <input type='checkbox' class='filled-in' id='include_images#{i}'/>
+                                        <label for='include_images#{i}'>Include images</label>
+                                        </p>
+                                        <p>
+                                        <input type='checkbox' class='filled-in' id='mark_as_read#{i}' checked='checked'/>
+                                        <label for='mark_as_read#{i}'>Mark as read</label>
+                                        </p>
+                                        <p>
+                                        <input type='checkbox' class='filled-in' id='full_article#{i}' checked='checked'/>
+                                        <label for='full_article#{i}'>Full article</label>
+                                      </p>
+                                      </div></li>")
+                else
+                  elementToFill
+                      .append("<li class='collection-item'>
+                                  <div feed_id='#{feed_id}' title='#{title}'>
+                                      #{title}
+                                      <a href='#!' class='secondary-content self_remove'>
+                                          <i class='material-icons'>clear</i>
+                                      </a>
+                                      </div></li>")
 
 clearFeedList = (list) ->
     list.empty()
@@ -113,3 +164,52 @@ presetTimezone = ->
         timezone = timezones[i]
         if timezone.value == tz.name()
             timezone.selected = "selected"
+
+loadScheduleModal = (detailed)->
+    if detailed
+      includeImages = produceCheckbox('schedule_include_images', 'Include articles images', 'Many images may slow down ebook downloading')
+      markAsRead = produceCheckbox('schedule_mark_as_read', 'Mark feed as read', null)
+      markAsRead = produceCheckbox('schedule_full', 'Deliver full articles', 'Extract article text from webpage. Not needed if feed already contains full article text.')
+      time = produceTimes()
+      console.log(detailed)
+    else
+      console.log(detailed)
+
+produceCheckbox = (id, text, tooltip) ->
+    input = "<input type='checkbox' class='filled-in' id='#{id}'/>
+              <label for='#{id}>#{text}</label>"
+    if tooltip != null
+        input = input +
+              "<i data-position='right' data-delay='50' data-tooltip='#{tooltip}' class='tooltipped tiny material-icons hide-on-med-and-down'>info_outline</i>"
+    return "<p>" + input + "</p"
+
+produceTimes = ->
+    "<p>
+    <label>What time you want your feed to be delivered?</label>
+    <select id='times' class='browser-default'>
+        <option>12:00 AM</option>
+        <option>01:00 AM</option>
+        <option>02:00 AM</option>
+        <option>03:00 AM</option>
+        <option>04:00 AM</option>
+        <option>05:00 AM</option>
+        <option>06:00 AM</option>
+        <option>07:00 AM</option>
+        <option>08:00 AM</option>
+        <option>09:00 AM</option>
+        <option>10:00 AM</option>
+        <option>11:00 AM</option>
+        <option>12:00 PM</option>
+        <option>01:00 PM</option>
+        <option>02:00 PM</option>
+        <option>03:00 PM</option>
+        <option>04:00 PM</option>
+        <option>05:00 PM</option>
+        <option>06:00 PM</option>
+        <option>07:00 PM</option>
+        <option>08:00 PM</option>
+        <option>09:00 PM</option>
+        <option>10:00 PM</option>
+        <option>11:00 PM</option>
+    </select>
+</p>"
