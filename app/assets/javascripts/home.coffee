@@ -29,18 +29,29 @@ $ ->
             # todo disable deliver button
         $(@).parent().parent().remove()
 
-    $('#deliver_button').click ->
-        $('#progress').show()
-        form = $('#deliver_form')
-        mode = form.find('#mode')
+    $('#schedule_button').click ->
+        $('#deliver_progress').show()
+        form = $('#schedule_form')
+        mode = form.find('#schedule_mode')
         request = new Object()
         if mode.is(":checked")
-        # todo
+            feeds = form.find("#detailed_schedule_feed_list").children()
+            feedsLength = feeds.length
+            request.feeds = []
+            for i in [0...feedsLength]
+                feed = feeds.eq(i).children().eq(0)
+                feedRequest = new Object()
+                feedRequest.id = feed.attr('feed_id')
+                feedRequest.title = feed.attr('title')
+                feedRequest.includeImages = feed.find('.include_images').is(":checked")
+                feedRequest.fullArticle = feed.find('.full_article').is(":checked")
+                feedRequest.markAsRead = feed.find('.mark_as_read').is(":checked")
+                request.feeds.push(feedRequest)
         else
-            includeImages = form.find('#include_images')
-            markAsRead = form.find('#mark_as_read')
-            fullArticle = form.find('#full')
-            feeds = form.find("#feed_list").children()
+            includeImages = form.find('#schedule_include_images')
+            markAsRead = form.find('#schedule_mark_as_read')
+            fullArticle = form.find('#schedule_full')
+            feeds = form.find("#schedule_feed_list").children()
             feedsLength = feeds.length
             request.feeds = []
             for i in [0...feedsLength]
@@ -60,10 +71,10 @@ $ ->
             contentType: 'application/json; charset=utf-8',
             dataType: 'json',
             success: ->
-                $('#progress').hide()
+                $('#deliver_progress').hide()
                 alert('success')
             error: ->
-                $('#progress').hide()
+                $('#deliver_progress').hide()
                 alert('error')
 
     $("#search_box").keyup ->
@@ -130,15 +141,15 @@ fillWithSelectedSubscriptions = (elementToFill, detailed) ->
                                           <i class='material-icons'>clear</i>
                                       </a>
                                       <p>
-                                        <input type='checkbox' class='filled-in' id='include_images#{i}'/>
+                                        <input type='checkbox' class='filled-in include_images' id='include_images#{i}'/>
                                         <label for='include_images#{i}'>Include images</label>
                                         </p>
                                         <p>
-                                        <input type='checkbox' class='filled-in' id='mark_as_read#{i}' checked='checked'/>
+                                        <input type='checkbox' class='filled-in mark_as_read' id='mark_as_read#{i}' checked='checked'/>
                                         <label for='mark_as_read#{i}'>Mark as read</label>
                                         </p>
                                         <p>
-                                        <input type='checkbox' class='filled-in' id='full_article#{i}' checked='checked'/>
+                                        <input type='checkbox' class='filled-in full_article' id='full_article#{i}' checked='checked'/>
                                         <label for='full_article#{i}'>Full article</label>
                                       </p>
                                       </div></li>")
@@ -164,52 +175,3 @@ presetTimezone = ->
         timezone = timezones[i]
         if timezone.value == tz.name()
             timezone.selected = "selected"
-
-loadScheduleModal = (detailed)->
-    if detailed
-      includeImages = produceCheckbox('schedule_include_images', 'Include articles images', 'Many images may slow down ebook downloading')
-      markAsRead = produceCheckbox('schedule_mark_as_read', 'Mark feed as read', null)
-      markAsRead = produceCheckbox('schedule_full', 'Deliver full articles', 'Extract article text from webpage. Not needed if feed already contains full article text.')
-      time = produceTimes()
-      console.log(detailed)
-    else
-      console.log(detailed)
-
-produceCheckbox = (id, text, tooltip) ->
-    input = "<input type='checkbox' class='filled-in' id='#{id}'/>
-              <label for='#{id}>#{text}</label>"
-    if tooltip != null
-        input = input +
-              "<i data-position='right' data-delay='50' data-tooltip='#{tooltip}' class='tooltipped tiny material-icons hide-on-med-and-down'>info_outline</i>"
-    return "<p>" + input + "</p"
-
-produceTimes = ->
-    "<p>
-    <label>What time you want your feed to be delivered?</label>
-    <select id='times' class='browser-default'>
-        <option>12:00 AM</option>
-        <option>01:00 AM</option>
-        <option>02:00 AM</option>
-        <option>03:00 AM</option>
-        <option>04:00 AM</option>
-        <option>05:00 AM</option>
-        <option>06:00 AM</option>
-        <option>07:00 AM</option>
-        <option>08:00 AM</option>
-        <option>09:00 AM</option>
-        <option>10:00 AM</option>
-        <option>11:00 AM</option>
-        <option>12:00 PM</option>
-        <option>01:00 PM</option>
-        <option>02:00 PM</option>
-        <option>03:00 PM</option>
-        <option>04:00 PM</option>
-        <option>05:00 PM</option>
-        <option>06:00 PM</option>
-        <option>07:00 PM</option>
-        <option>08:00 PM</option>
-        <option>09:00 PM</option>
-        <option>10:00 PM</option>
-        <option>11:00 PM</option>
-    </select>
-</p>"
