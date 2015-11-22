@@ -2,7 +2,11 @@ package controllers;
 
 import adaptors.Adaptor;
 import adaptors.auth.Tokens;
+import com.fasterxml.jackson.databind.JsonNode;
+import controllers.request.DeliveryRequest;
+import controllers.request.ScheduleRequest;
 import play.libs.F.Promise;
+import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
 import play.mvc.With;
@@ -28,9 +32,31 @@ public class SecuredController extends Controller {
     public Promise<Result> home(){
         Tokens tokens = SessionUtils.findTokens(session());
         Adaptor adaptor = SessionUtils.findAdaptor(session());
-        return adaptor.getSubscriptions(tokens).map(subscriptions -> {
-            return ok(home.render(subscriptions, zones, session()));
-        });
+        return adaptor.getSubscriptions(tokens).map(subscriptions ->
+             ok(home.render(subscriptions, zones, session()))
+        );
+    }
+
+    public Promise<Result> deliver() {
+        JsonNode json = request().body().asJson();
+        System.out.println(json);
+        DeliveryRequest request = Json.fromJson(json, DeliveryRequest.class);
+
+        Tokens tokens = SessionUtils.findTokens(session());
+        Adaptor adaptor = SessionUtils.findAdaptor(session());
+
+        return Promise.pure(ok());
+    }
+
+    public Promise<Result> schedule() {
+        JsonNode json = request().body().asJson();
+        System.out.println(json);
+        ScheduleRequest request = Json.fromJson(json, ScheduleRequest.class);
+
+        Tokens tokens = SessionUtils.findTokens(session());
+        Adaptor adaptor = SessionUtils.findAdaptor(session());
+
+        return Promise.pure(ok());
     }
 
 //    public Promise<Result> deliver(){
@@ -43,7 +69,7 @@ public class SecuredController extends Controller {
 //                                fetchArticles(unread, request).map(ret -> {
 //                                    Book.BookBuilder bookBuilder = initBookBuilder(request);
 //                                    List<Section> sections = new ArrayList<>();
-//                                    for (FeedDeliveryRequest feed : request.feeds) {
+//                                    for (Feed feed : request.feeds) {
 //                                        Section.SectionBuilder s = Section.builder();
 //                                        s.title(feed.title);
 //                                        List<Article> articles = new ArrayList<>();
@@ -98,8 +124,8 @@ public class SecuredController extends Controller {
 //                });
 //    }
 //
-//    private FeedDeliveryRequest getFeedRequest(DeliveryRequest deliveryRequest, String feedId){
-//        for (FeedDeliveryRequest feedDeliveryRequest : deliveryRequest.feeds){
+//    private Feed getFeedRequest(DeliveryRequest deliveryRequest, String feedId){
+//        for (Feed feedDeliveryRequest : deliveryRequest.feeds){
 //            if (feedDeliveryRequest.id.equals(feedId)){
 //                return feedDeliveryRequest;
 //            }
@@ -107,11 +133,11 @@ public class SecuredController extends Controller {
 //        return null;
 //    }
 //
-//    private List<String> extractIds(List<FeedDeliveryRequest> feeds){
+//    private List<String> extractIds(List<Feed> feeds){
 //        return feeds.stream().map(feed -> feed.id).collect(Collectors.toList());
 //    }
 //
-//    private List<String> extractIdsToMarkAsRead(List<FeedDeliveryRequest> feeds){
+//    private List<String> extractIdsToMarkAsRead(List<Feed> feeds){
 //        return feeds.stream().filter(feed -> feed.markAsRead).map(feed -> feed.id).collect(Collectors.toList());
 //    }
 //

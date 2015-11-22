@@ -81,7 +81,7 @@
       </div>
       <div class="modal-footer">
           <a href="#!" class="modal-action modal-close waves-effect waves-red btn-flat">Cancel</a>
-          <a href="#!" class="modal-action waves-effect waves-green btn-flat" id="deliver_button">Deliver</a>
+          <a href="#!" class="modal-action waves-effect waves-green btn-flat submit" id="deliver_button">Deliver</a>
       </div>
   </div>
 }
@@ -90,7 +90,7 @@
   <div id="schedule_modal" class="modal">
       <div class="modal-content" id="schedule_form">
           <h4>Schedule delivery</h4>
-          <div class="progress" id="deliver_progress" style="display: none">
+          <div class="progress" id="schedule_progress" style="display: none">
               <div class="indeterminate"></div>
           </div>
           @switch("schedule_mode")
@@ -114,7 +114,7 @@
       </div>
       <div class="modal-footer">
           <a href="#!" class="modal-action modal-close waves-effect waves-red btn-flat">Cancel</a>
-          <a href="#!" class="modal-action waves-effect waves-green btn-flat" id="schedule_button">Schedule</a>
+          <a href="#!" class="modal-action waves-effect waves-green btn-flat submit" id="schedule_button">Schedule</a>
       </div>
   </div>
 }

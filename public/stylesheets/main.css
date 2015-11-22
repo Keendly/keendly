@@ -60,3 +60,10 @@ body {
 .modal {
   max-width: 700px
 }
+
+.empty_div {
+  background-color: #ffcdd2;
+  border-width: 0px;
+  padding: 10px;
+  color: #b71c1c
+}

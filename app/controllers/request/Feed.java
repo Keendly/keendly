@@ -1,6 +1,6 @@
 package controllers.request;
 
-public class FeedDeliveryRequest {
+public class Feed {
 
     public String id;
     public String title;

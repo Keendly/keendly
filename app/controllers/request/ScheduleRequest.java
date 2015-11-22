@@ -2,7 +2,9 @@ package controllers.request;
 
 import java.util.List;
 
-public class DeliveryRequest {
+public class ScheduleRequest {
 
+    public String time;
+    public String timeZone;
     public List<Feed> feeds;
 }
