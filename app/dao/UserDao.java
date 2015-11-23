@@ -21,11 +21,12 @@ public class UserDao {
         }
     }
 
-    public void createUser(String id, Provider provider, String email){
+    public User createUser(String id, Provider provider, String email){
         User user = new User();
         user.providerId = id;
         user.provider = provider;
         user.email = email;
         JPA.em().persist(user);
+        return user;
     }
 }

@@ -98,15 +98,15 @@
             @includeImages("schedule_include_images")
             @markAsRead("schedule_mark_as_read")
             @fullArticle("schedule_full")
-            @times("times")
-            @timezones("timezones", zones)
+            @times("times_simple")
+            @timezones("timezones_simple", zones)
             <label>Feeds included in the delivery:</label>
             <ul class="collection" id="schedule_feed_list">
             </ul>
           </div>
           <div id="schedule_detailed" style="display: none">
-            @times("times")
-            @timezones("timezones", zones)
+            @times("times_detailed")
+            @timezones("timezones_detailed", zones)
             <label>Feeds included in the delivery:</label>
             <ul class="collection" id="detailed_schedule_feed_list">
             </ul>
@@ -122,7 +122,7 @@
 @times(id: String) = {
   <p>
       <label>What time you want your feed to be delivered?</label>
-      <select id="@id" class="browser-default">
+      <select id="@id" class="browser-default times">
           <option>12:00 AM</option>
           <option>01:00 AM</option>
           <option>02:00 AM</option>
@@ -151,7 +151,7 @@
 @timezones(id: String, zones: Map[String, Integer]) = {
   <p>
       <label>What is your timezone?</label>
-      <select id="@id" class="browser-default">
+      <select id="@id" class="browser-default timezones">
           @for((key, value) <- zones){
               <option value="@key" offset="@value">@key</option>
           }

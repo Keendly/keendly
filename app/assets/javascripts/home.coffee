@@ -103,6 +103,8 @@ $ ->
           feed.find('.full_article').is(":checked"),
           feed.find('.mark_as_read').is(":checked")
         )
+        request.time = SCHEDULE_DELIVERY_FORM.find('#times_detailed').val()
+        request.timezone = SCHEDULE_DELIVERY_FORM.find('#timezones_detailed').val()
         request.feeds.push(feedRequest)
     else
       includeImages = SCHEDULE_DELIVERY_FORM.find('#schedule_include_images')
@@ -119,7 +121,8 @@ $ ->
           markAsRead.is(":checked")
         )
         request.feeds.push(feedRequest)
-
+      request.time = SCHEDULE_DELIVERY_FORM.find('#times_simple').val()
+      request.timezone = SCHEDULE_DELIVERY_FORM.find('#timezones_simple').val()
     post(
       'schedule',
       request,
@@ -268,7 +271,7 @@ enableButton = (button) ->
 
 initTimezone = ->
   tz = jstz.determine();
-  timezones = $('#timezones').find('option')
+  timezones = $('.timezones').find('option')
   for i in [0...timezones.length]
     timezone = timezones[i]
     if timezone.value == tz.name()

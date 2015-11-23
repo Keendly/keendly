@@ -74,10 +74,10 @@ public class MainController extends Controller {
                 JPA.withTransaction(() -> {
                     User existingUser = userDao.findByProviderId(user.getId(), tokens.getProvider());
                     if (existingUser == null){
-                        userDao.createUser(user.getId(), tokens.getProvider(), user.getUserName());
+                        existingUser = userDao.createUser(user.getId(), tokens.getProvider(), user.getUserName());
                     }
+                    session(SESSION_USER, toJson(existingUser).toString());
                 });
-                session(SESSION_USER, toJson(user).toString());
                 // if access token got changed (refreshed), set it in session cookie
                 if (!tokens.getAccessToken().equals(accessToken)){
                     session(SESSION_AUTH, toJson(tokens).toString());

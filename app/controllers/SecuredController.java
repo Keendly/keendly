@@ -4,7 +4,13 @@ import adaptors.Adaptor;
 import adaptors.auth.Tokens;
 import com.fasterxml.jackson.databind.JsonNode;
 import controllers.request.DeliveryRequest;
+import controllers.request.Feed;
 import controllers.request.ScheduleRequest;
+import dao.SubscriptionDao;
+import models.Subscription;
+import models.SubscriptionFrequency;
+import models.SubscriptionItem;
+import play.db.jpa.JPA;
 import play.libs.F.Promise;
 import play.libs.Json;
 import play.mvc.Controller;
@@ -14,8 +20,12 @@ import sun.util.calendar.ZoneInfo;
 import utils.SessionUtils;
 import views.html.home;
 
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.time.zone.ZoneRulesProvider;
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.TreeMap;
 
 
@@ -28,6 +38,8 @@ public class SecuredController extends Controller {
             zones.put(zone, ZoneInfo.getTimeZone(zone).getOffset(System.currentTimeMillis())/1000/60/60);
         }
     }
+
+    private SubscriptionDao subscriptionDao = new SubscriptionDao();
 
     public Promise<Result> home(){
         Tokens tokens = SessionUtils.findTokens(session());
@@ -52,10 +64,27 @@ public class SecuredController extends Controller {
         JsonNode json = request().body().asJson();
         System.out.println(json);
         ScheduleRequest request = Json.fromJson(json, ScheduleRequest.class);
+        TimeZone timezone = ZoneInfo.getTimeZone(request.timezone);
+        LocalTime time = LocalTime.parse(request.time, DateTimeFormatter.ofPattern("h:m a"));
+        Subscription subscription = new Subscription();
+        subscription.active = Boolean.TRUE;
+        subscription.frequency = SubscriptionFrequency.DAILY;
+        subscription.time = time.toString();
+        subscription.timeZone = timezone.toZoneId().getId();
+        subscription.items = new ArrayList<>();
+        subscription.user = SessionUtils.getUser(session());
 
-        Tokens tokens = SessionUtils.findTokens(session());
-        Adaptor adaptor = SessionUtils.findAdaptor(session());
+        for (Feed feed : request.feeds){
+            SubscriptionItem item = new SubscriptionItem();
+            item.feedId = feed.id;
+            item.fullArticle = feed.fullArticle;
+            item.markAsRead = feed.markAsRead;
+            item.withImages = feed.includeImages;
+            item.subscription = subscription;
+            subscription.items.add(item);
+        }
 
+        JPA.withTransaction(() -> subscriptionDao.createSubscription(subscription));
         return Promise.pure(ok());
     }
 
