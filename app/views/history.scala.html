@@ -1,0 +1,30 @@
+@(deliveries: List[controllers.model.FeedDelivery], page: Integer)
+
+@main("Keendly") {
+
+    <script type='text/javascript' src='@routes.Assets.at("javascripts/history.js")'></script>
+      <div class="container">
+          <table class="highlight" id="deliveries">
+              <thead>
+              <tr>
+                  <th>Feeds</th>
+                  <th>Date</th>
+              </tr>
+              </thead>
+
+              <tbody>
+              @for((d, index) <- deliveries.zipWithIndex){
+              <tr>
+                  <td>
+                      @for((feed) <- d.feeds){
+                          @feed
+                      }
+                  </td>
+                  <td>@d.date</td>
+              </tr>
+              }
+              </tbody>
+          </table>
+      </div>
+}
+

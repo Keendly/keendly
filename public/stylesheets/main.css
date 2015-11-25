@@ -61,9 +61,37 @@ body {
   max-width: 700px
 }
 
-.empty_div {
+.error_div {
   background-color: #ffcdd2;
   border-width: 0px;
   padding: 10px;
-  color: #b71c1c
+  color: #b71c1c;
+  margin-top: 7.25px;
 }
+
+.info_div {
+  background-color: #bbdefb;
+  border-width: 0px;
+  padding: 10px;
+  color: #0d47a1;
+  margin-top: 7.25px;
+}
+
+html, body, #wrapper {
+  height: 100%
+}
+
+body > #wrapper {
+  height: auto;
+  min-height: 100%
+}
+
+#footer {
+  clear: both;
+  position: relative;
+  z-index: 10;
+  height: 10em;
+  margin-top: -10em;
+}
+
+#content { padding-bottom: 10em; }

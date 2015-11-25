@@ -12,15 +12,13 @@ import play.db.jpa.JPA;
 import play.db.jpa.Transactional;
 import play.i18n.Messages;
 import play.libs.F.Promise;
-import play.mvc.Controller;
 import play.mvc.Result;
-import utils.SessionUtils;
 import views.html.login;
 
 import static controllers.Constants.*;
 import static play.libs.Json.toJson;
 
-public class MainController extends Controller {
+public class MainController extends AbstractController {
 
     private UserDao userDao = new UserDao();
 
@@ -56,20 +54,12 @@ public class MainController extends Controller {
         }
     }
 
-    private String getQueryParam(String key){
-        String value[] = request().queryString().get(key);
-        if (value != null && value.length > 0){
-            return value[0];
-        }
-        return null;
-    }
-
     @Transactional
     public Promise<Result> login(){
-        Tokens tokens = SessionUtils.findTokens(session());
+        Tokens tokens = findTokens();
         if (tokens != null){
             String accessToken = tokens.getAccessToken();
-            Adaptor adaptor = SessionUtils.findAdaptor(session());
+            Adaptor adaptor = findAdaptor();
             return adaptor.getUser(tokens).map(user -> {
                 JPA.withTransaction(() -> {
                     User existingUser = userDao.findByProviderId(user.getId(), tokens.getProvider());

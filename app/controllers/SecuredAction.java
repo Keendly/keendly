@@ -7,7 +7,6 @@ import play.libs.F.Promise;
 import play.mvc.Action;
 import play.mvc.Http;
 import play.mvc.Result;
-import utils.SessionUtils;
 
 public class SecuredAction extends Action.Simple {
     public Promise<Result> call(Http.Context ctx) throws Throwable {

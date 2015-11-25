@@ -4,23 +4,22 @@ import adaptors.Adaptor;
 import adaptors.model.ExternalSubscription;
 import adaptors.model.Tokens;
 import com.fasterxml.jackson.databind.JsonNode;
+import controllers.model.FeedDelivery;
 import controllers.model.FeedSubscription;
 import controllers.request.DeliveryRequest;
 import controllers.request.Feed;
 import controllers.request.ScheduleRequest;
+import dao.DeliveryDao;
 import dao.SubscriptionDao;
-import entities.Subscription;
-import entities.SubscriptionFrequency;
-import entities.SubscriptionItem;
-import play.Logger;
+import entities.*;
+import org.apache.commons.lang3.StringUtils;
 import play.db.jpa.JPA;
 import play.libs.F.Promise;
 import play.libs.Json;
-import play.mvc.Controller;
 import play.mvc.Result;
 import play.mvc.With;
 import sun.util.calendar.ZoneInfo;
-import utils.SessionUtils;
+import views.html.history;
 import views.html.home;
 
 import java.time.LocalTime;
@@ -32,7 +31,7 @@ import java.util.stream.Collectors;
 
 
 @With(SecuredAction.class)
-public class SecuredController extends Controller {
+public class SecuredController extends AbstractController {
 
     private static Map<String, Integer> zones = new TreeMap<>();
     static {
@@ -42,13 +41,12 @@ public class SecuredController extends Controller {
     }
 
     private SubscriptionDao subscriptionDao = new SubscriptionDao();
+    private DeliveryDao deliveryDao = new DeliveryDao();
 
     public Promise<Result> home(){
-        Tokens tokens = SessionUtils.findTokens(session());
-        Adaptor adaptor = SessionUtils.findAdaptor(session());
-        return adaptor.getSubscriptions(tokens).map(subscriptions ->
+        return findAdaptor().getSubscriptions(findTokens()).map(subscriptions ->
             JPA.withTransaction(() -> {
-                List<SubscriptionItem> items = subscriptionDao.getSubscriptionItems(SessionUtils.getUser(session()));
+                List<SubscriptionItem> items = subscriptionDao.getSubscriptionItems(getUser());
                 List<FeedSubscription> feedSubscriptions = new ArrayList<>();
 
                 for(ExternalSubscription externalSubscription : subscriptions){
@@ -70,7 +68,6 @@ public class SecuredController extends Controller {
         Map<LocalTime, String> scheduled = new HashMap<>();
         for (SubscriptionItem item : feedItems){
             scheduled.put(LocalTime.parse(item.subscription.time), item.subscription.timeZone);
-            Logger.info(LocalTime.parse(item.subscription.time).format(dateTimeFormatter()));
         }
         feedSubscription.scheduled = scheduled;
 
@@ -87,8 +84,8 @@ public class SecuredController extends Controller {
         DeliveryRequest request = Json.fromJson(json, DeliveryRequest.class);
 
         // get articles from adaptor, call lautus and send to S3
-        Tokens tokens = SessionUtils.findTokens(session());
-        Adaptor adaptor = SessionUtils.findAdaptor(session());
+        Tokens tokens = findTokens();
+        Adaptor adaptor = findAdaptor();
 
         return Promise.pure(ok());
     }
@@ -105,7 +102,7 @@ public class SecuredController extends Controller {
         subscription.time = time.toString();
         subscription.timeZone = timezone.toZoneId().getId();
         subscription.items = new ArrayList<>();
-        subscription.user = SessionUtils.getUser(session());
+        subscription.user = getUser();
 
         for (Feed feed : request.feeds){
             SubscriptionItem item = new SubscriptionItem();
@@ -226,4 +223,37 @@ public class SecuredController extends Controller {
 //    private String today(){
 //        return new SimpleDateFormat("yyyy-MM-dd").format(new Date());
 //    }
+
+    public Result history(){
+        int page = parsePage(getQueryParam("page"));
+        List<Delivery> deliveries = new ArrayList<>();
+        JPA.withTransaction(() ->  {
+            deliveries.addAll(deliveryDao.getDeliveries(getUser(), page));
+        });
+        return ok(history.render(map(deliveries), page));
+    }
+
+    private List<FeedDelivery> map(List<Delivery> deliveries){
+        List<FeedDelivery> ret = new ArrayList<>();
+        for (Delivery delivery : deliveries){
+            FeedDelivery feedDelivery = new FeedDelivery();
+            feedDelivery.date = delivery.date;
+            List<String> feeds = new ArrayList<>();
+            for (DeliveryItem deliveryItem : delivery.items){
+                feeds.add(deliveryItem.title);
+            }
+        }
+        return ret;
+    }
+
+    private int parsePage(String page){
+        if (StringUtils.isEmpty(page)){
+            return 1;
+        }
+        try {
+            return Integer.parseInt(page);
+        } catch (Exception e){
+            return 1;
+        }
+    }
 }

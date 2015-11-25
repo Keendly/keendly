@@ -261,10 +261,10 @@ clearAndShow = (elem) ->
   elem.show()
 
 emptyListPlaceholder = ->
-  "<div class='empty_div'>No feeds selected</div>"
+  "<div class='error_div'>No feeds selected</div>"
 
 removeEmptyListPlaceholder = ->
-  $('.empty_div').remove()
+  $('.error_div').remove()
 
 enableButton = (button) ->
   button.removeClass('disabled')
