@@ -1,6 +1,6 @@
 package controllers;
 
-import models.User;
+import entities.User;
 import play.Logger;
 import play.i18n.Messages;
 import play.libs.F.Promise;

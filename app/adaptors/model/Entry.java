@@ -1,4 +1,4 @@
-package adaptors.auth;
+package adaptors.model;
 
 import java.util.Date;
 

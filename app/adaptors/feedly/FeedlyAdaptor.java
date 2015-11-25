@@ -1,13 +1,13 @@
 package adaptors.feedly;
 
 import adaptors.Adaptor;
-import adaptors.auth.Entry;
-import adaptors.auth.Subscription;
-import adaptors.auth.Tokens;
-import adaptors.auth.User;
+import adaptors.model.Entry;
+import adaptors.model.ExternalSubscription;
+import adaptors.model.Tokens;
+import adaptors.model.User;
 import adaptors.exception.ApiException;
 import com.fasterxml.jackson.databind.JsonNode;
-import models.Provider;
+import entities.Provider;
 import org.apache.http.HttpStatus;
 import play.libs.F.Promise;
 import play.libs.Json;
@@ -90,18 +90,18 @@ public class FeedlyAdaptor extends Adaptor {
     }
 
     @Override
-    public Promise<List<Subscription>> getSubscriptions(Tokens tokens){
+    public Promise<List<ExternalSubscription>> getSubscriptions(Tokens tokens){
         return doGet(feedlyUrl + "/subscriptions", tokens, response -> {
-            List<Subscription> subscriptions = new ArrayList<>();
+            List<ExternalSubscription> externalSubscriptions = new ArrayList<>();
             JsonNode json = response.asJson();
             if (json.isArray()){
                 for (JsonNode item : json){
-                    subscriptions.add(mapFromJson(item));
+                    externalSubscriptions.add(mapFromJson(item));
                 }
             } else {
-                subscriptions.add(mapFromJson(json));
+                externalSubscriptions.add(mapFromJson(json));
             }
-            return subscriptions;
+            return externalSubscriptions;
         });
     }
 
@@ -238,11 +238,11 @@ public class FeedlyAdaptor extends Adaptor {
         return null;
     }
 
-    private Subscription mapFromJson(JsonNode json){
-        Subscription subscription = new Subscription();
-        subscription.setFeedId(json.get("id").asText());
-        subscription.setTitle(json.get("title").asText());
-        return subscription;
+    private ExternalSubscription mapFromJson(JsonNode json){
+        ExternalSubscription externalSubscription = new ExternalSubscription();
+        externalSubscription.setFeedId(json.get("id").asText());
+        externalSubscription.setTitle(json.get("title").asText());
+        return externalSubscription;
     }
 
     private <T> Promise<T> doPost(String url, Tokens tokens, JsonNode content, Function<WSResponse, T> callback){

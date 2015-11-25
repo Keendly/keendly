@@ -1,7 +1,7 @@
 package adaptors.feedly;
 
-import adaptors.auth.Tokens;
-import adaptors.auth.User;
+import adaptors.model.Tokens;
+import adaptors.model.User;
 import adaptors.exception.ApiException;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;

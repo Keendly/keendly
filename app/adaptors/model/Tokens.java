@@ -1,6 +1,6 @@
-package adaptors.auth;
+package adaptors.model;
 
-import models.Provider;
+import entities.Provider;
 
 public class Tokens {
 

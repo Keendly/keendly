@@ -1,9 +1,9 @@
 package adaptors;
 
-import adaptors.auth.Entry;
-import adaptors.auth.Subscription;
-import adaptors.auth.Tokens;
-import adaptors.auth.User;
+import adaptors.model.Entry;
+import adaptors.model.ExternalSubscription;
+import adaptors.model.Tokens;
+import adaptors.model.User;
 import play.libs.F.Promise;
 
 import java.util.List;
@@ -15,7 +15,7 @@ public abstract class Adaptor {
 
     public abstract Promise<Tokens> getTokens(String code);
     public abstract Promise<User> getUser(Tokens tokens);
-    public abstract Promise<List<Subscription>> getSubscriptions(Tokens tokens);
+    public abstract Promise<List<ExternalSubscription>> getSubscriptions(Tokens tokens);
     public abstract Promise<Map<String, List<Entry>>> getUnread(List<String> feedIds, Tokens tokens);
     public abstract Promise markAsRead(List<String> feedIds, Tokens tokens);
 }

@@ -1,7 +1,7 @@
 package dao;
 
-import models.Provider;
-import models.User;
+import entities.Provider;
+import entities.User;
 import play.db.jpa.JPA;
 
 import javax.persistence.NoResultException;

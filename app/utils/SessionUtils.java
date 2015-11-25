@@ -2,11 +2,11 @@ package utils;
 
 import adaptors.Adaptor;
 import adaptors.Adaptors;
-import adaptors.auth.Tokens;
+import adaptors.model.Tokens;
 import com.fasterxml.jackson.databind.JsonNode;
 import controllers.Constants;
-import models.Provider;
-import models.User;
+import entities.Provider;
+import entities.User;
 import org.apache.commons.lang3.StringUtils;
 import play.libs.Json;
 import play.mvc.Http;

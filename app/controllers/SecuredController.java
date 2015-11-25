@@ -1,15 +1,18 @@
 package controllers;
 
 import adaptors.Adaptor;
-import adaptors.auth.Tokens;
+import adaptors.model.ExternalSubscription;
+import adaptors.model.Tokens;
 import com.fasterxml.jackson.databind.JsonNode;
+import controllers.model.FeedSubscription;
 import controllers.request.DeliveryRequest;
 import controllers.request.Feed;
 import controllers.request.ScheduleRequest;
 import dao.SubscriptionDao;
-import models.Subscription;
-import models.SubscriptionFrequency;
-import models.SubscriptionItem;
+import entities.Subscription;
+import entities.SubscriptionFrequency;
+import entities.SubscriptionItem;
+import play.Logger;
 import play.db.jpa.JPA;
 import play.libs.F.Promise;
 import play.libs.Json;
@@ -22,11 +25,10 @@ import views.html.home;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.time.zone.ZoneRulesProvider;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.TimeZone;
-import java.util.TreeMap;
+import java.util.*;
+import java.util.stream.Collectors;
 
 
 @With(SecuredAction.class)
@@ -45,8 +47,38 @@ public class SecuredController extends Controller {
         Tokens tokens = SessionUtils.findTokens(session());
         Adaptor adaptor = SessionUtils.findAdaptor(session());
         return adaptor.getSubscriptions(tokens).map(subscriptions ->
-             ok(home.render(subscriptions, zones, session()))
+            JPA.withTransaction(() -> {
+                List<SubscriptionItem> items = subscriptionDao.getSubscriptionItems(SessionUtils.getUser(session()));
+                List<FeedSubscription> feedSubscriptions = new ArrayList<>();
+
+                for(ExternalSubscription externalSubscription : subscriptions){
+                    List<SubscriptionItem> feedItems = items.stream()
+                            .filter(s -> s.feedId.equals(externalSubscription.getFeedId()))
+                            .collect(Collectors.toList());
+                    FeedSubscription feedSubscription = map(externalSubscription, feedItems);
+                    feedSubscriptions.add(feedSubscription);
+                }
+                return ok(home.render(feedSubscriptions, zones, dateTimeFormatter(), session()));
+            })
         );
+    }
+
+    private FeedSubscription map(ExternalSubscription externalSubscription, List<SubscriptionItem> feedItems){
+        FeedSubscription feedSubscription = new FeedSubscription();
+        feedSubscription.providerId = externalSubscription.getFeedId();
+        feedSubscription.title = externalSubscription.getTitle();
+        Map<LocalTime, String> scheduled = new HashMap<>();
+        for (SubscriptionItem item : feedItems){
+            scheduled.put(LocalTime.parse(item.subscription.time), item.subscription.timeZone);
+            Logger.info(LocalTime.parse(item.subscription.time).format(dateTimeFormatter()));
+        }
+        feedSubscription.scheduled = scheduled;
+
+        return feedSubscription;
+    }
+
+    private DateTimeFormatter dateTimeFormatter(){
+        return DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(lang().toLocale());
     }
 
     public Promise<Result> deliver() {
@@ -54,6 +86,7 @@ public class SecuredController extends Controller {
         System.out.println(json);
         DeliveryRequest request = Json.fromJson(json, DeliveryRequest.class);
 
+        // get articles from adaptor, call lautus and send to S3
         Tokens tokens = SessionUtils.findTokens(session());
         Adaptor adaptor = SessionUtils.findAdaptor(session());
 

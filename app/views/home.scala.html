@@ -1,4 +1,4 @@
-@(subscriptions: List[adaptors.auth.Subscription], zones: Map[String, Integer])(implicit session: play.mvc.Http.Session)
+@(subscriptions: List[controllers.model.FeedSubscription], zones: Map[String, Integer], formatter: java.time.format.DateTimeFormatter)(implicit session: play.mvc.Http.Session)
 
 @main("Keendly") {
   <nav>
@@ -44,9 +44,15 @@
           <tbody>
           @for((s, index) <- subscriptions.zipWithIndex){
           <tr>
-              <td><input type="checkbox" class="filled-in" id="sub@index" name="@s.getFeedId()" /><label  for="sub@index"></label></td>
-              <td class="feed_title">@s.getTitle()</td>
-              <td></td>
+              <td><input type="checkbox" class="filled-in" id="sub@index" name="@s.providerId" /><label  for="sub@index"></label></td>
+              <td class="feed_title">@s.title</td>
+              <td>
+              @for((key, value) <- s.scheduled){
+                  <p class="tooltipped" data-position="top" data-delay="50" data-tooltip="@value">
+                  @key.format(formatter)
+                  </p>
+              }
+              </td>
               <td class="hide-on-small-only" ></td>
           </tr>
           }
