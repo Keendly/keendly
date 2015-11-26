@@ -2068,12 +2068,14 @@ img.responsive-img, video.responsive-video {
   .pagination li.active a {
     color: #fff; }
   .pagination li.active {
-    background-color: #32313b; }
+    background-color: #39b1c6; }
   .pagination li.disabled a {
     cursor: default;
     color: #999; }
   .pagination li i {
-    font-size: 2rem; }
+    font-size: 2rem;
+    vertical-align: middle
+  }
 .pagination li.pages ul li {
   display: inline-block;
   float: none; }

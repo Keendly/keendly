@@ -14,7 +14,7 @@ public class DeliveryDao {
     public List<Delivery> getDeliveries(User user, int page){
         Query query = JPA.em().createQuery("select d from Delivery d where d.user = :user order by date desc")
                 .setMaxResults(PAGE_SIZE)
-                .setFirstResult(PAGE_SIZE * (page - 1) + 1)
+                .setFirstResult(PAGE_SIZE * (page - 1))
                 .setParameter("user", user);
         return query.getResultList();
     }

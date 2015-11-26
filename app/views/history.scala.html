@@ -1,4 +1,5 @@
-@(deliveries: List[controllers.model.FeedDelivery], page: Integer)
+@(deliveries: List[controllers.model.FeedDelivery], page: Integer)(implicit lang: play.api.i18n.Lang)
+@import java.text.DateFormat
 
 @main("Keendly") {
 
@@ -8,7 +9,7 @@
               <thead>
               <tr>
                   <th>Feeds</th>
-                  <th>Date</th>
+                  <th>Delivery date</th>
               </tr>
               </thead>
 
@@ -17,14 +18,28 @@
               <tr>
                   <td>
                       @for((feed) <- d.feeds){
-                          @feed
+                          '@feed'
                       }
                   </td>
-                  <td>@d.date</td>
+                  <td>@DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM, lang.toLocale).format(d.date)</td>
               </tr>
               }
               </tbody>
           </table>
+          <ul class="pagination" style="text-align: center">
+            @if(page == 1){
+              <li class="disabled"><a href="history?page=@(page-1)"><i class="material-icons">chevron_left</i></a></li>
+            } else {
+              <li class="waves-effect"><a href="history?page=@(page-1)"><i class="material-icons">chevron_left</i></a></li>
+            }
+           @for(i <- 0 to 4){
+             @if(i == 0){
+                <li class="active"><a href="history?page=@(i + page)">@(i + page)</a></li>
+             } else {
+                <li class="waves-effect"><a href="history?page=@(i + page)">@(i + page)</a></li>
+             }
+           }
+           <li class="waves-effect"><a href="history?page=@(page+1)"><i class="material-icons">chevron_right</i></a></li>
+         </ul>
       </div>
 }
-

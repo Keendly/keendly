@@ -226,11 +226,12 @@ public class SecuredController extends AbstractController {
 
     public Result history(){
         int page = parsePage(getQueryParam("page"));
-        List<Delivery> deliveries = new ArrayList<>();
+        List<FeedDelivery> deliveries = new ArrayList<>();
         JPA.withTransaction(() ->  {
-            deliveries.addAll(deliveryDao.getDeliveries(getUser(), page));
+            List<Delivery> entities = deliveryDao.getDeliveries(getUser(), page);
+            deliveries.addAll(map(entities));
         });
-        return ok(history.render(map(deliveries), page));
+        return ok(history.render(deliveries, page, lang()));
     }
 
     private List<FeedDelivery> map(List<Delivery> deliveries){
@@ -239,9 +240,11 @@ public class SecuredController extends AbstractController {
             FeedDelivery feedDelivery = new FeedDelivery();
             feedDelivery.date = delivery.date;
             List<String> feeds = new ArrayList<>();
+            feedDelivery.feeds = feeds;
             for (DeliveryItem deliveryItem : delivery.items){
                 feeds.add(deliveryItem.title);
             }
+            ret.add(feedDelivery);
         }
         return ret;
     }
