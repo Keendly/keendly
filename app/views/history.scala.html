@@ -26,20 +26,41 @@
               }
               </tbody>
           </table>
-          <ul class="pagination" style="text-align: center">
-            @if(page == 1){
-              <li class="disabled"><a href="history?page=@(page-1)"><i class="material-icons">chevron_left</i></a></li>
-            } else {
-              <li class="waves-effect"><a href="history?page=@(page-1)"><i class="material-icons">chevron_left</i></a></li>
-            }
-           @for(i <- 0 to 4){
-             @if(i == 0){
-                <li class="active"><a href="history?page=@(i + page)">@(i + page)</a></li>
-             } else {
-                <li class="waves-effect"><a href="history?page=@(i + page)">@(i + page)</a></li>
-             }
-           }
-           <li class="waves-effect"><a href="history?page=@(page+1)"><i class="material-icons">chevron_right</i></a></li>
-         </ul>
+          @pagination(page)
       </div>
+}
+
+@pagination(page: Integer) = {
+  <ul class="pagination" style="text-align: center">
+    @if(page == 1){
+      <li class="disabled"><a href="history?page=@(page-1)"><i class="material-icons">chevron_left</i></a></li>
+    } else {
+      <li class="waves-effect"><a href="history?page=@(page-1)"><i class="material-icons">chevron_left</i></a></li>
+    }
+
+   @for(i <- 0 to 4){
+     @if(page == 1){
+       @if(i == 0){
+          <li class="active"><a href="history?page=@(page)">@(page)</a></li>
+       } else {
+          <li class="waves-effect"><a href="history?page=@(i + page)">@(i + page)</a></li>
+       }
+     }
+     @if(page == 2){
+       @if(i == 1){
+          <li class="active"><a href="history?page=@(page)">@(page)</a></li>
+       } else {
+          <li class="waves-effect"><a href="history?page=@(i + page - 1)">@(i + page -  1)</a></li>
+       }
+     }
+     @if(page > 2) {
+       @if(i == 2){
+          <li class="active"><a href="history?page=@(page)">@(page)</a></li>
+       } else {
+          <li class="waves-effect"><a href="history?page=@(i + page - 2)">@(i + page - 2)</a></li>
+       }
+     }
+   }
+   <li class="waves-effect"><a href="history?page=@(page+1)"><i class="material-icons">chevron_right</i></a></li>
+ </ul>
 }
