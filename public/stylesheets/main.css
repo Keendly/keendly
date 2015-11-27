@@ -77,6 +77,15 @@ body {
   margin-top: 7.25px;
 }
 
+.success_div {
+  background-color: #c8e6c9;
+  border-width: 0px;
+  padding: 10px;
+  color: #1b5e20;
+  margin-top: 7.25px;
+}
+
+
 html, body, #wrapper {
   height: 100%
 }
@@ -95,3 +104,11 @@ body > #wrapper {
 }
 
 #content { padding-bottom: 10em; }
+
+#settings_form {
+  margin-top: 10px;
+}
+
+#settings_form button {
+  float: right
+}

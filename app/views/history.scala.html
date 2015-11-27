@@ -3,7 +3,6 @@
 
 @main("Keendly") {
 
-    <script type='text/javascript' src='@routes.Assets.at("javascripts/history.js")'></script>
       <div class="container">
           <table id="deliveries">
               <thead>
@@ -26,6 +25,9 @@
               }
               </tbody>
           </table>
+          @if(deliveries.size == 0){
+            <div class='info_div'>No deliveries found</div>
+          }
           @pagination(page)
       </div>
 }
@@ -33,7 +35,7 @@
 @pagination(page: Integer) = {
   <ul class="pagination" style="text-align: center">
     @if(page == 1){
-      <li class="disabled"><a href="history?page=@(page-1)"><i class="material-icons">chevron_left</i></a></li>
+      <li class="disabled"><a href="history"><i class="material-icons">chevron_left</i></a></li>
     } else {
       <li class="waves-effect"><a href="history?page=@(page-1)"><i class="material-icons">chevron_left</i></a></li>
     }

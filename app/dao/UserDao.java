@@ -29,4 +29,12 @@ public class UserDao {
         JPA.em().persist(user);
         return user;
     }
+
+    public User updateUser(User user){
+        return JPA.em().merge(user);
+    }
+
+    public User findById(long id){
+        return JPA.em().find(User.class, id);
+    }
 }

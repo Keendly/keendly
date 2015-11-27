@@ -11,9 +11,11 @@ import controllers.request.Feed;
 import controllers.request.ScheduleRequest;
 import dao.DeliveryDao;
 import dao.SubscriptionDao;
+import dao.UserDao;
 import entities.*;
 import org.apache.commons.lang3.StringUtils;
 import play.db.jpa.JPA;
+import play.i18n.Messages;
 import play.libs.F.Promise;
 import play.libs.Json;
 import play.mvc.Result;
@@ -21,6 +23,7 @@ import play.mvc.With;
 import sun.util.calendar.ZoneInfo;
 import views.html.history;
 import views.html.home;
+import views.html.settings;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -42,6 +45,7 @@ public class SecuredController extends AbstractController {
 
     private SubscriptionDao subscriptionDao = new SubscriptionDao();
     private DeliveryDao deliveryDao = new DeliveryDao();
+    private UserDao userDao = new UserDao();
 
     public Promise<Result> home(){
         return findAdaptor().getSubscriptions(findTokens()).map(subscriptions ->
@@ -258,5 +262,24 @@ public class SecuredController extends AbstractController {
         } catch (Exception e){
             return 1;
         }
+    }
+
+    public Result settings(){
+        final StringBuffer email = new StringBuffer();
+        JPA.withTransaction(() -> {
+            User user = userDao.findById(getUser().id);
+            email.append(user.deliveryEmail);
+        });
+        return ok(settings.render(email.toString(), flash()));
+    }
+
+    public Result saveSettings(){
+        Map<String, String[]> form = request().body().asFormUrlEncoded();
+        JPA.withTransaction(() -> {
+            User user = userDao.findById(getUser().id);
+            user.deliveryEmail = form.get("email")[0];
+        });
+        flash(Constants.FLASH_INFO, Messages.get("settings.saved"));
+        return redirect(routes.SecuredController.settings());
     }
 }
