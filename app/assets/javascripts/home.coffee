@@ -1,57 +1,94 @@
+SUBSCRIPTION_FEED_LIST_SELECTOR = '#subscription_feed_list'
+SUBSCRIPTION_DETAILED_FEED_LIST_SELECTOR = '#detailed_subscription_feed_list'
+SUBSCRIPTION_MODE_SELECTOR = '#subscription_mode'
+
+DELIVERY_FEED_LIST_SELECTOR = '#feed_list';
+DELIVERY_DETAILED_FEED_LIST_SELECTOR = '#detailed_feed_list'
 $ ->
+  DELIVERY_MODAL_BTN = $('#delivery_modal_btn')
+  DELIVERY_MODAL = $('#delivery_modal')
+  DELIVERY_FEED_LIST = $(DELIVERY_FEED_LIST_SELECTOR)
+  DELIVERY_DETAILED_FEED_LIST = $(DELIVERY_DETAILED_FEED_LIST_SELECTOR)
+
+  SUBSCRIPTION_MODAL_BTN = $('#subscription_modal_btn')
+  SUBSCRIPTION_MODAL = $('#subscription_modal')
+  SUBSCRIPTION_FEED_LIST = $(SUBSCRIPTION_FEED_LIST_SELECTOR)
+  SUBSCRIPTION_DETAILED_FEED_LIST = $(SUBSCRIPTION_DETAILED_FEED_LIST_SELECTOR)
+
+  DELIVERY_SAVE_BTN = $('#delivery_save_btn')
+  DELIVERY_FORM = $('#delivery_form')
+  DELIVERY_PROGRESS = $('#delivery_progress')
+  DELIVERY_MODE = $('#delivery_mode')
+
+  SUBSCRIPTION_SAVE_BTN = $('#subscription_save_btn')
+  SUBSCRIPTION_UPDATE_BTN = $('#subscription_update_btn')
+  SUBSCRIPTION_DELETE_BTN = $('#subscription_delete_btn')
+  SUBSCRIPTION_PROGRESS = $('#subscription_progress')
+  SUBSCRIPTION_FORM = $('#subscription_form')
+  SUBSCRIPTION_MODE = $(SUBSCRIPTION_MODE_SELECTOR)
+
+  SELF_REMOVE_CLASS = '.self_remove'
+  SUBSCRIPTION_EDIT = $('.schedule_edit')
+
   # init materialize components
   $(".button-collapse").sideNav()
   # try to guess user's timezone
   initTimezone()
 
-  DELIVER_NOW_MODAL_BTN = $('#deliver_now')
-  DELIVER_NOW_MODAL = $('#deliver_modal')
-  DELIVER_NOW_FEED_LIST = $('#feed_list')
-  DELIVER_NOW_DETAILED_FEED_LIST = $('#detailed_feed_list')
 
-  SCHEDULE_DELIVERY_MODAL_BTN = $('#schedule_delivery')
-  SCHEDULE_DELIVERY_MODAL = $('#schedule_modal')
-  SCHEDULE_DELIVERY_FEED_LIST = $('#schedule_feed_list')
-  SCHEDULE_DELIVERY_DETAILED_FEED_LIST = $('#detailed_schedule_feed_list')
-
-  DELIVER_NOW_BTN = $('#deliver_button')
-  DELIVER_NOW_FORM = $('#deliver_form')
-  DELIVER_NOW_PROGRESS = $('#progress')
-  DELIVER_NOW_SWITCH = $('#mode')
-
-  SCHEDULE_DELIVERY_BTN = $('#schedule_button')
-  SCHEDULE_DELIVERY_PROGRESS = $('#schedule_progress')
-  SCHEDULE_DELIVERY_FORM = $('#schedule_form')
-  SCHEDULE_DELIVERY_SWITCH = $('#schedule_mode')
-
-  SELF_REMOVE_CLASS = '.self_remove'
-
-  DELIVER_NOW_MODAL_BTN.click ->
+  DELIVERY_MODAL_BTN.click ->
     removeEmptyListPlaceholder()
-    clearAndShow(DELIVER_NOW_FEED_LIST)
-    fillWithSelectedFeeds(DELIVER_NOW_FEED_LIST, false)
-    if isEmpty(DELIVER_NOW_FEED_LIST)
+    enableButton(DELIVERY_SAVE_BTN)
+    clearAndShow(DELIVERY_FEED_LIST)
+
+    DELIVERY_MODE.attr('checked',false)
+    showSelectedFeedList(DELIVERY_FEED_LIST, DELIVERY_DETAILED_FEED_LIST, false)
+    if isEmpty(DELIVERY_FEED_LIST)
       alert('nothing to deliver')
     else
-      DELIVER_NOW_MODAL.openModal();
+      DELIVERY_MODAL.openModal();
 
-  SCHEDULE_DELIVERY_MODAL_BTN.click ->
+  SUBSCRIPTION_MODAL_BTN.click ->
     removeEmptyListPlaceholder()
-    clearAndShow(SCHEDULE_DELIVERY_FEED_LIST)
-    fillWithSelectedFeeds(SCHEDULE_DELIVERY_FEED_LIST, false)
-    if isEmpty(SCHEDULE_DELIVERY_FEED_LIST)
+    enableButton(SUBSCRIPTION_SAVE_BTN)
+    clearAndShow(SUBSCRIPTION_FEED_LIST)
+
+    SUBSCRIPTION_MODE.attr('checked',false);
+    showSelectedFeedList(SUBSCRIPTION_FEED_LIST, SUBSCRIPTION_DETAILED_FEED_LIST, false)
+    if isEmpty(SUBSCRIPTION_FEED_LIST)
       alert('nothing to deliver')
     else
-      SCHEDULE_DELIVERY_MODAL.openModal();
+      SUBSCRIPTION_UPDATE_BTN.hide()
+      SUBSCRIPTION_DELETE_BTN.hide()
+      SUBSCRIPTION_SAVE_BTN.show()
+      SUBSCRIPTION_MODAL.openModal();
 
-  DELIVER_NOW_BTN.click ->
-    if DELIVER_NOW_BTN.hasClass('disabled')
+  SUBSCRIPTION_EDIT.click ->
+    removeEmptyListPlaceholder()
+    enableButton(SUBSCRIPTION_UPDATE_BTN)
+    enableButton(SUBSCRIPTION_DELETE_BTN)
+    subscription_id = $(@).attr('sid')
+    $.ajax
+      url: 'subscription?id=' + subscription_id,
+      type: 'GET',
+      dataType: 'json',
+      success: (data) ->
+        fillModalWithSubscription(data)
+        SUBSCRIPTION_UPDATE_BTN.show()
+        SUBSCRIPTION_DELETE_BTN.show()
+        SUBSCRIPTION_SAVE_BTN.hide()
+        SUBSCRIPTION_MODAL.openModal();
+      error: ->
+        alert('error!')
+
+  DELIVERY_SAVE_BTN.click ->
+    if DELIVERY_SAVE_BTN.hasClass('disabled')
       return
-    DELIVER_NOW_PROGRESS.show()
+    DELIVERY_PROGRESS.show()
     request = new Object()
     request.feeds = []
-    if DELIVER_NOW_SWITCH.is(":checked")
-      feeds = DELIVER_NOW_DETAILED_FEED_LIST.children()
+    if DELIVERY_MODE.is(":checked")
+      feeds = DELIVERY_DETAILED_FEED_LIST.children()
       for i in [0...feeds.length]
         feed = feeds.eq(i).children().eq(0)
         feedRequest = requestFeed(
@@ -63,10 +100,10 @@ $ ->
         )
         request.feeds.push(feedRequest)
     else
-      includeImages = DELIVER_NOW_FORM.find('#include_images')
-      markAsRead = DELIVER_NOW_FORM.find('#mark_as_read')
-      fullArticle = DELIVER_NOW_FORM.find('#full_article')
-      feeds = DELIVER_NOW_FEED_LIST.children()
+      includeImages = DELIVERY_FORM.find('#include_images')
+      markAsRead = DELIVERY_FORM.find('#mark_as_read')
+      fullArticle = DELIVERY_FORM.find('#full_article')
+      feeds = DELIVERY_FEED_LIST.children()
       for i in [0...feeds.length]
         feed = feeds.eq(i).children().eq(0)
         feedRequest = requestFeed(
@@ -81,19 +118,19 @@ $ ->
     post(
       'deliver',
       request,
-      DELIVER_NOW_PROGRESS,
+      DELIVERY_PROGRESS,
       -> alert('success'),
       -> alert('error')
     )
 
-  SCHEDULE_DELIVERY_BTN.click ->
-    if SCHEDULE_DELIVERY_BTN.hasClass('disabled')
+  SUBSCRIPTION_SAVE_BTN.click ->
+    if SUBSCRIPTION_SAVE_BTN.hasClass('disabled')
       return
-    SCHEDULE_DELIVERY_PROGRESS.show()
+    SUBSCRIPTION_PROGRESS.show()
     request = new Object()
     request.feeds = []
-    if SCHEDULE_DELIVERY_SWITCH.is(":checked")
-      feeds = SCHEDULE_DELIVERY_DETAILED_FEED_LIST.children()
+    if SUBSCRIPTION_MODE.is(":checked")
+      feeds = SUBSCRIPTION_DETAILED_FEED_LIST.children()
       for i in [0...feeds.length]
         feed = feeds.eq(i).children().eq(0)
         feedRequest = requestFeed(
@@ -103,14 +140,14 @@ $ ->
           feed.find('.full_article').is(":checked"),
           feed.find('.mark_as_read').is(":checked")
         )
-        request.time = SCHEDULE_DELIVERY_FORM.find('#times_detailed').val()
-        request.timezone = SCHEDULE_DELIVERY_FORM.find('#timezones_detailed').val()
+        request.time = SUBSCRIPTION_FORM.find('#times_detailed').val()
+        request.timezone = SUBSCRIPTION_FORM.find('#timezones_detailed').val()
         request.feeds.push(feedRequest)
     else
-      includeImages = SCHEDULE_DELIVERY_FORM.find('#schedule_include_images')
-      markAsRead = SCHEDULE_DELIVERY_FORM.find('#schedule_mark_as_read')
-      fullArticle = SCHEDULE_DELIVERY_FORM.find('#schedule_full')
-      feeds = SCHEDULE_DELIVERY_FEED_LIST.children()
+      includeImages = SUBSCRIPTION_FORM.find('#schedule_include_images')
+      markAsRead = SUBSCRIPTION_FORM.find('#schedule_mark_as_read')
+      fullArticle = SUBSCRIPTION_FORM.find('#schedule_full')
+      feeds = SUBSCRIPTION_FEED_LIST.children()
       for i in [0...feeds.length]
         feed = feeds.eq(i).children().eq(0)
         feedRequest = requestFeed(
@@ -121,45 +158,52 @@ $ ->
           markAsRead.is(":checked")
         )
         request.feeds.push(feedRequest)
-      request.time = SCHEDULE_DELIVERY_FORM.find('#times_simple').val()
-      request.timezone = SCHEDULE_DELIVERY_FORM.find('#timezones_simple').val()
+      request.time = SUBSCRIPTION_FORM.find('#times_simple').val()
+      request.timezone = SUBSCRIPTION_FORM.find('#timezones_simple').val()
     post(
       'schedule',
       request,
-      SCHEDULE_DELIVERY_PROGRESS,
+      SUBSCRIPTION_PROGRESS,
       -> alert('success'),
       -> alert('error')
     )
 
+  SUBSCRIPTION_UPDATE_BTN.click ->
+    if SUBSCRIPTION_UPDATE_BTN.hasClass('disabled')
+      return
+    alert('not implemented')
+
+  SUBSCRIPTION_DELETE_BTN.click ->
+    if SUBSCRIPTION_DELETE_BTN.hasClass('disabled')
+      return
+    alert('not implemented')
+
   # handler for mode switch on deliver now modal
-  DELIVER_NOW_SWITCH.change ->
+  DELIVERY_MODE.change ->
     removeEmptyListPlaceholder()
-    enableButton(DELIVER_NOW_BTN)
-    if DELIVER_NOW_SWITCH.is(':checked')
-      clearAndShow(DELIVER_NOW_DETAILED_FEED_LIST)
-      fillWithSelectedFeeds(DELIVER_NOW_DETAILED_FEED_LIST, true)
-      $('#detailed').show()
-      $('#simple').hide()
+    enableButton(DELIVERY_SAVE_BTN)
+    if DELIVERY_MODE.is(':checked')
+      showSelectedFeedList(DELIVERY_DETAILED_FEED_LIST, DELIVERY_FEED_LIST, true)
     else
-      clearAndShow(DELIVER_NOW_FEED_LIST)
-      fillWithSelectedFeeds(DELIVER_NOW_FEED_LIST, false)
-      $('#detailed').hide()
-      $('#simple').show()
+      showSelectedFeedList(DELIVERY_FEED_LIST, DELIVERY_DETAILED_FEED_LIST, false)
 
   # handler for mode switch on schedule delivery modal
-  SCHEDULE_DELIVERY_SWITCH.change ->
+  SUBSCRIPTION_MODE.change ->
+    # TODO condition for edit mode
     removeEmptyListPlaceholder()
-    enableButton(SCHEDULE_DELIVERY_BTN)
-    if SCHEDULE_DELIVERY_SWITCH.is(':checked')
-      clearAndShow(SCHEDULE_DELIVERY_DETAILED_FEED_LIST)
-      fillWithSelectedFeeds(SCHEDULE_DELIVERY_DETAILED_FEED_LIST, true)
-      $('#schedule_detailed').show()
-      $('#schedule_simple').hide()
+    isEditMode = SUBSCRIPTION_DELETE_BTN.is(":visible") # hacky check for mode
+    if isEditMode
+      enableButton(SUBSCRIPTION_UPDATE_BTN)
+      if SUBSCRIPTION_MODE.is(':checked')
+        showFeedList(SUBSCRIPTION_DETAILED_FEED_LIST, SUBSCRIPTION_FEED_LIST, true)
+      else
+        showFeedList(SUBSCRIPTION_FEED_LIST, SUBSCRIPTION_DETAILED_FEED_LIST, false)
     else
-      clearAndShow(SCHEDULE_DELIVERY_FEED_LIST)
-      fillWithSelectedFeeds(SCHEDULE_DELIVERY_FEED_LIST, false)
-      $('#schedule_detailed').hide()
-      $('#schedule_simple').show()
+      enableButton(SUBSCRIPTION_SAVE_BTN)
+      if SUBSCRIPTION_MODE.is(':checked')
+        showSelectedFeedList(SUBSCRIPTION_DETAILED_FEED_LIST, SUBSCRIPTION_FEED_LIST, true)
+      else
+        showSelectedFeedList(SUBSCRIPTION_FEED_LIST, SUBSCRIPTION_DETAILED_FEED_LIST, false)
 
   # live handler for feed list remove button
   $(document).on 'click', SELF_REMOVE_CLASS, (event) ->
@@ -210,7 +254,59 @@ requestFeed = (feed_id, title, includeImages, markAsRead, fullArticle) ->
   request.markAsRead = markAsRead
   request
 
-fillWithSelectedFeeds = (elementToFill, detailed) ->
+fillModalWithSubscription = (subscription) ->
+  subscriptionMode = $(SUBSCRIPTION_MODE_SELECTOR)
+  subscriptionFeedList = $(SUBSCRIPTION_FEED_LIST_SELECTOR)
+  subscriptionDetailedFeedList = $(SUBSCRIPTION_DETAILED_FEED_LIST_SELECTOR)
+
+  setTime(subscription['time'])
+  setTimezone( subscription['timezone'])
+
+  if isSimple(subscription)
+    subscriptionMode.prop('checked', false)
+    showSubscriptionFeedList(subscription, subscriptionFeedList, subscriptionDetailedFeedList, false)
+  else
+    subscriptionMode.prop('checked', true)
+    showSubscriptionFeedList(subscription, subscriptionDetailedFeedList, subscriptionFeedList, true)
+
+isSimple = (subscription) ->
+  # caluclate if all feeds have the same configuration
+  simple = false
+  if subscription['feeds'].length < 2
+    simple = true
+  else
+    last = null
+    for i in [0...subscription['feeds'].length]
+      item = subscription['feeds'][i]
+      if last != null
+        if (last['withImages'] != item['withImages'] or
+            last['fullArticle'] != item['fullArticle'] or
+            last['markAsRead'] != item['markAsRead'])
+          simple = false
+          break
+      last = item
+    return simple
+
+findFeedTitle = (feed_to_find) ->
+  subscriptions = $('#subscriptions').find('tr')
+  subscriptionsLength = subscriptions.length
+  for i in [0...subscriptionsLength]
+    subscription = subscriptions.eq(i)
+    columns = subscription.find('td')
+    if columns.length > 0
+      checkbox = columns.eq(0).find('.filled-in')
+      feed_id = checkbox.attr('name')
+      title = columns.eq(1).text()
+      if feed_to_find == feed_id
+        return title
+
+showSelectedFeedList = (feedListToShow, feedListToHide, isDetailed) ->
+  clearAndShow(feedListToShow)
+  fillWithSelectedFeeds(feedListToShow, isDetailed)
+  feedListToHide.parent().hide()
+  feedListToShow.parent().show()
+
+fillWithSelectedFeeds = (elementToFill, isDetailed) ->
   subscriptions = $('#subscriptions').find('tr')
   subscriptionsLength = subscriptions.length
   for i in [0...subscriptionsLength]
@@ -221,10 +317,26 @@ fillWithSelectedFeeds = (elementToFill, detailed) ->
       if checkbox.is(':checked')
         feed_id = checkbox.attr('name')
         title = columns.eq(1).text()
-        if detailed
+        if isDetailed
           elementToFill.append(detailedFeedListItem(feed_id, title, i))
         else
           elementToFill.append(simpleFeedListItem(feed_id, title))
+
+showSubscriptionFeedList = (subscription, feedListToShow, feedListToHide, isDetailed) ->
+  clearAndShow(feedListToShow)
+  for i in [0...subscription['feeds'].length]
+    item = subscription['feeds'][i]
+    feedId = item['id']
+    title = findFeedTitle(feedId)
+    if title != null
+      if isDetailed
+        feedListToShow.append(
+          detailedFeedListItem(feedId, title, i, item['includeImages'], item['markAsRead'], item['fullArticle'])
+        )
+      else
+        feedListToShow.append(simpleFeedListItem(feedId, title))
+  feedListToShow.parent().show()
+  feedListToHide.parent().hide()
 
 simpleFeedListItem = (feed_id, title) ->
     "<li class='collection-item'>
@@ -235,26 +347,36 @@ simpleFeedListItem = (feed_id, title) ->
     </a>
     </div></li>"
 
-detailedFeedListItem = (feed_id, title, i) ->
-    "<li class='collection-item'>
-    <div feed_id='#{feed_id}' title='#{title}'>
-        #{title}
-        <a href='#!' class='secondary-content self_remove'>
-            <i class='material-icons'>clear</i>
-        </a>
-        <p>
-          <input type='checkbox' class='filled-in include_images' id='include_images#{i}'/>
-          <label for='include_images#{i}'>Include images</label>
-          </p>
-          <p>
-          <input type='checkbox' class='filled-in mark_as_read' id='mark_as_read#{i}' checked='checked'/>
-          <label for='mark_as_read#{i}'>Mark as read</label>
-          </p>
-          <p>
-          <input type='checkbox' class='filled-in full_article' id='full_article#{i}' checked='checked'/>
-          <label for='full_article#{i}'>Full article</label>
+detailedFeedListItem = (feed_id, title, id) ->
+  detailedFeedListItem(feed_id, title, id, false, true, true)
+
+detailedFeedListItem = (feed_id, title, id, include_images, mark_as_read, full_article) ->
+  includeImagesCheckbox = checkbox('include_images', 'includeImages' + id, include_images)
+  marAsReadCheckbox = checkbox('mark_as_read', 'mark_as_read' + id, mark_as_read)
+  fullArticleCheckbox = checkbox('full_article', 'full_article' + id, full_article)
+  "<li class='collection-item'>
+  <div feed_id='#{feed_id}' title='#{title}'>
+      #{title}
+      <a href='#!' class='secondary-content self_remove'>
+          <i class='material-icons'>clear</i>
+      </a>
+      <p>
+  " + includeImagesCheckbox +
+  "      <label for='include_images#{id}'>Include images</label>
         </p>
-        </div></li>"
+        <p>" + marAsReadCheckbox + "
+        <label for='mark_as_read#{id}'>Mark as read</label>
+        </p>
+        <p>" + fullArticleCheckbox + "
+        <label for='full_article#{id}'>Full article</label>
+      </p>
+      </div></li>"
+
+checkbox = (clazz, id, checked) ->
+  if checked
+    "<input type='checkbox' class='filled-in #{clazz}' id='#{id}'/>"
+  else
+    "<input type='checkbox' class='filled-in #{clazz}' id='#{id}' checked='checked'/>"
 
 clearAndShow = (elem) ->
   elem.empty()
@@ -271,11 +393,21 @@ enableButton = (button) ->
 
 initTimezone = ->
   tz = jstz.determine();
+  setTimezone(tz.name())
+
+setTimezone = (tz) ->
   timezones = $('.timezones').find('option')
   for i in [0...timezones.length]
     timezone = timezones[i]
-    if timezone.value == tz.name()
+    if timezone.value == tz
         timezone.selected = "selected"
+
+setTime = (t) ->
+  times = $('.times').find('option')
+  for i in [0...times.length]
+    time = times[i]
+    if time.value == t
+        time.selected = "selected"
 
 isEmpty = (elem) ->
   elem.children().length == 0

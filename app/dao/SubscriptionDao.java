@@ -19,4 +19,8 @@ public class SubscriptionDao {
                 .setParameter("user", user);
         return query.getResultList();
     }
+
+    public Subscription getSubscription(String id){
+        return JPA.em().find(Subscription.class, Long.parseLong(id));
+    }
 }

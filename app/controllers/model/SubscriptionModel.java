@@ -1,8 +1,8 @@
-package controllers.request;
+package controllers.model;
 
 import java.util.List;
 
-public class ScheduleRequest {
+public class SubscriptionModel {
 
     public String time;
     public String timezone;

@@ -1,4 +1,4 @@
-package controllers.request;
+package controllers.model;
 
 public class Feed {
 

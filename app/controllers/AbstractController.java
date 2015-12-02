@@ -8,6 +8,9 @@ import entities.User;
 import org.apache.commons.lang3.StringUtils;
 import play.mvc.Controller;
 
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
+
 import static controllers.Constants.SESSION_AUTH;
 import static controllers.Constants.SESSION_PROVIDER;
 import static play.libs.Json.fromJson;
@@ -42,5 +45,9 @@ public abstract class AbstractController extends Controller {
 
     public static User getUser(){
         return SessionUtils.getUser(session());
+    }
+
+    protected DateTimeFormatter dateTimeFormatter(){
+        return DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(lang().toLocale());
     }
 }

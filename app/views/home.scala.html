@@ -1,4 +1,5 @@
 @(subscriptions: List[controllers.model.FeedSubscription], zones: Map[String, Integer], formatter: java.time.format.DateTimeFormatter)(implicit session: play.mvc.Http.Session)
+@import java.time.LocalTime
 
 @main("Keendly") {
 
@@ -7,8 +8,8 @@
   <form>
       <div class="row">
           <div class="col s12 m6">
-              <a class="waves-effect waves-light btn modal-trigger" id="deliver_now" href="#deliver_modal">Deliver now</a>
-              <a class="waves-effect waves-light btn modal-trigger" id="schedule_delivery" href="#schedule_modal">Schedule</a>
+              <a class="waves-effect waves-light btn modal-trigger" id="delivery_modal_btn" href="#delivery_modal">Deliver now</a>
+              <a class="waves-effect waves-light btn modal-trigger" id="subscription_modal_btn" href="#subscription_modal">Schedule</a>
           </div>
           <div class="input-field col offset-m3 s12 m3" id="search">
               <input id="search_box" type="search" required>
@@ -32,9 +33,11 @@
               <td class="feed_title">@s.title</td>
               <td>
               @for((key, value) <- s.scheduled){
-                  <p class="tooltipped" data-position="top" data-delay="50" data-tooltip="@value">
+                  <!--  <p class="tooltipped" data-position="top" data-delay="50" data-tooltip="@value"> -->
+                  <a class="modal-trigger schedule_edit" href="#subscription_modal" sid="@value">
                   @key.format(formatter)
-                  </p>
+                  </a>
+                  <!-- </p> -->
               }
               </td>
               <td class="hide-on-small-only" ></td>
@@ -45,18 +48,18 @@
   </form>
   </div>
 
-  @deliverModal
-  @scheduleModal(zones)
+  @deliveryModal
+  @subscriptionModal(zones)
 }
 
-@deliverModal = {
-  <div id="deliver_modal" class="modal">
-      <div class="modal-content" id="deliver_form">
+@deliveryModal = {
+  <div id="delivery_modal" class="modal">
+      <div class="modal-content" id="delivery_form">
           <h4>Deliver feeds</h4>
-          <div class="progress" id="progress" style="display: none">
+          <div class="progress" id="delivery_progress" style="display: none">
               <div class="indeterminate"></div>
           </div>
-          @switch("mode")
+          @switch("delivery_mode")
           <div id="simple">
             @includeImages("include_images")
             @markAsRead("mark_as_read")
@@ -71,40 +74,43 @@
       </div>
       <div class="modal-footer">
           <a href="#!" class="modal-action modal-close waves-effect waves-red btn-flat">Cancel</a>
-          <a href="#!" class="modal-action waves-effect waves-green btn-flat submit" id="deliver_button">Deliver</a>
+          <a href="#!" class="modal-action waves-effect waves-green btn-flat submit" id="delivery_save_btn">Deliver</a>
       </div>
   </div>
 }
 
-@scheduleModal(zones: Map[String, Integer]) = {
-  <div id="schedule_modal" class="modal">
-      <div class="modal-content" id="schedule_form">
-          <h4>Schedule delivery</h4>
-          <div class="progress" id="schedule_progress" style="display: none">
+@subscriptionModal(zones: Map[String, Integer]) = {
+  <div id="subscription_modal" class="modal">
+      <div class="modal-content" id="subscription_form">
+          <h4>Schedule delivery</h4> <!-- TODO different title in edit mode -->
+          <div class="progress" id="subscription_progress" style="display: none">
               <div class="indeterminate"></div>
           </div>
-          @switch("schedule_mode")
-          <div id="schedule_simple">
+          @switch("subscription_mode")
+          <div id="subscription_simple">
             @includeImages("schedule_include_images")
             @markAsRead("schedule_mark_as_read")
             @fullArticle("schedule_full")
             @times("times_simple")
             @timezones("timezones_simple", zones)
             <label>Feeds included in the delivery:</label>
-            <ul class="collection" id="schedule_feed_list">
+            <ul class="collection" id="subscription_feed_list">
             </ul>
           </div>
-          <div id="schedule_detailed" style="display: none">
+          <div id="subscription_detailed" style="display: none">
             @times("times_detailed")
             @timezones("timezones_detailed", zones)
             <label>Feeds included in the delivery:</label>
-            <ul class="collection" id="detailed_schedule_feed_list">
+            <ul class="collection" id="detailed_subscription_feed_list">
             </ul>
           </div>
       </div>
       <div class="modal-footer">
+          <a href="#!" class="modal-action waves-effect waves-red btn-flat submit" id="subscription_delete_btn">Delete</a>
           <a href="#!" class="modal-action modal-close waves-effect waves-red btn-flat">Cancel</a>
-          <a href="#!" class="modal-action waves-effect waves-green btn-flat submit" id="schedule_button">Schedule</a>
+          <a href="#!" class="modal-action waves-effect waves-green btn-flat submit" id="subscription_save_btn">Schedule</a>
+          <a href="#!" class="modal-action waves-effect waves-green btn-flat submit" id="subscription_update_btn">Update</a>
+          <!-- pass subscription id on save (edit mode) -->
       </div>
   </div>
 }
@@ -113,27 +119,10 @@
   <p>
       <label>What time you want your feed to be delivered?</label>
       <select id="@id" class="browser-default times">
-          <option>12:00 AM</option>
-          <option>01:00 AM</option>
-          <option>02:00 AM</option>
-          <option>03:00 AM</option>
-          <option>04:00 AM</option>
-          <option>05:00 AM</option>
-          <option>06:00 AM</option>
-          <option>07:00 AM</option>
-          <option>08:00 AM</option>
-          <option>09:00 AM</option>
-          <option>10:00 AM</option>
-          <option>11:00 AM</option>
-          <option>12:00 PM</option>
-          <option>01:00 PM</option>
-          <option>02:00 PM</option>
-          <option>03:00 PM</option>
-          <option>04:00 PM</option>
-          <option>08:00 PM</option>
-          <option>09:00 PM</option>
-          <option>10:00 PM</option>
-          <option>11:00 PM</option>
+        @for(i <- 0 until 24) {
+          <option>@LocalTime.of(i, 0).format(formatter)</option>
+          <option>@LocalTime.of(i, 30).format(formatter)</option>
+        }
       </select>
   </p>
 }

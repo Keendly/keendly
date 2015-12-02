@@ -8,6 +8,6 @@ public class FeedSubscription {
 
     public String providerId;
     public String title;
-    public Map<LocalTime, String> scheduled;
+    public Map<LocalTime, Long> scheduled;
     public Date lastDelivery;
 }
