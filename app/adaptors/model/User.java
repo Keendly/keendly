@@ -4,6 +4,7 @@ public class User {
 
     private String id;
     private String userName;
+    private String displayName;
 
     public String getUserName() {
         return userName;
@@ -19,5 +20,13 @@ public class User {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
     }
 }

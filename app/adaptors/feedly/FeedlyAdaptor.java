@@ -85,6 +85,7 @@ public class FeedlyAdaptor extends Adaptor {
             JsonNode node = response.asJson();
             user.setId(node.get("id").asText());
             user.setUserName(node.get("email").asText());
+            user.setDisplayName(node.get("fullName").asText());
             return user;
         });
     }

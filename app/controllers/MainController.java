@@ -66,6 +66,7 @@ public class MainController extends AbstractController {
                     if (existingUser == null){
                         existingUser = userDao.createUser(user.getId(), tokens.getProvider(), user.getUserName());
                     }
+                    session(SESSION_USER_DISPLAY, user.getDisplayName());
                     session(SESSION_USER, toJson(existingUser).toString());
                 });
                 // if access token got changed (refreshed), set it in session cookie
