@@ -123,3 +123,15 @@ body > #wrapper {
   background-color: #ffcdd2;
 }
 
+.login_btns {
+  margin-top: 20px
+}
+
+.login_btns .disabled {
+  opacity: .3
+}
+
+.logo_link {
+  margin-right: 15px
+}
+

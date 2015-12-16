@@ -68,6 +68,8 @@ $ ->
 
   SUBSCRIPTION_EDIT.click ->
     removeEmptyListPlaceholder()
+    enableButton(SUBSCRIPTION_UPDATE_BTN)
+    enableButton(SUBSCRIPTION_DELETE_BTN)
     subscription_id = $(@).attr('sid')
     $.ajax
       url: 'subscription?id=' + subscription_id,
@@ -209,9 +211,9 @@ $ ->
       list.empty()
       list.parent().append(emptyListPlaceholder)
       list.hide()
-      btn = list.parent().parent().parent().find('.submit')
-      btn.addClass('disabled')
-      # todo disable deliver/schedule button
+      btn = list.parent().parent().parent().find('.save')
+      if btn != null
+        btn.addClass('disabled')
     $(@).parent().parent().remove()
 
   $("#search_box").keyup ->
