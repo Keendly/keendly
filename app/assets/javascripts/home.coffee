@@ -190,6 +190,7 @@ $ ->
   # handler for mode switch on schedule delivery modal
   SUBSCRIPTION_MODE.change ->
     removeEmptyListPlaceholder()
+    enableButton(SUBSCRIPTION_SAVE_BTN)
     if SUBSCRIPTION_MODE.is(':checked')
       showSelectedFeedList(SUBSCRIPTION_DETAILED_FEED_LIST, SUBSCRIPTION_FEED_LIST, true)
     else
@@ -338,7 +339,7 @@ fillWithSelectedFeeds = (elementToFill, isDetailed) ->
 
 showSubscriptionFeedList = (subscription, feedListToShow, feedListToHide, isDetailed) ->
   clearAndShow(feedListToShow)
-  if subscription['feeds']?
+  if subscription['feeds']? and subscription['feeds'].length > 0
     for i in [0...subscription['feeds'].length]
       item = subscription['feeds'][i]
       feedId = item['id']
@@ -352,6 +353,10 @@ showSubscriptionFeedList = (subscription, feedListToShow, feedListToHide, isDeta
           )
         else
           feedListToShow.append(simpleFeedListItem(feedId, title))
+  else
+    feedListToShow.parent().find('.error_div').remove()
+    feedListToShow.parent().append(emptyListPlaceholder)
+    feedListToShow.hide()
   feedListToShow.parent().show()
   feedListToHide.parent().hide()
 
