@@ -1,7 +1,7 @@
 @(subscriptions: List[controllers.model.FeedSubscription], zones: Map[String, Integer], formatter: java.time.format.DateTimeFormatter)(implicit session: play.mvc.Http.Session)
 @import java.time.LocalTime
 
-@main("Keendly") {
+@main("Home | Keendly") {
 
   <script type='text/javascript' src='@routes.Assets.at("javascripts/home.js")'></script>
   <div class="container" id="subs-container">
@@ -34,7 +34,7 @@
               <td>
               @for((key, value) <- s.scheduled){
                   <!--  <p class="tooltipped" data-position="top" data-delay="50" data-tooltip="@value"> -->
-                  <a class="modal-trigger schedule_edit" href="#subscription_modal" sid="@value">
+                  <a class="modal-trigger schedule_edit" href="#subscription_edit_modal" sid="@value">
                   @key.format(formatter)
                   </a>
                   <!-- </p> -->
@@ -50,6 +50,7 @@
 
   @deliveryModal
   @subscriptionModal(zones)
+  @subscriptionEditModal(zones)
 }
 
 @deliveryModal = {
@@ -106,13 +107,44 @@
           </div>
       </div>
       <div class="modal-footer">
-          <a href="#!" class="modal-action waves-effect waves-red btn-flat submit" id="subscription_delete_btn">Delete</a>
-          <a href="#!" class="modal-action modal-close waves-effect waves-red btn-flat">Cancel</a>
           <a href="#!" class="modal-action waves-effect waves-green btn-flat submit" id="subscription_save_btn">Schedule</a>
-          <a href="#!" class="modal-action waves-effect waves-green btn-flat submit" id="subscription_update_btn">Update</a>
-          <!-- pass subscription id on save (edit mode) -->
       </div>
   </div>
+}
+
+@subscriptionEditModal(zones: Map[String, Integer]) = {
+<div id="subscription_edit_modal" class="modal">
+    <div class="modal-content" id="subscription_edit_form">
+        <h4>Edit scheduled delivery</h4> <!-- TODO different title in edit mode -->
+        <div class="progress" id="subscription_edit_progress" style="display: none">
+            <div class="indeterminate"></div>
+        </div>
+        @switch("subscription_edit_mode")
+        <div id="subscription_edit_simple">
+            @includeImages("subscription_edit_include_images")
+            @markAsRead("subscription_edit_mark_as_read")
+            @fullArticle("subscription_edit_full")
+            @times("subscription_edit_times_simple")
+            @timezones("subscription_edit_timezones_simple", zones)
+            <label>Feeds included in the delivery:</label>
+            <ul class="collection" id="subscription_edit_feed_list">
+            </ul>
+        </div>
+        <div id="subscription_edit_detailed" style="display: none">
+            @times("subscription_edit_times_detailed")
+            @timezones("subscription_edit_timezones_detailed", zones)
+            <label>Feeds included in the delivery:</label>
+            <ul class="collection" id="detailed_subscription_edit_feed_list">
+            </ul>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <a href="#!" class="modal-action waves-effect waves-red btn-flat submit" id="subscription_delete_btn">Delete</a>
+        <a href="#!" class="modal-action modal-close waves-effect waves-red btn-flat">Cancel</a>
+        <a href="#!" class="modal-action waves-effect waves-green btn-flat submit" id="subscription_update_btn">Update</a>
+        <!-- pass subscription id on save (edit mode) -->
+    </div>
+</div>
 }
 
 @times(id: String) = {

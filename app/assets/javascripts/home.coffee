@@ -2,6 +2,10 @@ SUBSCRIPTION_FEED_LIST_SELECTOR = '#subscription_feed_list'
 SUBSCRIPTION_DETAILED_FEED_LIST_SELECTOR = '#detailed_subscription_feed_list'
 SUBSCRIPTION_MODE_SELECTOR = '#subscription_mode'
 
+SUBSCRIPTION_EDIT_FEED_LIST_SELECTOR = '#subscription_edit_feed_list'
+SUBSCRIPTION_EDIT_DETAILED_FEED_LIST_SELECTOR = '#detailed_subscription_edit_feed_list'
+SUBSCRIPTION_EDIT_MODE_SELECTOR = '#subscription_edit_mode'
+
 DELIVERY_FEED_LIST_SELECTOR = '#feed_list';
 DELIVERY_DETAILED_FEED_LIST_SELECTOR = '#detailed_feed_list'
 $ ->
@@ -20,21 +24,23 @@ $ ->
   DELIVERY_PROGRESS = $('#delivery_progress')
   DELIVERY_MODE = $('#delivery_mode')
 
+  SUBSCRIPTION_EDIT_MODAL = $('#subscription_edit_modal')
+  SUBSCRIPTION_EDIT_FEED_LIST = $(SUBSCRIPTION_EDIT_FEED_LIST_SELECTOR)
+  SUBSCRIPTION_EDIT_DETAILED_FEED_LIST = $(SUBSCRIPTION_EDIT_DETAILED_FEED_LIST_SELECTOR)
+
   SUBSCRIPTION_SAVE_BTN = $('#subscription_save_btn')
   SUBSCRIPTION_UPDATE_BTN = $('#subscription_update_btn')
   SUBSCRIPTION_DELETE_BTN = $('#subscription_delete_btn')
   SUBSCRIPTION_PROGRESS = $('#subscription_progress')
   SUBSCRIPTION_FORM = $('#subscription_form')
   SUBSCRIPTION_MODE = $(SUBSCRIPTION_MODE_SELECTOR)
+  SUBSCRIPTION_EDIT_MODE = $('#subscription_edit_mode')
 
   SELF_REMOVE_CLASS = '.self_remove'
   SUBSCRIPTION_EDIT = $('.schedule_edit')
 
-  # init materialize components
-  $(".button-collapse").sideNav()
   # try to guess user's timezone
   initTimezone()
-
 
   DELIVERY_MODAL_BTN.click ->
     removeEmptyListPlaceholder()
@@ -58,15 +64,10 @@ $ ->
     if isEmpty(SUBSCRIPTION_FEED_LIST)
       alert('nothing to deliver')
     else
-      SUBSCRIPTION_UPDATE_BTN.hide()
-      SUBSCRIPTION_DELETE_BTN.hide()
-      SUBSCRIPTION_SAVE_BTN.show()
       SUBSCRIPTION_MODAL.openModal();
 
   SUBSCRIPTION_EDIT.click ->
     removeEmptyListPlaceholder()
-    enableButton(SUBSCRIPTION_UPDATE_BTN)
-    enableButton(SUBSCRIPTION_DELETE_BTN)
     subscription_id = $(@).attr('sid')
     $.ajax
       url: 'subscription?id=' + subscription_id,
@@ -74,10 +75,7 @@ $ ->
       dataType: 'json',
       success: (data) ->
         fillModalWithSubscription(data)
-        SUBSCRIPTION_UPDATE_BTN.show()
-        SUBSCRIPTION_DELETE_BTN.show()
-        SUBSCRIPTION_SAVE_BTN.hide()
-        SUBSCRIPTION_MODAL.openModal();
+        SUBSCRIPTION_EDIT_MODAL.openModal();
       error: ->
         alert('error!')
 
@@ -189,21 +187,20 @@ $ ->
 
   # handler for mode switch on schedule delivery modal
   SUBSCRIPTION_MODE.change ->
-    # TODO condition for edit mode
     removeEmptyListPlaceholder()
-    isEditMode = SUBSCRIPTION_DELETE_BTN.is(":visible") # hacky check for mode
-    if isEditMode
-      enableButton(SUBSCRIPTION_UPDATE_BTN)
-      if SUBSCRIPTION_MODE.is(':checked')
-        showFeedList(SUBSCRIPTION_DETAILED_FEED_LIST, SUBSCRIPTION_FEED_LIST, true)
-      else
-        showFeedList(SUBSCRIPTION_FEED_LIST, SUBSCRIPTION_DETAILED_FEED_LIST, false)
+    if SUBSCRIPTION_MODE.is(':checked')
+      showSelectedFeedList(SUBSCRIPTION_DETAILED_FEED_LIST, SUBSCRIPTION_FEED_LIST, true)
     else
-      enableButton(SUBSCRIPTION_SAVE_BTN)
-      if SUBSCRIPTION_MODE.is(':checked')
-        showSelectedFeedList(SUBSCRIPTION_DETAILED_FEED_LIST, SUBSCRIPTION_FEED_LIST, true)
-      else
-        showSelectedFeedList(SUBSCRIPTION_FEED_LIST, SUBSCRIPTION_DETAILED_FEED_LIST, false)
+      showSelectedFeedList(SUBSCRIPTION_FEED_LIST, SUBSCRIPTION_DETAILED_FEED_LIST, false)
+
+  # handler for mode switch on subscription edit modal
+  SUBSCRIPTION_EDIT_MODE.change ->
+    if SUBSCRIPTION_EDIT_MODE.is(':checked')
+      subscription = recoverSubscriptionFromModal(false)
+      fillModalWithSubscriptionFixed(subscription, true)
+    else
+      subscription = recoverSubscriptionFromModal(true)
+      fillModalWithSubscriptionFixed(subscription, false)
 
   # live handler for feed list remove button
   $(document).on 'click', SELF_REMOVE_CLASS, (event) ->
@@ -254,13 +251,24 @@ requestFeed = (feed_id, title, includeImages, markAsRead, fullArticle) ->
   request.markAsRead = markAsRead
   request
 
-fillModalWithSubscription = (subscription) ->
-  subscriptionMode = $(SUBSCRIPTION_MODE_SELECTOR)
-  subscriptionFeedList = $(SUBSCRIPTION_FEED_LIST_SELECTOR)
-  subscriptionDetailedFeedList = $(SUBSCRIPTION_DETAILED_FEED_LIST_SELECTOR)
+fillModalWithSubscriptionFixed = (subscription, detailed) ->
+  subscriptionMode = $(SUBSCRIPTION_EDIT_MODE_SELECTOR)
+  subscriptionFeedList = $(SUBSCRIPTION_EDIT_FEED_LIST_SELECTOR)
+  subscriptionDetailedFeedList = $(SUBSCRIPTION_EDIT_DETAILED_FEED_LIST_SELECTOR)
 
-  setTime(subscription['time'])
-  setTimezone( subscription['timezone'])
+  fillModalWithSubscriptionTime(subscription)
+
+  if (detailed)
+    showSubscriptionFeedList(subscription, subscriptionDetailedFeedList, subscriptionFeedList, true)
+  else
+    showSubscriptionFeedList(subscription, subscriptionFeedList, subscriptionDetailedFeedList, false)
+
+fillModalWithSubscription = (subscription) ->
+  subscriptionMode = $(SUBSCRIPTION_EDIT_MODE_SELECTOR)
+  subscriptionFeedList = $(SUBSCRIPTION_EDIT_FEED_LIST_SELECTOR)
+  subscriptionDetailedFeedList = $(SUBSCRIPTION_EDIT_DETAILED_FEED_LIST_SELECTOR)
+
+  fillModalWithSubscriptionTime(subscription)
 
   if isSimple(subscription)
     subscriptionMode.prop('checked', false)
@@ -268,6 +276,10 @@ fillModalWithSubscription = (subscription) ->
   else
     subscriptionMode.prop('checked', true)
     showSubscriptionFeedList(subscription, subscriptionDetailedFeedList, subscriptionFeedList, true)
+
+fillModalWithSubscriptionTime = (subscription) ->
+  setTime(subscription['time'])
+  setTimezone( subscription['timezone'])
 
 isSimple = (subscription) ->
   # caluclate if all feeds have the same configuration
@@ -324,19 +336,56 @@ fillWithSelectedFeeds = (elementToFill, isDetailed) ->
 
 showSubscriptionFeedList = (subscription, feedListToShow, feedListToHide, isDetailed) ->
   clearAndShow(feedListToShow)
-  for i in [0...subscription['feeds'].length]
-    item = subscription['feeds'][i]
-    feedId = item['id']
-    title = findFeedTitle(feedId)
-    if title != null
-      if isDetailed
-        feedListToShow.append(
-          detailedFeedListItem(feedId, title, i, item['includeImages'], item['markAsRead'], item['fullArticle'])
-        )
-      else
-        feedListToShow.append(simpleFeedListItem(feedId, title))
+  if subscription['feeds']?
+    for i in [0...subscription['feeds'].length]
+      item = subscription['feeds'][i]
+      feedId = item['id']
+      title = item['title']
+      if title == null
+        title = findFeedTitle(feedId)
+      if title != null
+        if isDetailed
+          feedListToShow.append(
+            detailedFeedListItem(feedId, title, i, item['includeImages'], item['markAsRead'], item['fullArticle'])
+          )
+        else
+          feedListToShow.append(simpleFeedListItem(feedId, title))
   feedListToShow.parent().show()
   feedListToHide.parent().hide()
+
+recoverSubscriptionFromModal = (detailed) ->
+  subscription = { }
+  time = null
+  timezone = null
+  if detailed
+    time = $('#subscription_edit_times_detailed option:selected').text()
+    timezone = $('#subscription_edit_timezones_detailed option:selected').text()
+  else
+    time = $('#subscription_edit_times_simple option:selected').text()
+    timezone = $('#subscription_edit_timezones_simple option:selected').text()
+#  for i in [0...options.length]
+#    option = options[i]
+#    if option.selected == "selected"
+#      timezone = option.value
+#      break
+
+  subscription['time'] = time
+  subscription['timezone'] = timezone
+  feeds = [ ]
+  elems = null
+  if (detailed)
+    elems = $(SUBSCRIPTION_EDIT_DETAILED_FEED_LIST_SELECTOR).find('div')
+  else
+    elems = $(SUBSCRIPTION_EDIT_FEED_LIST_SELECTOR).find('div')
+  elems.each ->
+    feed = $(@)
+    item = {}
+    item['id'] = feed.attr('feed_id')
+    item['title'] = feed.attr('title')
+    feeds.push(item)
+  subscription['feeds'] = feeds
+  return subscription
+
 
 simpleFeedListItem = (feed_id, title) ->
     "<li class='collection-item'>
@@ -382,14 +431,14 @@ clearAndShow = (elem) ->
   elem.empty()
   elem.show()
 
+enableButton = (button) ->
+  button.removeClass('disabled')
+
 emptyListPlaceholder = ->
   "<div class='error_div'>No feeds selected</div>"
 
 removeEmptyListPlaceholder = ->
   $('.error_div').remove()
-
-enableButton = (button) ->
-  button.removeClass('disabled')
 
 initTimezone = ->
   tz = jstz.determine();
