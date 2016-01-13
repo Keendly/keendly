@@ -1,7 +1,7 @@
 package dao;
 
 import entities.Provider;
-import entities.User;
+import entities.UserEntity;
 import play.db.jpa.JPA;
 
 import javax.persistence.NoResultException;
@@ -9,20 +9,20 @@ import javax.persistence.Query;
 
 public class UserDao {
 
-    public User findByProviderId(String id, Provider provider){
-        Query query = JPA.em().createQuery("select u from User u where u.provider = :provider and u.providerId = :providerId")
+    public UserEntity findByProviderId(String id, Provider provider){
+        Query query = JPA.em().createQuery("select u from UserEntity u where u.provider = :provider and u.providerId = :providerId")
                 .setParameter("provider", provider)
                 .setParameter("providerId", id);
 
         try {
-            return (User) query.getSingleResult();
+            return (UserEntity) query.getSingleResult();
         } catch (NoResultException e){
             return null;
         }
     }
 
-    public User createUser(String id, Provider provider, String email){
-        User user = new User();
+    public UserEntity createUser(String id, Provider provider, String email){
+        UserEntity user = new UserEntity();
         user.providerId = id;
         user.provider = provider;
         user.email = email;
@@ -30,11 +30,11 @@ public class UserDao {
         return user;
     }
 
-    public User updateUser(User user){
+    public UserEntity updateUser(UserEntity user){
         return JPA.em().merge(user);
     }
 
-    public User findById(long id){
-        return JPA.em().find(User.class, id);
+    public UserEntity findById(long id){
+        return JPA.em().find(UserEntity.class, id);
     }
 }

@@ -1,10 +1,10 @@
 package entities;
 
 import javax.persistence.*;
-import java.util.List;
 
 @Entity
-public class DeliveryItem extends BaseEntity {
+@Table(name = "SubscriptionItem")
+public class SubscriptionItemEntity {
 
     @Id
     @GeneratedValue(strategy= GenerationType.AUTO)
@@ -22,13 +22,7 @@ public class DeliveryItem extends BaseEntity {
     @Column(name = "mark_as_read", nullable = false)
     public Boolean markAsRead;
 
-    @Column(nullable = false)
-    public String title;
-
     @ManyToOne(optional = false)
-    @JoinColumn(name = "delivery_id", referencedColumnName = "id")
-    public Delivery delivery;
-
-    @OneToMany(mappedBy = "deliveryItem")
-    public List<DeliveryArticle> articles;
+    @JoinColumn(name = "subscription_id", referencedColumnName = "id")
+    public SubscriptionEntity subscription;
 }

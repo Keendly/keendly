@@ -2,20 +2,20 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-# Home page
-GET     /                           controllers.MainController.index()
+GET     /login                      controllers.LoginController.login(code: String)
+# GET     /feedlyCallback             controllers.MainController.feedlyCallback(code: String, error: String)
 
-# Map static resources from the /public folder to the /assets URL path
-GET     /assets/*file               controllers.Assets.at(path="/public", file)
+#GET     /settings                   controllers.SecuredController.getSettings()
+#POST    /settings                   controllers.SecuredController.saveSettings()
 
-GET     /login                      controllers.MainController.login()
-GET     /feedlyCallback             controllers.MainController.feedlyCallback(code: String, error: String)
-GET     /home                       controllers.SecuredController.home()
-GET     /history                    controllers.SecuredController.history()
-GET     /settings                   controllers.SecuredController.getSettings()
-POST    /settings                   controllers.SecuredController.saveSettings()
-GET     /logout                     controllers.MainController.logout()
-POST    /deliver                    controllers.RestController.deliver()
-POST    /schedule                   controllers.RestController.schedule()
-GET     /subscription               controllers.RestController.getSubscription(id: String)
-POST    /subscription               controllers.RestController.saveSubscription()
+POST    /subscriptions              controllers.SubscriptionController.createSubscription()
+GET     /subscriptions/:id          controllers.SubscriptionController.getSubscription(id: String)
+PATCH   /subscriptions/:id          controllers.SubscriptionController.updateSubscription(id: String)
+#GET     /subscriptions              controllers.SubscriptionController.getSubscriptions()
+
+
+POST    /deliveries                 controllers.DeliveryController.createDelivery()
+PATCH   /deliveries/:id             controllers.DeliveryController.updateDelivery(id: Long)
+GET     /deliveries/:id             controllers.DeliveryController.getDelivery(id: Long)
+GET     /deliveries                 controllers.DeliveryController.getDeliveries(page: Integer, pageSize: Integer)
+

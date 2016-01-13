@@ -4,7 +4,8 @@ import javax.persistence.*;
 import java.util.List;
 
 @Entity
-public class Subscription extends BaseEntity {
+@Table(name = "Subscription")
+public class SubscriptionEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy= GenerationType.AUTO)
@@ -24,9 +25,9 @@ public class Subscription extends BaseEntity {
     public Boolean active;
 
     @OneToMany(mappedBy = "subscription", cascade = CascadeType.PERSIST)
-    public List<SubscriptionItem> items;
+    public List<SubscriptionItemEntity> items;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "user_id", referencedColumnName = "id")
-    public User user;
+    public UserEntity user;
 }

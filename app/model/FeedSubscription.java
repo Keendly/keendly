@@ -1,4 +1,4 @@
-package controllers.model;
+package model;
 
 import java.time.LocalTime;
 import java.util.Date;

@@ -5,14 +5,15 @@ import java.util.Date;
 import java.util.List;
 
 @Entity
-public class Delivery extends BaseEntity {
+@Table(name = "Delivery")
+public class DeliveryEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy= GenerationType.AUTO)
     public long id;
 
-    @Column(nullable = false)
-    public Date date;
+    @Column
+    public Date date; // null until delivered actually
 
     @Column(nullable = false)
     public Boolean manual;
@@ -22,12 +23,12 @@ public class Delivery extends BaseEntity {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "user_id", referencedColumnName = "id")
-    public User user;
+    public UserEntity user;
 
-    @OneToMany(mappedBy = "delivery")
-    public List<DeliveryItem> items;
+    @OneToMany(mappedBy = "delivery", cascade = CascadeType.PERSIST)
+    public List<DeliveryItemEntity> items;
 
     @ManyToOne(optional = true)
     @JoinColumn(name = "subscription_id", referencedColumnName = "id")
-    public Subscription subscription;
+    public SubscriptionEntity subscription;
 }

@@ -1,13 +1,12 @@
 package adaptors.feedly;
 
 import adaptors.Adaptor;
+import adaptors.exception.ApiException;
 import adaptors.model.Entry;
 import adaptors.model.ExternalSubscription;
 import adaptors.model.Tokens;
 import adaptors.model.User;
-import adaptors.exception.ApiException;
 import com.fasterxml.jackson.databind.JsonNode;
-import entities.Provider;
 import org.apache.http.HttpStatus;
 import play.libs.F.Promise;
 import play.libs.Json;
@@ -56,12 +55,12 @@ public class FeedlyAdaptor extends Adaptor {
     }
 
     @Override
-    public Promise<Tokens> getTokens(String code){
+    public Promise<Tokens> login(String authorizationCode){
         JsonNode json = Json.newObject()
                 .put("grant_type", "authorization_code")
                 .put("client_id", clientId)
                 .put("client_secret", clientSecret)
-                .put("code", code)
+                .put("code", authorizationCode)
                 .put("redirect_uri", redirectUri);
 
         return WS.url(feedlyUrl + "/auth/token")
@@ -71,7 +70,7 @@ public class FeedlyAdaptor extends Adaptor {
                         JsonNode node = response.asJson();
                         String refreshToken = node.get("refresh_token").asText();
                         String accessToken = node.get("access_token").asText();
-                        return new Tokens(refreshToken, accessToken, Provider.FEEDLY);
+                        return new Tokens(refreshToken, accessToken);
                     } else {
                         throw new ApiException(response.getStatus(), response.getBody());
                     }
@@ -198,7 +197,7 @@ public class FeedlyAdaptor extends Adaptor {
         data.put("action", "markAsRead");
         data.put("feedIds", feedIds);
         data.put("asOf", String.valueOf(System.currentTimeMillis()));
-        data.put("type", "feeds");
+        data.put("type", "items");
 
         JsonNode content = Json.toJson(data);
         return doPost(feedlyUrl + "/markers", tokens, content, response -> "OK");

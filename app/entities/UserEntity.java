@@ -4,7 +4,7 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "KeendlyUser", uniqueConstraints = @UniqueConstraint(columnNames = {"provider", "provider_id"}))
-public class User extends BaseEntity {
+public class UserEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy= GenerationType.AUTO)

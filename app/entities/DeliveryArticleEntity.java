@@ -3,7 +3,8 @@ package entities;
 import javax.persistence.*;
 
 @Entity
-public class DeliveryArticle extends BaseEntity {
+@Table(name = "DeliveryArticle")
+public class DeliveryArticleEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -15,7 +16,7 @@ public class DeliveryArticle extends BaseEntity {
     @Column(nullable = false)
     public String title;
 
-    @ManyToOne(optional = false)
+    @ManyToOne
     @JoinColumn(name = "delivery_item_id", referencedColumnName = "id")
-    public DeliveryItem deliveryItem;
+    public DeliveryItemEntity deliveryItem;
 }
