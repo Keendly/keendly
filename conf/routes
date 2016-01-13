@@ -19,3 +19,5 @@ PATCH   /deliveries/:id             controllers.DeliveryController.updateDeliver
 GET     /deliveries/:id             controllers.DeliveryController.getDelivery(id: Long)
 GET     /deliveries                 controllers.DeliveryController.getDeliveries(page: Integer, pageSize: Integer)
 
+GET     /feeds                      controllers.FeedController.getFeeds()
+

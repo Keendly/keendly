@@ -1,7 +1,7 @@
 package controllers;
 
 import adaptors.Adaptor;
-import adaptors.model.Tokens;
+import auth.Tokens;
 import play.libs.F.Promise;
 import play.mvc.Action;
 import play.mvc.Http.Context;

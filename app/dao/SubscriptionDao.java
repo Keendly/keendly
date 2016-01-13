@@ -14,13 +14,14 @@ public class SubscriptionDao {
         JPA.em().persist(subscription);
     }
 
-    public List<SubscriptionItemEntity> getSubscriptionItems(UserEntity user){
-        Query query = JPA.em().createQuery("select si from SubscriptionItemEntity si where si.subscription.user = :user")
-                .setParameter("user", user);
-        return query.getResultList();
-    }
-
     public SubscriptionEntity getSubscription(String id){
         return JPA.em().find(SubscriptionEntity.class, Long.parseLong(id));
+    }
+
+    public List<SubscriptionItemEntity> getSubscriptionItems(UserEntity user){
+        Query query = JPA.em()
+                .createQuery("select si from SubscriptionItemEntity si where si.subscription.user = :user")
+                .setParameter("user", user);
+        return query.getResultList();
     }
 }

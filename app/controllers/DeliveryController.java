@@ -4,6 +4,7 @@ import dao.DeliveryDao;
 import entities.DeliveryArticleEntity;
 import entities.DeliveryEntity;
 import entities.DeliveryItemEntity;
+import mappers.MappingMode;
 import model.Delivery;
 import model.DeliveryArticle;
 import model.DeliveryItem;
@@ -175,9 +176,4 @@ public class DeliveryController extends AbstractController<Delivery> {
             return deliveries;
         }
     }
-
-    enum MappingMode {
-        SIMPLE, FULL
-    }
-
 }

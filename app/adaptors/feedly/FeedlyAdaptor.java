@@ -3,8 +3,8 @@ package adaptors.feedly;
 import adaptors.Adaptor;
 import adaptors.exception.ApiException;
 import adaptors.model.Entry;
-import adaptors.model.ExternalSubscription;
-import adaptors.model.Tokens;
+import adaptors.model.SubscribedFeed;
+import auth.Tokens;
 import adaptors.model.User;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.http.HttpStatus;
@@ -90,9 +90,9 @@ public class FeedlyAdaptor extends Adaptor {
     }
 
     @Override
-    public Promise<List<ExternalSubscription>> getSubscriptions(Tokens tokens){
+    public Promise<List<SubscribedFeed>> getSubscribedFeeds(Tokens tokens){
         return doGet(feedlyUrl + "/subscriptions", tokens, response -> {
-            List<ExternalSubscription> externalSubscriptions = new ArrayList<>();
+            List<SubscribedFeed> externalSubscriptions = new ArrayList<>();
             JsonNode json = response.asJson();
             if (json.isArray()){
                 for (JsonNode item : json){
@@ -238,8 +238,8 @@ public class FeedlyAdaptor extends Adaptor {
         return null;
     }
 
-    private ExternalSubscription mapFromJson(JsonNode json){
-        ExternalSubscription externalSubscription = new ExternalSubscription();
+    private SubscribedFeed mapFromJson(JsonNode json){
+        SubscribedFeed externalSubscription = new SubscribedFeed();
         externalSubscription.setFeedId(json.get("id").asText());
         externalSubscription.setTitle(json.get("title").asText());
         return externalSubscription;

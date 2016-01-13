@@ -2,7 +2,7 @@ package controllers;
 
 import adaptors.Adaptor;
 import adaptors.Adaptors;
-import adaptors.model.Tokens;
+import auth.Tokens;
 import entities.Provider;
 import play.mvc.Http;
 
@@ -20,4 +20,6 @@ public class RequestUtils {
 
         return new Tokens(refreshToken, accessToken);
     }
+
+
 }

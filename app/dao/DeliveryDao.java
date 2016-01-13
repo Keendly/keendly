@@ -1,16 +1,18 @@
 package dao;
 
 import entities.DeliveryEntity;
+import entities.DeliveryItemEntity;
 import entities.UserEntity;
 import play.db.jpa.JPA;
 
+import javax.persistence.NoResultException;
 import javax.persistence.Query;
 import java.util.List;
 
 public class DeliveryDao {
 
     public List<DeliveryEntity> getDeliveries(UserEntity user, int page, int pageSize){
-        Query query = JPA.em().createQuery("select d from DeliveryEntity d where d.user = :user order by date desc")
+        Query query = JPA.em().createQuery("select d from DeliveryEntity d where d.user = :user order by id desc")
                 .setMaxResults(pageSize)
                 .setFirstResult(pageSize * (page - 1))
                 .setParameter("user", user);
@@ -27,5 +29,17 @@ public class DeliveryDao {
 
     public void createDelivery(DeliveryEntity deliveryEntity){
         JPA.em().persist(deliveryEntity);
+    }
+
+    public DeliveryItemEntity getLastDeliveryItem(String feedId){
+        Query query = JPA.em().createQuery("select di from DeliveryItemEntity di where di.feedId = :feedId and di.delivery.date is not null order by di.delivery.date desc")
+                .setParameter("feedId", feedId)
+                .setMaxResults(1);
+
+        try {
+            return (DeliveryItemEntity) query.getSingleResult();
+        } catch (NoResultException e){
+            return null;
+        }
     }
 }

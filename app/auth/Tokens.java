@@ -1,4 +1,4 @@
-package adaptors.model;
+package auth;
 
 public class Tokens {
 
