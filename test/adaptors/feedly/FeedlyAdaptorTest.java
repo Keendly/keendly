@@ -1,7 +1,7 @@
 package adaptors.feedly;
 
-import auth.Tokens;
-import adaptors.model.User;
+import auth.Token;
+import adaptors.model.ExternalUser;
 import adaptors.exception.ApiException;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
@@ -61,13 +61,13 @@ public class FeedlyAdaptorTest {
         mockPOST("/auth/token", json, HttpStatus.SC_OK);
 
         // when
-        Promise<Tokens> tokensPromise = feedlyAdaptor.getTokens("doesnt_matter");
-        Tokens tokens = tokensPromise.get(1);
+        Promise<Token> tokensPromise = feedlyAdaptor.getTokens("doesnt_matter");
+        Token token = tokensPromise.get(1);
 
         // then
-        assertNotNull(tokens);
-        assertEquals("refresh", tokens.getRefreshToken());
-        assertEquals("access", tokens.getAccessToken());
+        assertNotNull(token);
+        assertEquals("refresh", token.getRefreshToken());
+        assertEquals("access", token.getAccessToken());
     }
 
     @Test(expected = ApiException.class)
@@ -76,7 +76,7 @@ public class FeedlyAdaptorTest {
         mockPOST("/auth/token", StringUtils.EMPTY, HttpStatus.SC_INTERNAL_SERVER_ERROR);
 
         // when
-        Promise<Tokens> tokensPromise = feedlyAdaptor.getTokens("doesnt_matter");
+        Promise<Token> tokensPromise = feedlyAdaptor.getTokens("doesnt_matter");
         tokensPromise.get(1);
     }
 
@@ -91,8 +91,8 @@ public class FeedlyAdaptorTest {
         mockGET("/profile", json, HttpStatus.SC_OK);
 
         // when
-        Promise<User> userPromise = feedlyAdaptor.getUser(new Tokens());
-        User user = userPromise.get(1);
+        Promise<ExternalUser> userPromise = feedlyAdaptor.getUser(new Token());
+        ExternalUser user = userPromise.get(1);
 
         // then
         assertNotNull(user);
@@ -106,7 +106,7 @@ public class FeedlyAdaptorTest {
         mockGET("/profile", StringUtils.EMPTY, HttpStatus.SC_INTERNAL_SERVER_ERROR);
 
         // when
-        Promise<User> userPromise = feedlyAdaptor.getUser(new Tokens());
+        Promise<ExternalUser> userPromise = feedlyAdaptor.getUser(new Token());
         userPromise.get(1000);
     }
 
@@ -125,14 +125,14 @@ public class FeedlyAdaptorTest {
                         "\"access_token\":\"newAccessToken\"" +
                 "}";
         mockPOST("/auth/token", refreshTokenResponse, HttpStatus.SC_OK);
-        Tokens tokens = new Tokens();
+        Token token = new Token();
 
         // when
-        Promise<User> userPromise = feedlyAdaptor.getUser(tokens);
+        Promise<ExternalUser> userPromise = feedlyAdaptor.getUser(token);
         userPromise.get(1000);
 
         // then
-        assertEquals("newAccessToken", tokens.getAccessToken());
+        assertEquals("newAccessToken", token.getAccessToken());
         PowerMockito.verifyStatic();
         WS.url(FEEDLY_URL + "/auth/token"); // refresh token called
     }
@@ -144,7 +144,7 @@ public class FeedlyAdaptorTest {
         mockPOST("/auth/token", StringUtils.EMPTY, HttpStatus.SC_UNAUTHORIZED);
 
         // when
-        Promise<User> userPromise = feedlyAdaptor.getUser(new Tokens());
+        Promise<ExternalUser> userPromise = feedlyAdaptor.getUser(new Token());
         userPromise.get(1000);
     }
 

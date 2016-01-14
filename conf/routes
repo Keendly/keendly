@@ -5,14 +5,9 @@
 GET     /login                      controllers.LoginController.login(code: String)
 # GET     /feedlyCallback             controllers.MainController.feedlyCallback(code: String, error: String)
 
-#GET     /settings                   controllers.SecuredController.getSettings()
-#POST    /settings                   controllers.SecuredController.saveSettings()
-
 POST    /subscriptions              controllers.SubscriptionController.createSubscription()
 GET     /subscriptions/:id          controllers.SubscriptionController.getSubscription(id: String)
 PATCH   /subscriptions/:id          controllers.SubscriptionController.updateSubscription(id: String)
-#GET     /subscriptions              controllers.SubscriptionController.getSubscriptions()
-
 
 POST    /deliveries                 controllers.DeliveryController.createDelivery()
 PATCH   /deliveries/:id             controllers.DeliveryController.updateDelivery(id: Long)
@@ -21,3 +16,5 @@ GET     /deliveries                 controllers.DeliveryController.getDeliveries
 
 GET     /feeds                      controllers.FeedController.getFeeds()
 
+GET     /users/:id                  controllers.UserController.getUser(id: String)
+PATCH   /users/:id                  controllers.UserController.updateUser(id: String)

@@ -1,6 +1,6 @@
 package controllers;
 
-import adaptors.model.User;
+import adaptors.model.ExternalUser;
 import com.fasterxml.jackson.databind.JsonNode;
 import dao.UserDao;
 import entities.Provider;
@@ -25,24 +25,24 @@ public abstract class AbstractController<T> extends Controller {
 //        return null;
 //    }
 //
-//    public static Tokens findTokens(){
+//    public static Token findTokens(){
 //        String tokensString = session().get(SESSION_AUTH);
 //        if (tokensString != null){
-//            Tokens tokens = fromJson(parse(tokensString), Tokens.class);
+//            Token tokens = fromJson(parse(tokensString), Token.class);
 //            return tokens;
 //        }
 //        return null;
 //    }
 //
-    protected User getUser(){
-        return (User) ctx().args.get("user");
+    protected ExternalUser getUser(){
+        return (ExternalUser) ctx().args.get("user");
     }
 
     // TODO this one should somehow retrieve user id from token to avoid calling DB here. Need to have smarter way for creating tokens (private key)
     protected UserEntity getUserEntity(){
         String providerStr = ctx().request().getHeader(KeendlyHeader.PROVIDER.value);
         Provider provider = Provider.valueOf(providerStr);
-        User user = getUser();
+        ExternalUser user = getUser();
         UserEntity entity = userDao.findByProviderId(user.getId(), provider);
         if (entity == null){
             entity = userDao.createUser(user.getId(),provider, user.getUserName());

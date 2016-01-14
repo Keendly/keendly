@@ -2,7 +2,7 @@ package controllers;
 
 import adaptors.Adaptor;
 import adaptors.model.SubscribedFeed;
-import auth.Tokens;
+import auth.Token;
 import dao.DeliveryDao;
 import dao.SubscriptionDao;
 import entities.DeliveryItemEntity;
@@ -25,7 +25,7 @@ import static controllers.RequestUtils.getAdaptor;
 import static controllers.RequestUtils.getTokens;
 
 @With(SecuredAction.class)
-public class FeedController extends AbstractController {
+public class FeedController extends AbstractController<Feed> {
 
     private SubscriptionDao subscriptionDao = new SubscriptionDao();
     private DeliveryDao deliveryDao = new DeliveryDao();
@@ -79,7 +79,7 @@ public class FeedController extends AbstractController {
         return getAdaptor(ctx().request());
     }
 
-    private Tokens tokens(){
+    private Token tokens(){
         return getTokens(ctx().request());
     }
 

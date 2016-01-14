@@ -14,7 +14,8 @@ libraryDependencies ++= Seq(
   "org.hibernate" % "hibernate-entitymanager" % "4.3.7.Final",
   "org.powermock" % "powermock-api-mockito" % "1.6.2",
   "org.powermock" % "powermock-module-junit4" % "1.6.2",
-  "postgresql" % "postgresql" % "9.1-901.jdbc4"
+  "postgresql" % "postgresql" % "9.1-901.jdbc4",
+  "io.jsonwebtoken" % "jjwt" % "0.6.0"
 )
 
 libraryDependencies ++= Seq(

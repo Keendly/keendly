@@ -1,6 +1,6 @@
 package adaptors.model;
 
-public class User {
+public class ExternalUser {
 
     private String id;
     private String userName;

@@ -2,7 +2,7 @@ package controllers;
 
 import adaptors.Adaptor;
 import adaptors.Adaptors;
-import auth.Tokens;
+import auth.Token;
 import entities.Provider;
 import play.mvc.Http;
 
@@ -14,11 +14,11 @@ public class RequestUtils {
         return Adaptors.getByProvider(provider);
     }
 
-    public static Tokens getTokens(Http.Request request){
+    public static Token getTokens(Http.Request request){
         String accessToken = request.getHeader(KeendlyHeader.ACCESS_TOKEN.value);
         String refreshToken = request.getHeader(KeendlyHeader.REFRESH_TOKEN.value);
 
-        return new Tokens(refreshToken, accessToken);
+        return new Token(refreshToken, accessToken);
     }
 
 

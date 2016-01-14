@@ -2,8 +2,8 @@ package adaptors;
 
 import adaptors.model.Entry;
 import adaptors.model.SubscribedFeed;
-import auth.Tokens;
-import adaptors.model.User;
+import auth.Token;
+import adaptors.model.ExternalUser;
 import play.libs.F.Promise;
 
 import java.util.List;
@@ -13,9 +13,9 @@ public abstract class Adaptor {
 
     protected long timeoutInSeconds = 30;
 
-    public abstract Promise<Tokens> login(String authorizationCode);
-    public abstract Promise<User> getUser(Tokens tokens);
-    public abstract Promise<List<SubscribedFeed>> getSubscribedFeeds(Tokens tokens);
-    public abstract Promise<Map<String, List<Entry>>> getUnread(List<String> feedIds, Tokens tokens);
-    public abstract Promise markAsRead(List<String> feedIds, Tokens tokens);
+    public abstract Promise<Token> login(String authorizationCode);
+    public abstract Promise<ExternalUser> getUser(Token token);
+    public abstract Promise<List<SubscribedFeed>> getSubscribedFeeds(Token token);
+    public abstract Promise<Map<String, List<Entry>>> getUnread(List<String> feedIds, Token token);
+    public abstract Promise markAsRead(List<String> feedIds, Token token);
 }

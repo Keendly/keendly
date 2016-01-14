@@ -1,11 +1,14 @@
 package auth;
 
-public class Tokens {
+public class Token {
 
+    private String userId;
+    private String provider;
+    private String providerId;
     private String refreshToken;
     private String accessToken;
 
-    public Tokens(String refreshToken, String accessToken){
+    public Token(String refreshToken, String accessToken){
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
     }

@@ -4,8 +4,8 @@ import adaptors.Adaptor;
 import adaptors.exception.ApiException;
 import adaptors.model.Entry;
 import adaptors.model.SubscribedFeed;
-import auth.Tokens;
-import adaptors.model.User;
+import auth.Token;
+import adaptors.model.ExternalUser;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.http.HttpStatus;
 import play.libs.F.Promise;
@@ -55,7 +55,7 @@ public class FeedlyAdaptor extends Adaptor {
     }
 
     @Override
-    public Promise<Tokens> login(String authorizationCode){
+    public Promise<Token> login(String authorizationCode){
         JsonNode json = Json.newObject()
                 .put("grant_type", "authorization_code")
                 .put("client_id", clientId)
@@ -70,7 +70,7 @@ public class FeedlyAdaptor extends Adaptor {
                         JsonNode node = response.asJson();
                         String refreshToken = node.get("refresh_token").asText();
                         String accessToken = node.get("access_token").asText();
-                        return new Tokens(refreshToken, accessToken);
+                        return new Token(refreshToken, accessToken);
                     } else {
                         throw new ApiException(response.getStatus(), response.getBody());
                     }
@@ -78,9 +78,9 @@ public class FeedlyAdaptor extends Adaptor {
     }
 
     @Override
-    public Promise<User> getUser(Tokens tokens){
-        return doGet(feedlyUrl + "/profile", tokens, response -> {
-            User user = new User();
+    public Promise<ExternalUser> getUser(Token token){
+        return doGet(feedlyUrl + "/profile", token, response -> {
+            ExternalUser user = new ExternalUser();
             JsonNode node = response.asJson();
             user.setId(node.get("id").asText());
             user.setUserName(node.get("email").asText());
@@ -90,8 +90,8 @@ public class FeedlyAdaptor extends Adaptor {
     }
 
     @Override
-    public Promise<List<SubscribedFeed>> getSubscribedFeeds(Tokens tokens){
-        return doGet(feedlyUrl + "/subscriptions", tokens, response -> {
+    public Promise<List<SubscribedFeed>> getSubscribedFeeds(Token token){
+        return doGet(feedlyUrl + "/subscriptions", token, response -> {
             List<SubscribedFeed> externalSubscriptions = new ArrayList<>();
             JsonNode json = response.asJson();
             if (json.isArray()){
@@ -106,15 +106,15 @@ public class FeedlyAdaptor extends Adaptor {
     }
 
     @Override
-    public Promise<Map<String, List<Entry>>> getUnread(List<String> feedIds, Tokens tokens){
-        return doGetFlat(feedlyUrl + "/markers/counts", tokens, response -> {
+    public Promise<Map<String, List<Entry>>> getUnread(List<String> feedIds, Token token){
+        return doGetFlat(feedlyUrl + "/markers/counts", token, response -> {
             JsonNode json = response.asJson();
             List<Promise<Map<String, List<Entry>>>> resultsPromises = new ArrayList<>();
             for (JsonNode feedCount : json.get("unreadcounts")) {
                 String feedId = feedCount.get("id").asText();
                 if (feedIds.contains(feedId)) {
                     int count = feedCount.get("count").asInt();
-                    Promise<Map<String, List<Entry>>> entries = getUnread(feedId, count, tokens, null);
+                    Promise<Map<String, List<Entry>>> entries = getUnread(feedId, count, token, null);
                     resultsPromises.add(entries);
                 }
             }
@@ -131,11 +131,11 @@ public class FeedlyAdaptor extends Adaptor {
         });
     }
 
-    private Promise<Map<String, List<Entry>>> getUnread(String feedId, int unreadCount, Tokens tokens, String continuation) {
+    private Promise<Map<String, List<Entry>>> getUnread(String feedId, int unreadCount, Token token, String continuation) {
         int count = unreadCount > MAX_ARTICLES_PER_FEED ? MAX_ARTICLES_PER_FEED : unreadCount; // TODO inform user
         String url = feedlyUrl + "/streams/" + urlEncode(feedId) + "/contents";
         url = continuation == null ? url : url + "?continuation=" + continuation;
-        return doGetFlat(url, tokens,
+        return doGetFlat(url, token,
                 response -> {
                     List<Entry> entries = new ArrayList<>();
                     for (JsonNode item : response.asJson().get("items")) {
@@ -172,7 +172,7 @@ public class FeedlyAdaptor extends Adaptor {
                         boolean hasContinuation = continuationNode != null;
                         if (hasContinuation){
                             Promise<Map<String, List<Entry>>> nextPagePromise =
-                                    getUnread(feedId, count - ret.get(feedId).size(), tokens, continuationNode.asText());
+                                    getUnread(feedId, count - ret.get(feedId).size(), token, continuationNode.asText());
                             return nextPagePromise.map(nextPage -> {
                                 ret.get(feedId).addAll(nextPage.get(feedId));
                                 return ret;
@@ -192,7 +192,7 @@ public class FeedlyAdaptor extends Adaptor {
         return null;
     }
 
-    public Promise markAsRead(List<String> feedIds, Tokens tokens){
+    public Promise markAsRead(List<String> feedIds, Token token){
         Map<String, Object> data = new HashMap<>();
         data.put("action", "markAsRead");
         data.put("feedIds", feedIds);
@@ -200,7 +200,7 @@ public class FeedlyAdaptor extends Adaptor {
         data.put("type", "items");
 
         JsonNode content = Json.toJson(data);
-        return doPost(feedlyUrl + "/markers", tokens, content, response -> "OK");
+        return doPost(feedlyUrl + "/markers", token, content, response -> "OK");
     }
 
     private static String urlEncode(String s){
@@ -245,7 +245,7 @@ public class FeedlyAdaptor extends Adaptor {
         return externalSubscription;
     }
 
-    private <T> Promise<T> doPost(String url, Tokens tokens, JsonNode content, Function<WSResponse, T> callback){
+    private <T> Promise<T> doPost(String url, Token tokens, JsonNode content, Function<WSResponse, T> callback){
         Promise<WSResponse> res = WS.url(url)
                 .setHeader("Authorization", "OAuth " + tokens.getAccessToken())
                 .setContentType("application/json")
@@ -267,10 +267,10 @@ public class FeedlyAdaptor extends Adaptor {
                 });
     }
 
-    private <T> Promise<T> doPostNoRefresh(String url, Tokens tokens, JsonNode content,
+    private <T> Promise<T> doPostNoRefresh(String url, Token token, JsonNode content,
                                            Function<WSResponse, T> callback) {
         return WS.url(url)
-                .setHeader("Authorization", "OAuth " + tokens.getAccessToken())
+                .setHeader("Authorization", "OAuth " + token.getAccessToken())
                 .setContentType("application/json")
                 .post(content)
                 .map(response -> {
@@ -282,7 +282,7 @@ public class FeedlyAdaptor extends Adaptor {
                 });
     }
 
-    private <T> Promise<T> doGet(String url, Tokens tokens, Function<WSResponse, T> callback){
+    private <T> Promise<T> doGet(String url, Token tokens, Function<WSResponse, T> callback){
         Promise<WSResponse> res = WS.url(url)
                 .setHeader("Authorization", "OAuth " + tokens.getAccessToken())
                 .get();
@@ -303,7 +303,7 @@ public class FeedlyAdaptor extends Adaptor {
                 });
     }
 
-    private <T> Promise<T> doGetFlat(String url, Tokens tokens, Function<WSResponse, Promise<T>> callback){
+    private <T> Promise<T> doGetFlat(String url, Token tokens, Function<WSResponse, Promise<T>> callback){
         Promise<WSResponse> res = WS.url(url)
                 .setHeader("Authorization", "OAuth " + tokens.getAccessToken())
                 .get();
@@ -324,9 +324,9 @@ public class FeedlyAdaptor extends Adaptor {
                 });
     }
 
-    private <T> Promise<T> doGetNoRefresh(String url, Tokens tokens, Function<WSResponse, T> callback){
+    private <T> Promise<T> doGetNoRefresh(String url, Token token, Function<WSResponse, T> callback){
         return WS.url(url)
-                .setHeader("Authorization", "OAuth " + tokens.getAccessToken())
+                .setHeader("Authorization", "OAuth " + token.getAccessToken())
                 .get()
                 .map(response -> {
                     if (isOk(response.getStatus())) {

@@ -1,7 +1,7 @@
 package controllers;
 
 import adaptors.Adaptor;
-import auth.Tokens;
+import auth.Token;
 import play.libs.F.Promise;
 import play.mvc.Action;
 import play.mvc.Http.Context;
@@ -19,9 +19,10 @@ public class SecuredAction extends Action.Simple {
     public Promise<Result> call(Context ctx) throws Throwable {
         try {
             Adaptor adaptor = getAdaptor(ctx.request());
-            Tokens tokens = getTokens(ctx.request());
+            Token token = getTokens(ctx.request());
 
-            return adaptor.getUser(tokens).flatMap(user -> {
+            // TODO probably better insert to DB already and store user_id in token
+            return adaptor.getUser(token).flatMap(user -> {
                 String providerId = ctx.request().getHeader(KeendlyHeader.PROVIDER_ID.value);
                 if (user.getId().equals(providerId)){
                     ctx.args.put("user", user);
