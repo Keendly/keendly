@@ -8,9 +8,6 @@ import auth.Authenticator;
 import dao.UserDao;
 import entities.Provider;
 import entities.UserEntity;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.impl.crypto.MacProvider;
 import model.User;
 import play.db.jpa.JPA;
 import play.libs.F;
@@ -18,9 +15,7 @@ import play.libs.Json;
 import play.mvc.Result;
 import play.mvc.With;
 
-import java.security.Key;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 
 public class UserController extends AbstractController<User> {
@@ -60,11 +55,6 @@ public class UserController extends AbstractController<User> {
 
     @With(SecuredAction.class)
     public Result getUser(String id)throws Exception{
-        Key key = MacProvider.generateKey();
-        String encodedKey = Base64.getEncoder().encodeToString(key.getEncoded());
-        System.out.println(encodedKey);
-        String s = Jwts.builder().setSubject("Joe").signWith(SignatureAlgorithm.HS512, key).compact();
-        System.out.println(s);
         List<User> users = new ArrayList<>();
         JPA.withTransaction(() -> {
             UserEntity userEntity = lookupUser(id);
@@ -105,13 +95,12 @@ public class UserController extends AbstractController<User> {
     }
 
     private UserEntity lookupUser(String id){
-        // TODO fixit after auth refactor
-        UserEntity userEntity = null;
+        Long userId;
         if (SELF.equals(id)){
-            userEntity = getUserEntity();
+            userId = getUserEntity().id;
         } else {
-            userEntity = userDao.findById(Long.parseLong(id));
+            userId = Long.parseLong(id);
         }
-        return userEntity;
+        return userDao.findById(userId);
     }
 }
