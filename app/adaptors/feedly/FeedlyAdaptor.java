@@ -4,7 +4,7 @@ import adaptors.Adaptor;
 import adaptors.exception.ApiException;
 import adaptors.model.Entry;
 import adaptors.model.SubscribedFeed;
-import auth.Token;
+import adaptors.model.Token;
 import adaptors.model.ExternalUser;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.http.HttpStatus;
@@ -259,6 +259,7 @@ public class FeedlyAdaptor extends Adaptor {
                         Promise token = refreshAccessToken(tokens.getRefreshToken());
                         return token.flatMap(newToken -> {
                             tokens.setAccessToken((String) newToken);
+                            tokens.setRefreshed();
                             return doPostNoRefresh(url, tokens, content, callback);
                         });
                     } else {
@@ -295,6 +296,7 @@ public class FeedlyAdaptor extends Adaptor {
                         Promise token = refreshAccessToken(tokens.getRefreshToken());
                         return token.flatMap(newToken -> {
                             tokens.setAccessToken((String) newToken);
+                            tokens.setRefreshed();
                             return doGetNoRefresh(url, tokens, callback);
                         });
                     } else {
@@ -316,6 +318,7 @@ public class FeedlyAdaptor extends Adaptor {
                         Promise token = refreshAccessToken(tokens.getRefreshToken());
                         return token.flatMap(newToken -> {
                             tokens.setAccessToken((String) newToken);
+                            tokens.setRefreshed();
                             return doGetNoRefresh(url, tokens, callback);
                         });
                     } else {

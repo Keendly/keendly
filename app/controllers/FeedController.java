@@ -1,8 +1,7 @@
 package controllers;
 
-import adaptors.Adaptor;
 import adaptors.model.SubscribedFeed;
-import auth.Token;
+import adaptors.model.Token;
 import dao.DeliveryDao;
 import dao.SubscriptionDao;
 import entities.DeliveryItemEntity;
@@ -21,9 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static controllers.RequestUtils.getAdaptor;
-import static controllers.RequestUtils.getTokens;
-
 @With(SecuredAction.class)
 public class FeedController extends AbstractController<Feed> {
 
@@ -32,7 +28,8 @@ public class FeedController extends AbstractController<Feed> {
     private FeedMapper feedMapper = new FeedMapper();
 
     public Promise<Result> getFeeds(){
-        return adaptor().getSubscribedFeeds(tokens()).map(subscribedFeeds ->
+        Token externalToken = getExternalToken();
+        return getAdaptor().getSubscribedFeeds(externalToken).map(subscribedFeeds ->
                 JPA.withTransaction(() -> {
                     List<Feed> feeds = new ArrayList<>();
 
@@ -59,7 +56,6 @@ public class FeedController extends AbstractController<Feed> {
                             }
                         }
 
-                        // TODO add last delivery
                         DeliveryItemEntity lastDeliveryItem = deliveryDao.getLastDeliveryItem(subscribedFeed.getFeedId());
                         if (lastDeliveryItem != null){
                             Delivery delivery = new Delivery();
@@ -69,18 +65,10 @@ public class FeedController extends AbstractController<Feed> {
                         }
                         feeds.add(feed);
                     }
-
+                    refreshTokenIfNeeded(externalToken);
                     return ok(Json.toJson(feeds));
                 })
         );
-    }
-
-    private Adaptor adaptor(){
-        return getAdaptor(ctx().request());
-    }
-
-    private Token tokens(){
-        return getTokens(ctx().request());
     }
 
     static class FeedMapper {

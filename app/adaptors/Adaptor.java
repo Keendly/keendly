@@ -2,7 +2,7 @@ package adaptors;
 
 import adaptors.model.Entry;
 import adaptors.model.SubscribedFeed;
-import auth.Token;
+import adaptors.model.Token;
 import adaptors.model.ExternalUser;
 import play.libs.F.Promise;
 

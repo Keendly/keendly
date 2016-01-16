@@ -22,4 +22,7 @@ public class UserEntity extends BaseEntity {
 
     @Column(name = "delivery_email")
     public String deliveryEmail;
+
+    @Column(length = 1000)
+    public String token;
 }

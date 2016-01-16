@@ -1,8 +1,11 @@
 package controllers;
 
-import adaptors.model.ExternalUser;
+import adaptors.Adaptor;
+import adaptors.Adaptors;
+import adaptors.model.Token;
+import auth.AuthToken;
+import auth.Authenticator;
 import com.fasterxml.jackson.databind.JsonNode;
-import dao.UserDao;
 import entities.Provider;
 import entities.UserEntity;
 import play.libs.Json;
@@ -14,40 +17,25 @@ import java.time.format.FormatStyle;
 
 public abstract class AbstractController<T> extends Controller {
 
-    protected UserDao userDao = new UserDao();
-
-//
-//    public static Adaptor findAdaptor(){
-//        String dataProvider = session().get(SESSION_PROVIDER);
-//        if (StringUtils.isNotEmpty(dataProvider)) {
-//            return Adaptors.getByProvider(Provider.valueOf(dataProvider));
-//        }
-//        return null;
-//    }
-//
-//    public static Token findTokens(){
-//        String tokensString = session().get(SESSION_AUTH);
-//        if (tokensString != null){
-//            Token tokens = fromJson(parse(tokensString), Token.class);
-//            return tokens;
-//        }
-//        return null;
-//    }
-//
-    protected ExternalUser getUser(){
-        return (ExternalUser) ctx().args.get("user");
+    protected Adaptor getAdaptor(){
+        Provider provider = getAuthToken().provider;
+        return Adaptors.getByProvider(provider);
     }
 
-    // TODO this one should somehow retrieve user id from token to avoid calling DB here. Need to have smarter way for creating tokens (private key)
+    protected Token getExternalToken(){
+        AuthToken token = getAuthToken();
+        return new Token(token.refreshToken, token.accessToken);
+    }
+
     protected UserEntity getUserEntity(){
-        String providerStr = ctx().request().getHeader(KeendlyHeader.PROVIDER.value);
-        Provider provider = Provider.valueOf(providerStr);
-        ExternalUser user = getUser();
-        UserEntity entity = userDao.findByProviderId(user.getId(), provider);
-        if (entity == null){
-            entity = userDao.createUser(user.getId(),provider, user.getUserName());
-        }
-        return entity;
+        UserEntity userEntity = new UserEntity();
+        AuthToken token = getAuthToken();
+        userEntity.id = token.userId;
+        return userEntity;
+    }
+
+    private AuthToken getAuthToken(){
+        return (AuthToken) ctx().args.get("token");
     }
 
     protected DateTimeFormatter dateTimeFormatter(){
@@ -62,5 +50,13 @@ public abstract class AbstractController<T> extends Controller {
     private Class<T> getGenericClass(){
         return (Class<T>) ((ParameterizedType) getClass()
                 .getGenericSuperclass()).getActualTypeArguments()[0];
+    }
+
+    protected void refreshTokenIfNeeded(Token externalToken){
+        if (externalToken.gotRefreshed()){
+            AuthToken token = getAuthToken();
+            String newToken = new Authenticator().generate(token.userId, token.provider, externalToken);
+            ctx().response().setHeader(KeendlyHeader.NEW_TOKEN.value, newToken);
+        }
     }
 }
