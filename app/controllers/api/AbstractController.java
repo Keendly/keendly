@@ -1,4 +1,4 @@
-package controllers;
+package controllers.api;
 
 import adaptors.Adaptor;
 import adaptors.Adaptors;
@@ -56,7 +56,7 @@ public abstract class AbstractController<T> extends Controller {
         if (externalToken.gotRefreshed()){
             AuthToken token = getAuthToken();
             String newToken = new Authenticator().generate(token.userId, token.provider, externalToken);
-            ctx().response().setHeader(KeendlyHeader.NEW_TOKEN.value, newToken);
+            ctx().response().setCookie(KeendlyHeader.SESSION_COOKIE.value, newToken);
         }
     }
 }

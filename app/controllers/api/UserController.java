@@ -1,16 +1,10 @@
-package controllers;
+package controllers.api;
 
 
-import adaptors.Adaptor;
-import adaptors.Adaptors;
-import adaptors.model.ExternalUser;
-import auth.Authenticator;
 import dao.UserDao;
-import entities.Provider;
 import entities.UserEntity;
 import model.User;
 import play.db.jpa.JPA;
-import play.libs.F;
 import play.libs.Json;
 import play.mvc.Result;
 import play.mvc.With;
@@ -23,35 +17,6 @@ public class UserController extends AbstractController<User> {
     private final static String SELF = "self";
 
     private UserDao userDao = new UserDao();
-    private Authenticator authenticator = new Authenticator();
-
-    public F.Promise<Result> loginUser(String authrorizationCode, String provider){
-        Provider p = Provider.valueOf(provider);
-        Adaptor adaptor = Adaptors.getByProvider(p);
-        return adaptor.login(authrorizationCode).flatMap(
-                token -> adaptor.getUser(token).map(user -> {
-
-                    List<Long> id = new ArrayList<>();
-                    JPA.withTransaction(() -> {
-                        UserEntity userEntity = findUser(user, p);
-                        userEntity.token = token.getRefreshToken();
-                        userEntity = JPA.em().merge(userEntity);
-
-                        id.add(userEntity.id); // why so hacky
-                    });
-                    String authToken = authenticator.generate(id.get(0), p, token);
-                    return ok(authToken);
-                })
-        );
-    }
-
-    protected UserEntity findUser(ExternalUser externalUser, Provider provider){
-        UserEntity entity = userDao.findByProviderId(externalUser.getId(), provider);
-        if (entity == null){
-            entity = userDao.createUser(externalUser.getId(), provider, externalUser.getUserName());
-        }
-        return entity;
-    }
 
     @With(SecuredAction.class)
     public Result getUser(String id)throws Exception{

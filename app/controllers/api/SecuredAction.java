@@ -1,4 +1,4 @@
-package controllers;
+package controllers.api;
 
 import auth.AuthToken;
 import auth.Authenticator;
@@ -17,7 +17,7 @@ public class SecuredAction extends Action.Simple {
 
     public Promise<Result> call(Context ctx) throws Throwable {
         try {
-            AuthToken token = authenticator.parse(ctx.request().getHeader(KeendlyHeader.AUTHORIZATION.value));
+            AuthToken token = authenticator.parse(findToken(ctx));
             ctx.args.put("token", token);
             return delegate.call(ctx);
 //            return adaptor.getUser(externalToken).flatMap(user -> {
@@ -38,5 +38,13 @@ public class SecuredAction extends Action.Simple {
             e.printStackTrace();
             return Promise.pure(unauthorized());
         }
+    }
+
+    private String findToken(Context ctx){
+        String token = ctx.request().getHeader(KeendlyHeader.AUTHORIZATION.value);
+        if (token == null){
+            token = ctx.request().cookie(KeendlyHeader.SESSION_COOKIE.value).value();
+        }
+        return token;
     }
 }

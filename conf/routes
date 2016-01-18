@@ -2,24 +2,27 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-# GET     /feedlyCallback             controllers.MainController.feedlyCallback(code: String, error: String)
-
 # Map static resources from the /public folder to the /assets URL path
-GET     /assets/*file               controllers.Assets.at(path="/public", file)
+GET     /assets/*file                   controllers.Assets.at(path="/public", file)
 
-POST    /subscriptions              controllers.SubscriptionController.createSubscription()
-GET     /subscriptions/:id          controllers.SubscriptionController.getSubscription(id: String)
-PATCH   /subscriptions/:id          controllers.SubscriptionController.updateSubscription(id: String)
+#API
+POST    /api/subscriptions              controllers.api.SubscriptionController.createSubscription()
+GET     /api/subscriptions/:id          controllers.api.SubscriptionController.getSubscription(id: String)
+PATCH   /api/subscriptions/:id          controllers.api.SubscriptionController.updateSubscription(id: String)
 
-POST    /deliveries                 controllers.DeliveryController.createDelivery()
-PATCH   /deliveries/:id             controllers.DeliveryController.updateDelivery(id: Long)
-GET     /deliveries/:id             controllers.DeliveryController.getDelivery(id: Long)
-GET     /deliveries                 controllers.DeliveryController.getDeliveries(page: Integer, pageSize: Integer)
+POST    /api/deliveries                 controllers.api.DeliveryController.createDelivery()
+PATCH   /api/deliveries/:id             controllers.api.DeliveryController.updateDelivery(id: Long)
+GET     /api/deliveries/:id             controllers.api.DeliveryController.getDelivery(id: Long)
+GET     /api/deliveries                 controllers.api.DeliveryController.getDeliveries(page: Integer, pageSize: Integer)
 
-GET     /feeds                      controllers.FeedController.getFeeds()
+GET     /api/feeds                      controllers.api.FeedController.getFeeds()
 
-GET     /login                      controllers.UserController.loginUser(code: String, provider: String)
-GET     /users/:id                  controllers.UserController.getUser(id: String)
-PATCH   /users/:id                  controllers.UserController.updateUser(id: String)
+GET     /api/users/:id                  controllers.api.UserController.getUser(id: String)
+PATCH   /api/users/:id                  controllers.api.UserController.updateUser(id: String)
 
-GET     /                           controllers.HomeController.index()
+# WEB
+GET     /                               controllers.WebController.index()
+GET     /login                          controllers.WebController.login(error: String ?= null)
+GET     /feedlyCallback                 controllers.LoginController.feedlyCallback(code: String, error: String)
+GET     /feeds                          controllers.WebController.feeds()
+GET     /deliveries                     controllers.WebController.deliveries()

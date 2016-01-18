@@ -1,4 +1,4 @@
-package controllers;
+package controllers.api;
 
 import dao.SubscriptionDao;
 import entities.SubscriptionEntity;
