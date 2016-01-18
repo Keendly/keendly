@@ -4,6 +4,9 @@
 
 # GET     /feedlyCallback             controllers.MainController.feedlyCallback(code: String, error: String)
 
+# Map static resources from the /public folder to the /assets URL path
+GET     /assets/*file               controllers.Assets.at(path="/public", file)
+
 POST    /subscriptions              controllers.SubscriptionController.createSubscription()
 GET     /subscriptions/:id          controllers.SubscriptionController.getSubscription(id: String)
 PATCH   /subscriptions/:id          controllers.SubscriptionController.updateSubscription(id: String)
@@ -18,3 +21,5 @@ GET     /feeds                      controllers.FeedController.getFeeds()
 GET     /login                      controllers.UserController.loginUser(code: String, provider: String)
 GET     /users/:id                  controllers.UserController.getUser(id: String)
 PATCH   /users/:id                  controllers.UserController.updateUser(id: String)
+
+GET     /                           controllers.HomeController.index()
