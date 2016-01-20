@@ -80,3 +80,28 @@ ReactDOM.render(
   <FeedBox url="api/feeds" />,
   document.getElementById('content')
 );
+
+$("#search_box").keyup(function() {
+  var columns, filter, i, j, ref, results, subscription, subscriptions, subscriptionsLength, text;
+  filter = $(this).val();
+  subscriptions = $('#subscriptions').find('tr');
+  subscriptionsLength = subscriptions.length;
+  results = [];
+  for (i = j = 0, ref = subscriptionsLength; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
+    subscription = subscriptions.eq(i);
+    columns = subscription.find('td');
+    if (columns.length > 0) {
+      text = columns.eq(1).text();
+      if (text.search(new RegExp(filter, "i")) < 0) {
+        results.push(subscription.hide());
+      } else {
+        results.push(subscription.show());
+      }
+    } else {
+      results.push(void 0);
+    }
+  }
+  return results;
+});
+
+
