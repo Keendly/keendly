@@ -40,7 +40,7 @@ public class LoginController extends Controller {
         Adaptor adaptor = Adaptors.getByProvider(p);
         return adaptor.login(authrorizationCode).flatMap(
                 token -> adaptor.getUser(token).map(user -> {
-
+                    session("displayName", user.getDisplayName());
                     List<Long> id = new ArrayList<>();
                     JPA.withTransaction(() -> {
                         UserEntity userEntity = findUser(user, p);

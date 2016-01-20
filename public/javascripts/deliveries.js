@@ -1,7 +1,7 @@
 var DeliveryBox = React.createClass({
-  loadFeeds: function() {
+  loadFeeds: function(page) {
     $.ajax({
-      url: this.props.url + '?page=1&pageSize=10',
+      url: this.props.url + '?page=' + page +'&pageSize=20',
       dataType: 'json',
       cache: false,
       success: function(data) {
@@ -13,15 +13,22 @@ var DeliveryBox = React.createClass({
     });
   },
   getInitialState: function() {
-    return {data: []};
+    return {data: [], page: 1};
   },
   componentDidMount: function() {
-    this.loadFeeds();
+    this.loadFeeds(this.state.page);
+  },
+  handlePageClick: function(newPage) {
+    this.setState({
+      page: newPage
+    });
+    this.loadFeeds(newPage);
   },
   render: function() {
     return (
       <div className="container">
         <DeliveryList data={this.state.data} />
+        <Pagination handleClick={this.handlePageClick} page={this.state.page} />
       </div>
     );
   }
@@ -72,6 +79,66 @@ var Delivery = React.createClass({
     );
   }
 });
+
+var Pagination = React.createClass({
+  handleClick: function(page) {
+    this.props.handleClick(page);
+  },
+  render: function() {
+    var currentPage = this.props.page;
+    var left = currentPage == 1 ?
+                  <li className="disabled"><a href="history"><i className="material-icons">chevron_left</i></a></li> :
+                  <li className="waves-effect"><a href="history?page=@(page-1)"><i className="material-icons">chevron_left</i></a></li>
+
+//    var numbers = <PageNumbers currentPage={page} />
+    var numbers = [0,1,2,3].map(function(i) {
+      if (currentPage == 1){
+        if (i == 0){
+          return <PageNumber handleClick={this.handleClick} active='true' page={currentPage} key={i} />
+        } else {
+          return <PageNumber handleClick={this.handleClick}  active='false' page={i + currentPage} key={i} />
+        }
+      }
+      if (currentPage == 2){
+        if (i == 1){
+          return <PageNumber handleClick={this.handleClick}  active='true' page={currentPage} key={i} />
+        } else {
+          return <PageNumber handleClick={this.handleClick}  active='false' page={i + currentPage - 1} key={i} />
+        }
+      }
+      if (currentPage > 2){
+        if (i == 2){
+          return <PageNumber handleClick={this.handleClick}  active='true' page={currentPage} key={i} />
+        } else {
+          return <PageNumber handleClick={this.handleClick}  active='false' page={i + currentPage - 2} key={i} />
+        }
+      }
+    }, this);
+    var right = <li className="waves-effect"><a href="history?page=@(page+1)"><i className="material-icons">chevron_right</i></a></li>
+    return (
+      <ul className="pagination">
+        {left}
+        {numbers}
+        {right}
+      </ul>
+    );
+  }
+});
+
+var PageNumber = React.createClass({
+  handleClick: function(page) {
+    this.props.handleClick(page);
+  },
+  render: function() {
+    var active = this.props.active;
+    var page = this.props.page;
+    if (active == 'true'){
+      return <li onClick={this.handleClick.bind(this, page)} className="active">{page}</li>
+    } else {
+      return <li onClick={this.handleClick.bind(this, page)} className="waves-effect">{page}</li>
+    }
+  }
+})
 
 ReactDOM.render(
   <DeliveryBox url="api/deliveries" />,
