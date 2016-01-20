@@ -87,10 +87,9 @@ var Pagination = React.createClass({
   render: function() {
     var currentPage = this.props.page;
     var left = currentPage == 1 ?
-                  <li className="disabled"><a href="history"><i className="material-icons">chevron_left</i></a></li> :
-                  <li className="waves-effect"><a href="history?page=@(page-1)"><i className="material-icons">chevron_left</i></a></li>
+                  <li className="disabled"><i className="material-icons">chevron_left</i></li> :
+                  <li className="waves-effect"><i onClick={this.handleClick.bind(this, currentPage-1)} className="material-icons">chevron_left</i></li>
 
-//    var numbers = <PageNumbers currentPage={page} />
     var numbers = [0,1,2,3].map(function(i) {
       if (currentPage == 1){
         if (i == 0){
@@ -114,7 +113,7 @@ var Pagination = React.createClass({
         }
       }
     }, this);
-    var right = <li className="waves-effect"><a href="history?page=@(page+1)"><i className="material-icons">chevron_right</i></a></li>
+    var right = <li className="waves-effect"><i onClick={this.handleClick.bind(this, currentPage+1)} className="material-icons">chevron_right</i></li>
     return (
       <ul className="pagination">
         {left}
