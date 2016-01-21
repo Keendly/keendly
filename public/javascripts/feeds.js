@@ -47,9 +47,7 @@ var FeedList = React.createClass({
   render: function() {
   var feedNodes = this.props.data.map(function(feed) {
     return (
-      <Feed title={feed.title} key={feed.feedId} lastDelivery={feed.lastDelivery}>
-
-      </Feed>
+      <Feed title={feed.title} feedId={feed.feedId} lastDelivery={feed.lastDelivery} />
     );
     });
     return (
@@ -76,7 +74,10 @@ var Feed = React.createClass({
   render: function() {
     return (
       <tr>
-        <td><input type="checkbox" className="filled-in" id={this.props.key} name={this.props.key} /><label for={this.props.key}></label></td>
+        <td>
+          <input type="checkbox" className="filled-in" id={this.props.feedId} />
+          <label htmlFor={this.props.feedId}></label>
+        </td>
         <td className="feed_title">{this.props.title}</td>
         <td>{this.props.lastDelivery != null ? moment(this.props.lastDelivery.deliveryDate).fromNow() : ''}</td>
       </tr>
@@ -86,16 +87,34 @@ var Feed = React.createClass({
 
 var DeliverModal = React.createClass({
   getInitialState: function() {
-    return {mode: 'simple'};
+    return {mode: 'simple', feeds: []};
   },
   modeChangeClick: function(event) {
     this.setState({
       'mode': event.target.checked ? 'detailed' : 'simple'
     });
   },
+  loadSelectedFeeds: function() {
+    var checkbox, columns, feed_id, i, j, ref, results, subscription, subscriptions, subscriptionsLength, title;
+    subscriptions = $('#subscriptions').find('tr');
+    subscriptionsLength = subscriptions.length;
+    results = [];
+    for (i = j = 0, ref = subscriptionsLength; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
+      subscription = subscriptions.eq(i);
+      columns = subscription.find('td');
+      if (columns.length > 0) {
+        checkbox = columns.eq(0).find('.filled-in');
+        if (checkbox.is(':checked')) {
+          feed_id = checkbox.attr('name');
+          results.push({'title': columns.eq(1).text(), 'feedId': feed_id});
+        }
+      }
+    }
+    return results;
+  },
   render: function() {
-    var feeds = [{'title':'lala','feedId':'id'}]
     var mode = this.state.mode;
+    var feeds = this.loadSelectedFeeds()
     var inProgress = 'false';
     var progressbar = inProgress == 'true' ?
       <div className="progress" id="delivery_progress">
@@ -107,9 +126,10 @@ var DeliverModal = React.createClass({
       var actualList = feeds.map(function(feed) {
           return (
             <li className='collection-item' key={feed.feedId}>
-            <div feed_id={feed.feedId} title={feed.title}>
-            {feed.title}
-            </div></li>
+              <div feed_id={feed.feedId} title={feed.title}>
+              {feed.title}
+              </div>
+            </li>
           );
         });
       list =
@@ -134,7 +154,7 @@ var DeliverModal = React.createClass({
        var actualList = feeds.map(function(feed) {
            return (
               <li className='collection-item' key={feed.feedId}>
-               <div feed_id={feed.feedId} title={feed.title} >
+               <div feed_id={feed.feedId} title={feed.title}>
                    {feed.title}
                  <p>
                    <input type="checkbox" className="filled-in" id="include_images"/>
@@ -148,7 +168,8 @@ var DeliverModal = React.createClass({
                    <input type="checkbox" className="filled-in" id="full_article" defaultChecked/>
                    <label htmlFor="full">Full article</label>
                  </p>
-               </div></li>
+               </div>
+             </li>
            );
          });
        list =
