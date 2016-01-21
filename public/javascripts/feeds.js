@@ -47,7 +47,7 @@ var FeedList = React.createClass({
   render: function() {
   var feedNodes = this.props.data.map(function(feed) {
     return (
-      <Feed title={feed.title} feedId={feed.feedId} lastDelivery={feed.lastDelivery} />
+      <Feed title={feed.title} key={feed.feedId} feedId={feed.feedId} lastDelivery={feed.lastDelivery} />
     );
     });
     return (
@@ -105,7 +105,7 @@ var DeliverModal = React.createClass({
       if (columns.length > 0) {
         checkbox = columns.eq(0).find('.filled-in');
         if (checkbox.is(':checked')) {
-          feed_id = checkbox.attr('name');
+          feed_id = checkbox.attr('id');
           results.push({'title': columns.eq(1).text(), 'feedId': feed_id});
         }
       }
@@ -125,11 +125,7 @@ var DeliverModal = React.createClass({
     if (mode == 'simple'){
       var actualList = feeds.map(function(feed) {
           return (
-            <li className='collection-item' key={feed.feedId}>
-              <div feed_id={feed.feedId} title={feed.title}>
-              {feed.title}
-              </div>
-            </li>
+            <SelectedFeed_Simple key={feed.feedId} feed={feed} />
           );
         });
       list =
@@ -153,23 +149,7 @@ var DeliverModal = React.createClass({
      } else {
        var actualList = feeds.map(function(feed) {
            return (
-              <li className='collection-item' key={feed.feedId}>
-               <div feed_id={feed.feedId} title={feed.title}>
-                   {feed.title}
-                 <p>
-                   <input type="checkbox" className="filled-in" id="include_images"/>
-                   <label htmlFor="include_images">Include images</label>
-                 </p>
-                 <p>
-                   <input type="checkbox" className="filled-in" id="mark_as_read" defaultChecked/>
-                   <label htmlFor="mark_as_read">Mark as read</label>
-                 </p>
-                 <p>
-                   <input type="checkbox" className="filled-in" id="full_article" defaultChecked/>
-                   <label htmlFor="full">Full article</label>
-                 </p>
-               </div>
-             </li>
+              <SelectedFeed_Detailed feed={feed} key={feed.feedId}/>
            );
          });
        list =
@@ -193,6 +173,44 @@ var DeliverModal = React.createClass({
           </div>
       </div>
     );
+  }
+});
+
+var SelectedFeed_Simple = React.createClass({
+  render: function(){
+    var feed = this.props.feed;
+    return (
+      <li className='collection-item'>
+        <div feed_id={feed.feedId} title={feed.title}>
+        {feed.title}
+        </div>
+      </li>
+    )
+  }
+});
+
+var SelectedFeed_Detailed = React.createClass({
+  render: function(){
+    var feed = this.props.feed;
+    return (
+      <li className='collection-item' key={feed.feedId}>
+       <div feed_id={feed.feedId} title={feed.title}>
+           {feed.title}
+         <p>
+           <input type="checkbox" className="filled-in" id="include_images"/>
+           <label htmlFor="include_images">Include images</label>
+         </p>
+         <p>
+           <input type="checkbox" className="filled-in" id="mark_as_read" defaultChecked/>
+           <label htmlFor="mark_as_read">Mark as read</label>
+         </p>
+         <p>
+           <input type="checkbox" className="filled-in" id="full_article" defaultChecked/>
+           <label htmlFor="full">Full article</label>
+         </p>
+       </div>
+      </li>
+    )
   }
 });
 
