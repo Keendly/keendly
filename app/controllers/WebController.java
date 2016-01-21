@@ -5,6 +5,7 @@ import play.mvc.Controller;
 import play.mvc.Result;
 import views.html.index;
 import views.html.login;
+import views.html.feeds;
 
 public class WebController extends Controller {
 
@@ -25,7 +26,7 @@ public class WebController extends Controller {
     }
 
     public Result feeds(){
-        return ok(index.render("Home | Keendly", "feeds.js"));
+        return ok(feeds.render());
     }
 
     public Result deliveries(){
