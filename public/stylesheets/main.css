@@ -69,6 +69,14 @@ body {
   margin-top: 7.25px;
 }
 
+.error_modal {
+  background-color: #ffcdd2;
+  border-width: 0px;
+  padding: 15px;
+  color: #b71c1c;
+  text-align: center
+}
+
 .info_div {
   background-color: #bbdefb;
   border-width: 0px;

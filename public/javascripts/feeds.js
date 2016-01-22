@@ -115,6 +115,15 @@ var DeliverModal = React.createClass({
   render: function() {
     var mode = this.state.mode;
     var feeds = this.loadSelectedFeeds()
+    if (feeds.length == 0){
+      return (
+          <div id="delivery_modal" className="modal">
+            <div className="error_modal">
+              Select feeds first
+              </div>
+          </div>
+        )
+    }
     var inProgress = 'false';
     var progressbar = inProgress == 'true' ?
       <div className="progress" id="delivery_progress">
