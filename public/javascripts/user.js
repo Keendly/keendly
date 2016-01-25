@@ -1,11 +1,10 @@
 var UserForm = React.createClass({
   handleSubmit: function (event) {
     event.preventDefault();
-    var deliveryEmail = $('#email').val();
     $.ajax({
       url: this.props.url,
       type: 'PATCH',
-      data: JSON.stringify({"deliveryEmail": deliveryEmail}),
+      data: JSON.stringify({"deliveryEmail": this.state.deliveryEmail}),
       contentType: "application/json; charset=utf-8",
       cache: false,
       success: function() {
@@ -16,8 +15,22 @@ var UserForm = React.createClass({
       }.bind(this)
     });
   },
+  handleChange: function(event) {
+    this.setState({
+      deliveryEmail: event.target.value
+    });
+  },
   getInitialState: function() {
-    return {error: false, success: false};
+    return {deliveryEmail: '', error: false, success: false};
+  },
+  componentDidMount: function() {
+   $.get(this.props.url, function(data) {
+      if (this.isMounted()) {
+        this.setState({
+          deliveryEmail: data.deliveryEmail
+        });
+      }
+    }.bind(this));
   },
   render: function() {
     return (
@@ -28,8 +41,8 @@ var UserForm = React.createClass({
       <form className="col s12" id="settings_form" method="POST" onSubmit={this.handleSubmit}>
           <div className="row">
               <div className="input-field col s12">
-                <input name="email" id="email" type="email" className="validate" />
-                <label htmlFor="email">Send-to-Kindle E-Mail</label>
+                <input value={this.state.deliveryEmail} onChange={this.handleChange} name="email" id="email" type="email" className="validate"/>
+                <label className="active" htmlFor="email">Send-to-Kindle E-Mail</label>
             </div>
           </div>
           <button className="btn waves-effect waves-light" type="submit" name="action">Save
