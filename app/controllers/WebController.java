@@ -33,6 +33,10 @@ public class WebController extends Controller {
         return ok(index.render("History | Keendly", "deliveries.js"));
     }
 
+    public Result user(){
+        return ok(index.render("Settings | Keendly", "user.js"));
+    }
+
     private String getQueryParam(String key){
         String value[] = request().queryString().get(key);
         if (value != null && value.length > 0){

@@ -26,3 +26,4 @@ GET     /login                          controllers.WebController.login(error: S
 GET     /feedlyCallback                 controllers.LoginController.feedlyCallback(code: String, error: String)
 GET     /feeds                          controllers.WebController.feeds()
 GET     /deliveries                     controllers.WebController.deliveries()
+GET     /user                           controllers.WebController.user()

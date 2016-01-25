@@ -28,6 +28,7 @@ public class DeliveryController extends AbstractController<Delivery> {
     private DeliveryMapper deliveryMapper = new DeliveryMapper();
 
     public Promise<Result> createDelivery() {
+        // validate if delivery email is configured
         Delivery delivery = fromRequest();
         JPA.withTransaction(() ->  deliveryDao.createDelivery(deliveryMapper.toEntity(delivery)));
 
