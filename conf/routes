@@ -27,3 +27,4 @@ GET     /feedlyCallback                 controllers.LoginController.feedlyCallba
 GET     /feeds                          controllers.WebController.feeds()
 GET     /deliveries                     controllers.WebController.deliveries()
 GET     /user                           controllers.WebController.user()
+GET     /logout                          controllers.WebController.logout()

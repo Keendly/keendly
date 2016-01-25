@@ -1,5 +1,6 @@
 package controllers;
 
+import controllers.api.KeendlyHeader;
 import org.apache.commons.lang3.StringUtils;
 import play.mvc.Controller;
 import play.mvc.Result;
@@ -35,6 +36,11 @@ public class WebController extends Controller {
 
     public Result user(){
         return ok(index.render("Settings | Keendly", "user.js"));
+    }
+
+    public Result logout(){
+        response().discardCookie(KeendlyHeader.SESSION_COOKIE.value);
+        return redirect(routes.WebController.login(null));
     }
 
     private String getQueryParam(String key){
