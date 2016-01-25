@@ -100,18 +100,19 @@ html, body, #wrapper {
 
 body > #wrapper {
   height: auto;
-  min-height: 100%
+  min-height: 100%;
+  position: relative;
 }
 
 #footer {
-  clear: both;
-  position: relative;
-  z-index: 10;
-  height: 10em;
-  margin-top: -10em;
+  bottom: 0;
+  height: 15em;
+  left: 0;
+  width: 100%;
+  position: absolute
 }
 
-#content { padding-bottom: 10em; }
+#content { padding-bottom: 15em; }
 
 #settings_form {
   padding-top: 20px;
