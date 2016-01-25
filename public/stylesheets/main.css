@@ -45,10 +45,6 @@ body {
   height: 15px;
 }
 
-#subs-container {
-  padding-top: 20px;
-}
-
 #search {
   margin-top: -5px
 }
@@ -150,5 +146,9 @@ body > #wrapper {
 
 #loading {
   margin: 0
+}
+
+#button_row {
+  margin-top: 7.25px
 }
 

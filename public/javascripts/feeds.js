@@ -19,16 +19,25 @@ var FeedBox = React.createClass({
     this.loadFeeds();
   },
   deliverButtonClick: function() {
+    var timestamp = Date.now()
     ReactDOM.render(
-      <DeliverModal />,
+      <DeliverModal url='api/deliveries' key={timestamp} success={this.handleDeliverySuccess} error={this.handleDeliveryError}/>,
       document.getElementById('modal')
     );
     $('#delivery_modal').openModal()
   },
+  handleDeliverySuccess: function() {
+    this.setState({success: true, error: false})
+  },
+  handleDeliveryError: function() {
+     this.setState({success: false, error: true})
+  },
   render: function() {
     return (
       <div className="container" id="subs-container">
-        <div className="row">
+        {this.state.error == true ? <div className='error_div'>Unexpected error occured :-( Please try again later.</div> : ''}
+        {this.state.success == true ? <div className='success_div'>Delivery started :-) Give us few minutes to deliver articles to your Kindle.</div> : ''}
+        <div className="row" id="button_row">
           <div className="col s12 m6">
             <a onClick={this.deliverButtonClick} className="waves-effect waves-light btn modal-trigger" id="delivery_modal_btn" href="#delivery_modal">Deliver now</a>
           </div>
@@ -87,14 +96,43 @@ var Feed = React.createClass({
 
 var DeliverModal = React.createClass({
   getInitialState: function() {
-    return {mode: 'simple', feeds: []};
+    return {mode: 'simple', feeds: this.getSelectedFeeds()};
   },
   modeChangeClick: function(event) {
     this.setState({
       'mode': event.target.checked ? 'detailed' : 'simple'
     });
   },
-  loadSelectedFeeds: function() {
+  handleSubmit: function() {
+     if (this.state.mode == 'detailed'){
+         $.each( this.state.feeds, function( i, feed ) {
+           feed['includeImages'] = $(document.getElementById(feed.feedId + 'img')).is(':checked');
+           feed['fullArticle'] =  $(document.getElementById(feed.feedId + 'full')).is(':checked');
+           feed['markAsRead'] = $(document.getElementById(feed.feedId + 'mark')).is(':checked');
+         });
+     } else {
+        $.each( this.state.feeds, function( i, feed ) {
+          feed['includeImages'] = $('#include_images').is(':checked');
+          feed['fullArticle'] =  $('#full_article').is(':checked');
+          feed['markAsRead'] = $('#mark_as_read').is(':checked');
+        });
+     }
+     $.ajax({
+       url: this.props.url,
+       type: "POST",
+       data: JSON.stringify({'items': this.state.feeds}),
+       contentType: "application/json; charset=utf-8",
+       success: function() {
+         $('#delivery_modal').closeModal();
+         this.props.success()
+       }.bind(this),
+       error: function(xhr, status, err) {
+         $('#delivery_modal').closeModal();
+         this.props.error()
+       }.bind(this)
+     });
+  },
+  getSelectedFeeds: function() {
     var checkbox, columns, feed_id, i, j, ref, results, subscription, subscriptions, subscriptionsLength, title;
     subscriptions = $('#subscriptions').find('tr');
     subscriptionsLength = subscriptions.length;
@@ -114,7 +152,7 @@ var DeliverModal = React.createClass({
   },
   render: function() {
     var mode = this.state.mode;
-    var feeds = this.loadSelectedFeeds()
+    var feeds = this.state.feeds;
     if (feeds.length == 0){
       return (
           <div id="delivery_modal" className="modal">
@@ -124,11 +162,6 @@ var DeliverModal = React.createClass({
           </div>
         )
     }
-    var inProgress = 'false';
-    var progressbar = inProgress == 'true' ?
-      <div className="progress" id="delivery_progress">
-        <div className="indeterminate"></div>
-      </div> : ''
 
     var list
     if (mode == 'simple'){
@@ -140,7 +173,7 @@ var DeliverModal = React.createClass({
       list =
       <div id="simple">
        <p>
-         <input type="checkbox" className="filled-in" id="include_images"/>
+         <input type="checkbox" className="filled-in" id="include_images" defaultChecked/>
          <label htmlFor="include_images">Include images</label>
        </p>
        <p>
@@ -149,7 +182,7 @@ var DeliverModal = React.createClass({
        </p>
        <p>
          <input type="checkbox" className="filled-in" id="full_article" defaultChecked/>
-         <label htmlFor="full">Full article</label>
+         <label htmlFor="full_article">Full article</label>
        </p>
        <ul className="collection" id="feed_list">
           {actualList}
@@ -172,13 +205,12 @@ var DeliverModal = React.createClass({
       <div id="delivery_modal" className="modal">
           <div className="modal-content" id="delivery_form">
               <h4>Deliver feeds</h4>
-              {progressbar}
               <ModeSwitch onChange={this.modeChangeClick} mode={mode} />
               {list}
           </div>
           <div className="modal-footer">
               <a href="#!" className="modal-action modal-close waves-effect waves-red btn-flat">Cancel</a>
-              <a href="#!" className="modal-action waves-effect waves-green btn-flat submit save" id="delivery_save_btn">Deliver</a>
+              <a href="#!" onClick={this.handleSubmit} className="modal-action waves-effect waves-green btn-flat submit save" id="delivery_save_btn">Deliver</a>
           </div>
       </div>
     );
@@ -203,19 +235,19 @@ var SelectedFeed_Detailed = React.createClass({
     var feed = this.props.feed;
     return (
       <li className='collection-item' key={feed.feedId}>
-       <div feed_id={feed.feedId} title={feed.title}>
+       <div feed_id={feed.feedId} id={feed.feedId} title={feed.title}>
            {feed.title}
          <p>
-           <input type="checkbox" className="filled-in" id="include_images"/>
-           <label htmlFor="include_images">Include images</label>
+           <input type="checkbox" id={feed.feedId + 'img'} className="filled-in" defaultChecked/>
+           <label htmlFor={feed.feedId + 'img'}>Include images</label>
          </p>
          <p>
-           <input type="checkbox" className="filled-in" id="mark_as_read" defaultChecked/>
-           <label htmlFor="mark_as_read">Mark as read</label>
+           <input type="checkbox" id={feed.feedId + 'mark'} className="filled-in" defaultChecked/>
+           <label htmlFor={feed.feedId + 'mark'}>Mark as read</label>
          </p>
          <p>
-           <input type="checkbox" className="filled-in" id="full_article" defaultChecked/>
-           <label htmlFor="full">Full article</label>
+           <input type="checkbox" id={feed.feedId + 'full'} className="filled-in" defaultChecked/>
+           <label htmlFor={feed.feedId + 'full'}>Full article</label>
          </p>
        </div>
       </li>
