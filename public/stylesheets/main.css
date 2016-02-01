@@ -152,3 +152,14 @@ body > #wrapper {
   margin-top: 7.25px
 }
 
+#inoreader_modal {
+  max-width: 500px;
+}
+
+#inoreader_modal .row {
+  margin-bottom: 0px
+}
+
+.login_btns {
+  box-sizing: unset
+}

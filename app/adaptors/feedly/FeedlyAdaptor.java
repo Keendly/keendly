@@ -2,12 +2,8 @@ package adaptors.feedly;
 
 import adaptors.Adaptor;
 import adaptors.exception.ApiException;
-import adaptors.model.Entry;
-import adaptors.model.SubscribedFeed;
-import adaptors.model.Token;
-import adaptors.model.ExternalUser;
+import adaptors.model.*;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.apache.http.HttpStatus;
 import play.libs.F.Promise;
 import play.libs.Json;
 import play.libs.ws.WS;
@@ -55,12 +51,12 @@ public class FeedlyAdaptor extends Adaptor {
     }
 
     @Override
-    public Promise<Token> login(String authorizationCode){
+    public Promise<Token> login(Credentials credentials){
         JsonNode json = Json.newObject()
                 .put("grant_type", "authorization_code")
                 .put("client_id", clientId)
                 .put("client_secret", clientSecret)
-                .put("code", authorizationCode)
+                .put("code", credentials.getAuthorizationCode())
                 .put("redirect_uri", redirectUri);
 
         return WS.url(feedlyUrl + "/auth/token")
@@ -357,16 +353,5 @@ public class FeedlyAdaptor extends Adaptor {
                         throw new ApiException(response.getStatus(), response.getBody());
                     }
                 });
-    }
-
-    private boolean isOk(int status){
-        return status == HttpStatus.SC_OK;
-    }
-
-    private boolean isUnauthorized(int status){
-        if (status == HttpStatus.SC_UNAUTHORIZED || status == HttpStatus.SC_FORBIDDEN){
-            return true;
-        }
-        return false;
     }
 }

@@ -2,8 +2,10 @@ package controllers;
 
 import adaptors.Adaptor;
 import adaptors.Adaptors;
+import adaptors.model.Credentials;
 import adaptors.model.ExternalUser;
 import auth.Authenticator;
+import com.sun.org.apache.regexp.internal.RE;
 import controllers.api.KeendlyHeader;
 import dao.UserDao;
 import entities.Provider;
@@ -29,16 +31,26 @@ public class LoginController extends Controller {
             Logger.error("Error got in feedly callback: {}", error);
             return F.Promise.pure(redirect(routes.WebController.login(error)));
         } else {
-            return loginUser(code, Provider.FEEDLY).map(token -> {
-                response().setCookie(KeendlyHeader.SESSION_COOKIE.value, token);
-                return redirect(routes.WebController.feeds());
-            });
+            Credentials credentials = new Credentials();
+            credentials.setAuthorizationCode(code);
+            return loginUser(credentials, Provider.FEEDLY);
         }
     }
 
-    public Promise<String> loginUser(String authrorizationCode, Provider p){
+    public Promise<Result> inoLogin(){
+        String email = request().body().asFormUrlEncoded().get("email")[0];
+        String password = request().body().asFormUrlEncoded().get("password")[0];
+        Credentials credentials = new Credentials();
+        credentials.setUsername(email);
+        credentials.setPassword(password);
+        return loginUser(credentials, Provider.INOREADER).recover(f -> {
+            return redirect(routes.WebController.login("Login error"));
+        });
+    }
+
+    public Promise<Result> loginUser(Credentials credentials, Provider p){
         Adaptor adaptor = Adaptors.getByProvider(p);
-        return adaptor.login(authrorizationCode).flatMap(
+        return adaptor.login(credentials).flatMap(
                 token -> adaptor.getUser(token).map(user -> {
                     session("displayName", user.getDisplayName());
                     List<Long> id = new ArrayList<>();
@@ -49,7 +61,9 @@ public class LoginController extends Controller {
 
                         id.add(userEntity.id); // why so hacky
                     });
-                    return authenticator.generate(id.get(0), p, token);
+                    String t = authenticator.generate(id.get(0), p, token);
+                    response().setCookie(KeendlyHeader.SESSION_COOKIE.value, t);
+                    return redirect(routes.WebController.feeds());
                 })
         );
     }
