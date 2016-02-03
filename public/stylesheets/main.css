@@ -14,7 +14,7 @@ body {
   cursor: pointer;
   display: block;
   text-decoration: none;
-  width: 224px;
+  width: 244px;
   margin-left: auto;
   margin-right: auto;
   display: block;
@@ -39,6 +39,11 @@ body {
 .button.inoreader {
   background-color: #30517E;
   background-image: url('/assets/images/login_inoreader.png');
+}
+
+.button.oldreader {
+  background-color: #30a67c;
+  background-image: url('/assets/images/login_oldreader.png');
 }
 
 #subscriptions label {
@@ -152,7 +157,7 @@ body > #wrapper {
   margin-top: 7.25px
 }
 
-#inoreader_modal {
+.login-modal {
   max-width: 500px;
 }
 
