@@ -1,6 +1,6 @@
 package controllers.api;
 
-import adaptors.model.SubscribedFeed;
+import adaptors.model.ExternalFeed;
 import adaptors.model.Token;
 import dao.DeliveryDao;
 import dao.SubscriptionDao;
@@ -29,14 +29,14 @@ public class FeedController extends AbstractController<Feed> {
 
     public Promise<Result> getFeeds(){
         Token externalToken = getExternalToken();
-        return getAdaptor().getSubscribedFeeds(externalToken).map(subscribedFeeds ->
+        return getAdaptor().getFeeds().map(subscribedFeeds ->
                 JPA.withTransaction(() -> {
                     List<Feed> feeds = new ArrayList<>();
 
                     List<SubscriptionItemEntity> subscriptionItemEntities =
                             subscriptionDao.getSubscriptionItems(getUserEntity());
 
-                    for(SubscribedFeed subscribedFeed : subscribedFeeds){
+                    for(ExternalFeed subscribedFeed : subscribedFeeds){
                         // find items for that feed
                         List<SubscriptionItemEntity> feedSubItemEntities = subscriptionItemEntities.stream()
                                 .filter(s -> s.feedId.equals(subscribedFeed.getFeedId()))
@@ -73,7 +73,7 @@ public class FeedController extends AbstractController<Feed> {
 
     static class FeedMapper {
 
-        Feed toModel(SubscribedFeed external){
+        Feed toModel(ExternalFeed external){
             Feed feed = new Feed();
             feed.feedId = external.getFeedId();
             feed.title = external.getTitle();

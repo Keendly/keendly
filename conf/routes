@@ -23,7 +23,8 @@ PATCH   /api/users/:id                  controllers.api.UserController.updateUse
 # WEB
 GET     /                               controllers.WebController.index()
 GET     /login                          controllers.WebController.login(error: String ?= null)
-POST    /inoLogin                       controllers.LoginController.inoLogin()
+POST    /inoreaderLogin                 controllers.LoginController.inoReaderLogin()
+POST    /oldReaderLogin                 controllers.LoginController.oldReaderLogin()
 GET     /feedlyCallback                 controllers.LoginController.feedlyCallback(code: String, error: String)
 GET     /feeds                          controllers.WebController.feeds()
 GET     /deliveries                     controllers.WebController.deliveries()

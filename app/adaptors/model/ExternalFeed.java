@@ -1,6 +1,6 @@
 package adaptors.model;
 
-public class SubscribedFeed {
+public class ExternalFeed {
 
     private String title;
     private String feedId;

@@ -37,7 +37,7 @@ public class LoginController extends Controller {
         }
     }
 
-    public Promise<Result> inoLogin(){
+    public Promise<Result> inoReaderLogin(){
         String email = request().body().asFormUrlEncoded().get("email")[0];
         String password = request().body().asFormUrlEncoded().get("password")[0];
         Credentials credentials = new Credentials();
@@ -48,17 +48,27 @@ public class LoginController extends Controller {
         });
     }
 
+    public Promise<Result> oldReaderLogin(){
+        String email = request().body().asFormUrlEncoded().get("email")[0];
+        String password = request().body().asFormUrlEncoded().get("password")[0];
+        Credentials credentials = new Credentials();
+        credentials.setUsername(email);
+        credentials.setPassword(password);
+        return loginUser(credentials, Provider.OLDREADER).recover(f -> {
+            return redirect(routes.WebController.login("Login error"));
+        });
+    }
+
     public Promise<Result> loginUser(Credentials credentials, Provider p){
         Adaptor adaptor = Adaptors.getByProvider(p);
         return adaptor.login(credentials).flatMap(
-                token -> adaptor.getUser(token).map(user -> {
+                token -> adaptor.getUser().map(user -> {
                     session("displayName", user.getDisplayName());
                     List<Long> id = new ArrayList<>();
                     JPA.withTransaction(() -> {
                         UserEntity userEntity = findUser(user, p);
                         userEntity.token = token.getRefreshToken();
                         userEntity = JPA.em().merge(userEntity);
-
                         id.add(userEntity.id); // why so hacky
                     });
                     String t = authenticator.generate(id.get(0), p, token);

@@ -4,6 +4,7 @@ import adaptors.Adaptor;
 import adaptors.exception.ApiException;
 import adaptors.model.*;
 import com.fasterxml.jackson.databind.JsonNode;
+import entities.Provider;
 import play.libs.F.Promise;
 import play.libs.Json;
 import play.libs.ws.WS;
@@ -43,6 +44,14 @@ public class FeedlyAdaptor extends Adaptor {
         init();
     }
 
+    public FeedlyAdaptor(){
+        super();
+    }
+
+    public FeedlyAdaptor(Token token){
+        super(token);
+    }
+
     private static void init(){
         feedlyUrl = parameter(FeedlyParam.URL.value);
         clientId = parameter(FeedlyParam.CLIENT_ID.value);
@@ -51,7 +60,7 @@ public class FeedlyAdaptor extends Adaptor {
     }
 
     @Override
-    public Promise<Token> login(Credentials credentials){
+    public Promise<Token> doLogin(Credentials credentials){
         JsonNode json = Json.newObject()
                 .put("grant_type", "authorization_code")
                 .put("client_id", clientId)
@@ -74,7 +83,7 @@ public class FeedlyAdaptor extends Adaptor {
     }
 
     @Override
-    public Promise<ExternalUser> getUser(Token token){
+    public Promise<ExternalUser> doGetUser(){
         return doGet(feedlyUrl + "/profile", token, response -> {
             ExternalUser user = new ExternalUser();
             JsonNode node = response.asJson();
@@ -86,9 +95,9 @@ public class FeedlyAdaptor extends Adaptor {
     }
 
     @Override
-    public Promise<List<SubscribedFeed>> getSubscribedFeeds(Token token){
+    public Promise<List<ExternalFeed>> doGetFeeds(){
         return doGet(feedlyUrl + "/subscriptions", token, response -> {
-            List<SubscribedFeed> externalSubscriptions = new ArrayList<>();
+            List<ExternalFeed> externalSubscriptions = new ArrayList<>();
             JsonNode json = response.asJson();
             if (json.isArray()){
                 for (JsonNode item : json){
@@ -102,7 +111,7 @@ public class FeedlyAdaptor extends Adaptor {
     }
 
     @Override
-    public Promise<Map<String, List<Entry>>> getUnread(List<String> feedIds, Token token){
+    public Promise<Map<String, List<Entry>>> doGetUnread(List<String> feedIds){
         return doGetFlat(feedlyUrl + "/markers/counts", token, response -> {
             JsonNode json = response.asJson();
             List<Promise<Map<String, List<Entry>>>> resultsPromises = new ArrayList<>();
@@ -110,7 +119,7 @@ public class FeedlyAdaptor extends Adaptor {
                 String feedId = feedCount.get("id").asText();
                 if (feedIds.contains(feedId)) {
                     int count = feedCount.get("count").asInt();
-                    Promise<Map<String, List<Entry>>> entries = getUnread(feedId, count, token, null);
+                    Promise<Map<String, List<Entry>>> entries = getUnread(feedId, count, null);
                     resultsPromises.add(entries);
                 }
             }
@@ -127,7 +136,7 @@ public class FeedlyAdaptor extends Adaptor {
         });
     }
 
-    private Promise<Map<String, List<Entry>>> getUnread(String feedId, int unreadCount, Token token, String continuation) {
+    private Promise<Map<String, List<Entry>>> getUnread(String feedId, int unreadCount, String continuation) {
         int count = unreadCount > MAX_ARTICLES_PER_FEED ? MAX_ARTICLES_PER_FEED : unreadCount; // TODO inform user
         String url = feedlyUrl + "/streams/" + urlEncode(feedId) + "/contents";
         url = continuation == null ? url : url + "?continuation=" + continuation;
@@ -168,7 +177,7 @@ public class FeedlyAdaptor extends Adaptor {
                         boolean hasContinuation = continuationNode != null;
                         if (hasContinuation){
                             Promise<Map<String, List<Entry>>> nextPagePromise =
-                                    getUnread(feedId, count - ret.get(feedId).size(), token, continuationNode.asText());
+                                    getUnread(feedId, count - ret.get(feedId).size(), continuationNode.asText());
                             return nextPagePromise.map(nextPage -> {
                                 ret.get(feedId).addAll(nextPage.get(feedId));
                                 return ret;
@@ -188,7 +197,8 @@ public class FeedlyAdaptor extends Adaptor {
         return null;
     }
 
-    public Promise markAsRead(List<String> feedIds, Token token){
+    @Override
+    public Promise doMarkAsRead(List<String> feedIds){
         Map<String, Object> data = new HashMap<>();
         data.put("action", "markAsRead");
         data.put("feedIds", feedIds);
@@ -197,6 +207,11 @@ public class FeedlyAdaptor extends Adaptor {
 
         JsonNode content = Json.toJson(data);
         return doPost(feedlyUrl + "/markers", token, content, response -> "OK");
+    }
+
+    @Override
+    public Provider getProvider() {
+        return Provider.FEEDLY;
     }
 
     private static String urlEncode(String s){
@@ -234,8 +249,8 @@ public class FeedlyAdaptor extends Adaptor {
         return null;
     }
 
-    private SubscribedFeed mapFromJson(JsonNode json){
-        SubscribedFeed externalSubscription = new SubscribedFeed();
+    private ExternalFeed mapFromJson(JsonNode json){
+        ExternalFeed externalSubscription = new ExternalFeed();
         externalSubscription.setFeedId(json.get("id").asText());
         externalSubscription.setTitle(json.get("title").asText());
         return externalSubscription;

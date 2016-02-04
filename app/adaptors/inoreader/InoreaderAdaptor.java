@@ -1,25 +1,35 @@
 package adaptors.inoreader;
 
-import adaptors.Adaptor;
+import adaptors.GoogleReaderTypeAdaptor;
 import adaptors.exception.ApiException;
 import adaptors.model.*;
-import com.fasterxml.jackson.databind.JsonNode;
+import entities.Provider;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.http.HttpStatus;
 import play.libs.F.Promise;
 import play.libs.ws.WS;
+import play.libs.ws.WSResponse;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
-public class InoreaderAdaptor extends Adaptor {
+public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
 
     private static final String URL = "https://www.inoreader.com/reader/api/0";
     private static final String APP_ID = "1000001083";
     private static final String APP_KEY = "LiFY_ZeWCm70HT62kN17wnQlki3BjJtX";
 
+    public InoreaderAdaptor(){
+
+    }
+
+    public InoreaderAdaptor(Token token) {
+        super(token);
+    }
+
     @Override
-    public Promise<Token> login(Credentials credentials) {
+    public Promise<Token> doLogin(Credentials credentials) {
         return WS.url("https://www.inoreader.com/accounts/ClientLogin")
                 .setHeader("AppId", APP_ID)
                 .setHeader("AppKey", APP_KEY)
@@ -38,71 +48,44 @@ public class InoreaderAdaptor extends Adaptor {
                 });
     }
 
-    private String extractToken(byte[] response){
-        String s = new String(response);
-        String[] params = s.split("\n");
-        for (String param : params){
-            String[] p = param.split("=");
-            if (p.length == 2 && p[0].equals("Auth")){
-                return p[1];
-            }
-        }
-        return null;
+    @Override
+    public Promise<ExternalUser> doGetUser() {
+        return get("/user-info", response -> toUser(response.asJson()));
     }
 
     @Override
-    public Promise<ExternalUser> getUser(Token token) {
-        return WS.url(URL + "/user-info")
-                .setHeader("AppId", APP_ID)
-                .setHeader("AppKey", APP_KEY)
-                .setHeader("Authorization", "GoogleLogin auth=" + token.getAccessToken())
-                .get()
-                .map(response -> {
-                    if (isOk(response.getStatus())) {
-                        ExternalUser user = new ExternalUser();
-                        JsonNode node = response.asJson();
-                        user.setId(node.get("userId").asText());
-                        user.setUserName(node.get("userEmail").asText());
-                        user.setDisplayName(node.get("userName").asText());
-                        return user;
-                    } else {
-                        throw new ApiException(response.getStatus(), response.getBody());
-                    }
-                });
+    public Promise<List<ExternalFeed>> doGetFeeds() {
+        return get("/subscription/list", response ->  toFeeds(response.asJson()));
     }
 
-    @Override
-    public Promise<List<SubscribedFeed>> getSubscribedFeeds(Token token) {
-        return WS.url(URL + "/subscription/list")
+    private <T> Promise<T> get(String url, Function<WSResponse, T> callback){
+        Promise<WSResponse> res =  WS.url(URL + url)
                 .setHeader("AppId", APP_ID)
                 .setHeader("AppKey", APP_KEY)
                 .setHeader("Authorization", "GoogleLogin auth=" + token.getAccessToken())
-                .get()
-                .map(response -> {
+                .get();
+        return res
+                .flatMap(response -> {
                    if (isOk(response.getStatus())){
-                       JsonNode json = response.asJson();
-                       JsonNode subs = json.get("subscriptions");
-                       List<SubscribedFeed> externalSubscriptions = new ArrayList<>();
-                       for (JsonNode sub : subs){
-                           SubscribedFeed externalSubscription = new SubscribedFeed();
-                           externalSubscription.setFeedId(sub.get("id").asText());
-                           externalSubscription.setTitle(sub.get("title").asText());
-                           externalSubscriptions.add(externalSubscription);
-                       }
-                       return externalSubscriptions;
-                    } else {
+                       return Promise.pure(callback.apply(response));
+                   } else {
                        throw new ApiException(response.getStatus(), response.getBody());
                    }
                 });
     }
 
     @Override
-    public Promise<Map<String, List<Entry>>> getUnread(List<String> feedIds, Token token) {
-        return null;
+    public Promise<Map<String, List<Entry>>> doGetUnread(List<String> feedIds) {
+        throw new NotImplementedException("bum");
     }
 
     @Override
-    public Promise markAsRead(List<String> feedIds, Token token) {
-        return null;
+    public Promise doMarkAsRead(List<String> feedIds) {
+        throw new NotImplementedException("pim");
+    }
+
+    @Override
+    public Provider getProvider() {
+        return Provider.INOREADER;
     }
 }

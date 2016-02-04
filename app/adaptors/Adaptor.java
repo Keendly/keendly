@@ -1,6 +1,7 @@
 package adaptors;
 
 import adaptors.model.*;
+import entities.Provider;
 import org.apache.http.HttpStatus;
 import play.libs.F.Promise;
 
@@ -11,11 +12,59 @@ public abstract class Adaptor {
 
     protected long timeoutInSeconds = 30;
 
-    public abstract Promise<Token> login(Credentials credentials);
-    public abstract Promise<ExternalUser> getUser(Token token);
-    public abstract Promise<List<SubscribedFeed>> getSubscribedFeeds(Token token);
-    public abstract Promise<Map<String, List<Entry>>> getUnread(List<String> feedIds, Token token);
-    public abstract Promise markAsRead(List<String> feedIds, Token token);
+    protected abstract Promise<Token> doLogin(Credentials credentials);
+    protected abstract Promise<ExternalUser> doGetUser();
+    protected abstract Promise<List<ExternalFeed>> doGetFeeds();
+    protected abstract Promise<Map<String, List<Entry>>> doGetUnread(List<String> feedIds);
+    protected abstract Promise doMarkAsRead(List<String> feedIds);
+
+    public abstract Provider getProvider();
+
+    protected Token token;
+    protected boolean isLoggedIn = false;
+
+    public Adaptor(){
+
+    }
+
+    public Adaptor(Token token){
+        this.token = token;
+        this.isLoggedIn = true;
+    }
+
+    public Promise<Token> login(Credentials credentials){
+        return this.doLogin(credentials).map(token -> {
+            this.isLoggedIn = true;
+            return token;
+        });
+    }
+
+    public Promise<ExternalUser> getUser(){
+        validateLoggedIn();
+        return doGetUser();
+    }
+
+    public Promise<List<ExternalFeed>> getFeeds(){
+        validateLoggedIn();
+        return doGetFeeds();
+    }
+
+    public Promise<Map<String, List<Entry>>> getUnread(List<String> feedIds){
+        validateLoggedIn();
+        return doGetUnread(feedIds);
+    }
+
+    public Promise<Boolean> markAsRead(List<String> feedIds){
+        validateLoggedIn();
+        return doMarkAsRead(feedIds);
+    }
+
+
+    private void validateLoggedIn(){
+        if (!isLoggedIn){
+            throw new IllegalStateException("Log in first");
+        }
+    }
 
     protected boolean isOk(int status){
         return status == HttpStatus.SC_OK;
