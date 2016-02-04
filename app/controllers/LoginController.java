@@ -1,11 +1,10 @@
 package controllers;
 
 import adaptors.Adaptor;
-import adaptors.Adaptors;
+import adaptors.AdaptorFactory;
 import adaptors.model.Credentials;
 import adaptors.model.ExternalUser;
 import auth.Authenticator;
-import com.sun.org.apache.regexp.internal.RE;
 import controllers.api.KeendlyHeader;
 import dao.UserDao;
 import entities.Provider;
@@ -60,7 +59,7 @@ public class LoginController extends Controller {
     }
 
     public Promise<Result> loginUser(Credentials credentials, Provider p){
-        Adaptor adaptor = Adaptors.getByProvider(p);
+        Adaptor adaptor = AdaptorFactory.getInstance(p);
         return adaptor.login(credentials).flatMap(
                 token -> adaptor.getUser().map(user -> {
                     session("displayName", user.getDisplayName());

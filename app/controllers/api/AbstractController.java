@@ -1,7 +1,7 @@
 package controllers.api;
 
 import adaptors.Adaptor;
-import adaptors.Adaptors;
+import adaptors.AdaptorFactory;
 import adaptors.model.Token;
 import auth.AuthToken;
 import auth.Authenticator;
@@ -19,7 +19,7 @@ public abstract class AbstractController<T> extends Controller {
 
     protected Adaptor getAdaptor(){
         Provider provider = getAuthToken().provider;
-        return Adaptors.getByProvider(provider);
+        return AdaptorFactory.getInstance(provider, getExternalToken());
     }
 
     protected Token getExternalToken(){

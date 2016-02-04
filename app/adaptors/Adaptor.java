@@ -35,6 +35,7 @@ public abstract class Adaptor {
     public Promise<Token> login(Credentials credentials){
         return this.doLogin(credentials).map(token -> {
             this.isLoggedIn = true;
+            this.token = token;
             return token;
         });
     }
