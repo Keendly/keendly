@@ -98,6 +98,31 @@ var DeliverModal = React.createClass({
   getInitialState: function() {
     return {mode: 'simple', feeds: this.getSelectedFeeds()};
   },
+  componentDidMount: function() {
+      var feedIds = []
+      $.each(this.state.feeds, function(index, value) {
+          feedIds.push(value.feedId)
+      });
+      $.ajax({
+         url: 'api/feeds/unreadCount',
+         type: "POST",
+         data: JSON.stringify(feedIds),
+         contentType: "application/json; charset=utf-8",
+         success: function(data) {
+            var newFeeds = []
+            $.each(this.state.feeds, function(index, value) {
+                $.each(data, function(feedId, unread) {
+                  if (feedId == value.feedId) {
+                    newFeeds.push({'title': value.title, 'feedId': value.feedId, 'unread': unread})
+                  }
+                });
+            });
+            this.setState({
+              feeds: newFeeds
+            });
+         }.bind(this)
+      });
+  },
   modeChangeClick: function(event) {
     this.setState({
       'mode': event.target.checked ? 'detailed' : 'simple'
@@ -120,7 +145,7 @@ var DeliverModal = React.createClass({
      $.ajax({
        url: this.props.url,
        type: "POST",
-       data: JSON.stringify({'items': this.state.feeds}),
+       data: JSON.stringify({'items': this.state.feeds}, ["items", "title", "feedId", "includeImages", "fullArticle", "markAsRead"]),
        contentType: "application/json; charset=utf-8",
        success: function() {
          $('#delivery_modal').closeModal();
@@ -223,7 +248,7 @@ var SelectedFeed_Simple = React.createClass({
     return (
       <li className='collection-item'>
         <div feed_id={feed.feedId} title={feed.title}>
-        {feed.title}
+        {feed.title}<span className="new badge">{feed.unread}</span>
         </div>
       </li>
     )
@@ -236,7 +261,7 @@ var SelectedFeed_Detailed = React.createClass({
     return (
       <li className='collection-item' key={feed.feedId}>
        <div feed_id={feed.feedId} id={feed.feedId} title={feed.title}>
-           {feed.title}
+           {feed.title}<span className="new badge">{feed.unread}</span>
          <p>
            <input type="checkbox" id={feed.feedId + 'img'} className="filled-in" defaultChecked/>
            <label htmlFor={feed.feedId + 'img'}>Include images</label>

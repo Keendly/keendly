@@ -136,6 +136,22 @@ public class FeedlyAdaptor extends Adaptor {
         });
     }
 
+    @Override
+    protected Promise<Map<String, Integer>> doGetUnreadCount(List<String> feedIds) {
+        return doGet(feedlyUrl + "/markers/counts", token, response -> {
+            JsonNode json = response.asJson();
+            Map<String, Integer> unreadCount = new HashMap<>();
+            for (JsonNode feedCount : json.get("unreadcounts")) {
+                String feedId = feedCount.get("id").asText();
+                if (feedIds.contains(feedId)) {
+                    int count = feedCount.get("count").asInt();
+                    unreadCount.put(feedId, count);
+                }
+            }
+            return unreadCount;
+        });
+    }
+
     private Promise<Map<String, List<Entry>>> getUnread(String feedId, int unreadCount, String continuation) {
         int count = unreadCount > MAX_ARTICLES_PER_FEED ? MAX_ARTICLES_PER_FEED : unreadCount; // TODO inform user
         String url = feedlyUrl + "/streams/" + urlEncode(feedId) + "/contents";

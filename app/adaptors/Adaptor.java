@@ -16,6 +16,7 @@ public abstract class Adaptor {
     protected abstract Promise<ExternalUser> doGetUser();
     protected abstract Promise<List<ExternalFeed>> doGetFeeds();
     protected abstract Promise<Map<String, List<Entry>>> doGetUnread(List<String> feedIds);
+    protected abstract Promise<Map<String, Integer>> doGetUnreadCount(List<String> feedIds);
     protected abstract Promise doMarkAsRead(List<String> feedIds);
 
     public abstract Provider getProvider();
@@ -54,6 +55,13 @@ public abstract class Adaptor {
         validateLoggedIn();
         return doGetUnread(feedIds);
     }
+
+    public Promise<Map<String, Integer>> getUnreadCount(List<String> feedIds){
+        validateLoggedIn();
+        return doGetUnreadCount(feedIds);
+    }
+
+
 
     public Promise<Boolean> markAsRead(List<String> feedIds){
         validateLoggedIn();

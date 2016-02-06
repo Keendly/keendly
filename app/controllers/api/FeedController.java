@@ -2,6 +2,7 @@ package controllers.api;
 
 import adaptors.model.ExternalFeed;
 import adaptors.model.Token;
+import com.fasterxml.jackson.databind.JsonNode;
 import dao.DeliveryDao;
 import dao.SubscriptionDao;
 import entities.DeliveryItemEntity;
@@ -71,6 +72,17 @@ public class FeedController extends AbstractController<Feed> {
         );
     }
 
+    public Promise<Result> getUnreadCount(){
+        JsonNode node = request().body().asJson();
+        List<String> feedIds = new ArrayList<>();
+        for (JsonNode id : node){
+            feedIds.add(id.asText());
+        }
+        return getAdaptor().getUnreadCount(feedIds).map(response -> {
+            return ok(Json.toJson(response));
+        });
+    }
+
     static class FeedMapper {
 
         Feed toModel(ExternalFeed external){
@@ -80,7 +92,6 @@ public class FeedController extends AbstractController<Feed> {
 
             return feed;
         }
-
     }
 
 }

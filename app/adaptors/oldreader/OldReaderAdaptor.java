@@ -3,12 +3,14 @@ package adaptors.oldreader;
 import adaptors.GoogleReaderTypeAdaptor;
 import adaptors.exception.ApiException;
 import adaptors.model.*;
+import com.fasterxml.jackson.databind.JsonNode;
 import entities.Provider;
 import org.apache.http.HttpStatus;
 import play.libs.F.Promise;
 import play.libs.ws.WS;
 import play.libs.ws.WSResponse;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -19,7 +21,7 @@ public class OldReaderAdaptor extends GoogleReaderTypeAdaptor {
     private static final String APP_NAME = "Keendly";
 
     public OldReaderAdaptor(){
-        
+
     }
 
     public OldReaderAdaptor(Token token){
@@ -60,6 +62,20 @@ public class OldReaderAdaptor extends GoogleReaderTypeAdaptor {
     @Override
     protected Promise<Map<String, List<Entry>>> doGetUnread(List<String> feedIds) {
         return null;
+    }
+
+    @Override
+    protected Promise<Map<String, Integer>> doGetUnreadCount(List<String> feedIds) {
+        Map<String, Integer> unreadCount = new HashMap<>();
+        return get("/unread-count", response -> {
+            JsonNode node = response.asJson();
+            for (JsonNode unread : node.get("unreadcounts")){
+                if (feedIds.contains(unread.get("id").asText())){
+                    unreadCount.put(unread.get("id").asText(), unread.get("count").asInt());
+                }
+            }
+            return unreadCount;
+        });
     }
 
     @Override
