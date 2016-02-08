@@ -21,8 +21,6 @@ import static utils.ConfigUtils.parameter;
 
 public class FeedlyAdaptor extends Adaptor {
 
-    private static final int MAX_ARTICLES_PER_FEED = 100;
-
     enum FeedlyParam {
         URL("feedly.url"),
         CLIENT_ID("feedly.client_id"),
@@ -245,24 +243,6 @@ public class FeedlyAdaptor extends Adaptor {
         } catch (MalformedURLException e) {
             return false;
         }
-    }
-
-    private static String asText(JsonNode node, String field){
-        JsonNode j = node.get(field);
-        if (j != null){
-            return j.asText();
-        }
-        return null;
-    }
-
-    private static Date asDate(JsonNode node, String field){
-        JsonNode j = node.get(field);
-        if (j != null){
-            Date d = new Date();
-            d.setTime(j.asLong());
-            return d;
-        }
-        return null;
     }
 
     private ExternalFeed mapFromJson(JsonNode json){

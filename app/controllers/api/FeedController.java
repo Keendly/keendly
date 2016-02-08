@@ -72,6 +72,17 @@ public class FeedController extends AbstractController<Feed> {
         );
     }
 
+    public Promise<Result> getUnread(){
+        JsonNode node = request().body().asJson();
+        List<String> feedIds = new ArrayList<>();
+        for (JsonNode id : node){
+            feedIds.add(id.asText());
+        }
+        return getAdaptor().getUnread(feedIds).map(response -> {
+            return ok(Json.toJson(response));
+        });
+    }
+
     public Promise<Result> getUnreadCount(){
         JsonNode node = request().body().asJson();
         List<String> feedIds = new ArrayList<>();

@@ -1,16 +1,19 @@
 package adaptors;
 
 import adaptors.model.*;
+import com.fasterxml.jackson.databind.JsonNode;
 import entities.Provider;
 import org.apache.http.HttpStatus;
 import play.libs.F.Promise;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 public abstract class Adaptor {
 
-    protected long timeoutInSeconds = 30;
+    protected static final int MAX_ARTICLES_PER_FEED = 100;
+    protected static final long TIMEOUT_IN_SECONDS = 30;
 
     protected abstract Promise<Token> doLogin(Credentials credentials);
     protected abstract Promise<ExternalUser> doGetUser();
@@ -75,14 +78,32 @@ public abstract class Adaptor {
         }
     }
 
-    protected boolean isOk(int status){
+    protected static boolean isOk(int status){
         return status == HttpStatus.SC_OK;
     }
 
-    protected boolean isUnauthorized(int status){
+    protected static boolean isUnauthorized(int status){
         if (status == HttpStatus.SC_UNAUTHORIZED || status == HttpStatus.SC_FORBIDDEN){
             return true;
         }
         return false;
+    }
+
+    protected static String asText(JsonNode node, String field){
+        JsonNode j = node.get(field);
+        if (j != null){
+            return j.asText();
+        }
+        return null;
+    }
+
+    protected static Date asDate(JsonNode node, String field){
+        JsonNode j = node.get(field);
+        if (j != null){
+            Date d = new Date();
+            d.setTime(j.asLong());
+            return d;
+        }
+        return null;
     }
 }
