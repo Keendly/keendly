@@ -4,7 +4,6 @@ import adaptors.Adaptor;
 import adaptors.exception.ApiException;
 import adaptors.model.*;
 import com.fasterxml.jackson.databind.JsonNode;
-import entities.Provider;
 import play.libs.F.Promise;
 import play.libs.Json;
 import play.libs.ws.WS;
@@ -14,7 +13,10 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 import static utils.ConfigUtils.parameter;
@@ -221,11 +223,6 @@ public class FeedlyAdaptor extends Adaptor {
 
         JsonNode content = Json.toJson(data);
         return doPost(feedlyUrl + "/markers", token, content, response -> "OK");
-    }
-
-    @Override
-    public Provider getProvider() {
-        return Provider.FEEDLY;
     }
 
     private static String urlEncode(String s){

@@ -4,7 +4,6 @@ import adaptors.GoogleReaderTypeAdaptor;
 import adaptors.exception.ApiException;
 import adaptors.model.*;
 import com.fasterxml.jackson.databind.JsonNode;
-import entities.Provider;
 import org.apache.http.HttpStatus;
 import play.libs.F.Promise;
 import play.libs.ws.WS;
@@ -60,11 +59,6 @@ public class OldReaderAdaptor extends GoogleReaderTypeAdaptor {
     }
 
     @Override
-    protected Promise<Map<String, List<Entry>>> doGetUnread(List<String> feedIds) {
-        return null;
-    }
-
-    @Override
     protected Promise<Map<String, Integer>> doGetUnreadCount(List<String> feedIds) {
         Map<String, Integer> unreadCount = new HashMap<>();
         return get("/unread-count", response -> {
@@ -83,8 +77,9 @@ public class OldReaderAdaptor extends GoogleReaderTypeAdaptor {
         return null;
     }
 
-    private <T> Promise<T> get(String url, Function<WSResponse, T> callback){
-        Promise<WSResponse> res =  WS.url(URL + url + "?output=json")
+    @Override
+    protected <T> Promise<T> get(String url, Function<WSResponse, T> callback){
+        Promise<WSResponse> res =  WS.url(URL + normalizeURL(url))
                 .setHeader("Authorization", "GoogleLogin auth=" + token.getAccessToken())
                 .get();
         return res
@@ -98,7 +93,25 @@ public class OldReaderAdaptor extends GoogleReaderTypeAdaptor {
     }
 
     @Override
-    public Provider getProvider() {
-        return Provider.OLDREADER;
+    protected <T> Promise<T> getFlat(String url, Function<WSResponse, Promise<T>> callback){
+        Promise<WSResponse> res =  WS.url(URL + normalizeURL(url))
+                .setHeader("Authorization", "GoogleLogin auth=" + token.getAccessToken())
+                .get();
+        return res
+                .flatMap(response -> {
+                    if (isOk(response.getStatus())){
+                        return callback.apply(response);
+                    } else {
+                        throw new ApiException(response.getStatus(), response.getBody());
+                    }
+                });
+    }
+
+    private static String normalizeURL(String url){
+        if (url.contains("?")){
+            return url + "&output=json";
+        } else {
+            return url + "?output=json";
+        }
     }
 }

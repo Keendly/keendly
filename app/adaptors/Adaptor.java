@@ -2,7 +2,6 @@ package adaptors;
 
 import adaptors.model.*;
 import com.fasterxml.jackson.databind.JsonNode;
-import entities.Provider;
 import org.apache.http.HttpStatus;
 import play.libs.F.Promise;
 
@@ -21,8 +20,6 @@ public abstract class Adaptor {
     protected abstract Promise<Map<String, List<Entry>>> doGetUnread(List<String> feedIds);
     protected abstract Promise<Map<String, Integer>> doGetUnreadCount(List<String> feedIds);
     protected abstract Promise doMarkAsRead(List<String> feedIds);
-
-    public abstract Provider getProvider();
 
     protected Token token;
     protected boolean isLoggedIn = false;

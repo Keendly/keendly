@@ -2,17 +2,20 @@ package adaptors.inoreader;
 
 import adaptors.GoogleReaderTypeAdaptor;
 import adaptors.exception.ApiException;
-import adaptors.model.*;
+import adaptors.model.Credentials;
+import adaptors.model.ExternalFeed;
+import adaptors.model.ExternalUser;
+import adaptors.model.Token;
 import com.fasterxml.jackson.databind.JsonNode;
-import entities.Provider;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.http.HttpStatus;
 import play.libs.F.Promise;
 import play.libs.ws.WS;
 import play.libs.ws.WSResponse;
 
-import java.net.URLEncoder;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
@@ -59,7 +62,8 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
         return get("/subscription/list", response ->  toFeeds(response.asJson()));
     }
 
-    private <T> Promise<T> get(String url, Function<WSResponse, T> callback){
+    @Override
+    protected  <T> Promise<T> get(String url, Function<WSResponse, T> callback){
         Promise<WSResponse> res =  WS.url(URL + url)
                 .setHeader("AppId", APP_ID)
                 .setHeader("AppKey", APP_KEY)
@@ -75,7 +79,8 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
                 });
     }
 
-    private <T> Promise<T> getFlat(String url, Function<WSResponse, Promise<T>> callback){
+    @Override
+    protected <T> Promise<T> getFlat(String url, Function<WSResponse, Promise<T>> callback){
         Promise<WSResponse> res =  WS.url(URL + url)
                 .setHeader("AppId", APP_ID)
                 .setHeader("AppKey", APP_KEY)
@@ -89,89 +94,6 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
                         throw new ApiException(response.getStatus(), response.getBody());
                     }
                 });
-    }
-
-    @Override
-    public Promise<Map<String, List<Entry>>> doGetUnread(List<String> feedIds) {
-        return getUnreadCount(feedIds).flatMap(unreadCounts -> {
-            List<Promise<Map<String, List<Entry>>>> resultsPromises = new ArrayList<>();
-            for (Map.Entry<String, Integer> entry : unreadCounts.entrySet()){
-                Promise<Map<String, List<Entry>>> entries = doGetUnread(entry.getKey(), entry.getValue(), null);
-                resultsPromises.add(entries);
-            }
-
-            return Promise.sequence(resultsPromises).map(ret -> {
-                Map<String, List<Entry>> entries = new HashMap<>();
-                for (Map<String, List<Entry>> entry : ret) {
-                    for (Map.Entry<String, List<Entry>> mapEntry : entry.entrySet()) {
-                        entries.put(mapEntry.getKey(), mapEntry.getValue());
-                    }
-                }
-                return entries;
-            });
-        });
-    }
-
-    private Promise<Map<String, List<Entry>>> doGetUnread(String feedId, int unreadCount, String continuation){
-        int count = unreadCount > MAX_ARTICLES_PER_FEED ? MAX_ARTICLES_PER_FEED : unreadCount; // TODO inform user
-        String url ="/stream/contents/" + URLEncoder.encode(feedId) + "?xt=user/-/state/com.google/read";
-        url = continuation == null ? url : url + "&continuation=" + continuation;
-        return getFlat(url, response -> {
-            JsonNode items = response.asJson().get("items");
-            if (items == null){
-                return Promise.pure(Collections.emptyMap());
-            }
-            List<Entry> entries = new ArrayList<>();
-            for (JsonNode item : items){
-                Entry entry = new Entry();
-                entry.setUrl(extractArticleUrl(item));
-                entry.setTitle(asText(item, "title"));
-                entry.setAuthor(asText(item, "author"));
-                entry.setPublished(asDate(item, "published"));
-                entry.setContent(extractContent(item));
-                entries.add(entry);
-            }
-            Map<String, List<Entry>> ret = new HashMap<>();
-            ret.put(feedId, entries);
-            if (ret.size() < count){
-                JsonNode continuationNode = response.asJson().get("continuation");
-                boolean hasContinuation = continuationNode != null;
-                if (hasContinuation){
-                    Promise<Map<String, List<Entry>>> nextPagePromise =
-                            doGetUnread(feedId, count - ret.get(feedId).size(), continuationNode.asText());
-                    return nextPagePromise.map(nextPage -> {
-                        ret.get(feedId).addAll(nextPage.get(feedId));
-                        return ret;
-                    });
-                }
-            }
-
-            return Promise.pure(ret);
-        });
-    }
-
-    private String extractArticleUrl(JsonNode node){
-        if (node.get("alternate") != null){
-            for (JsonNode alternate : node.get("alternate")) {
-                if (alternate.get("type").asText().equals("text/html")) {
-                    return alternate.get("href").asText();
-                }
-            }
-        } else if (node.get("canonical") != null) {
-            for (JsonNode canonical : node.get("canonical")) {
-                return canonical.get("href").asText();
-            }
-        }
-        return null;
-    }
-
-    private String extractContent(JsonNode item){
-        if (item.get("content") != null && item.get("content").get("content") != null){
-            return item.get("content").get("content").asText();
-        } else if (item.get("summary") != null && item.get("summary").get("content") != null){
-            return item.get("summary").get("content").asText();
-        }
-        return null;
     }
 
     @Override
@@ -191,10 +113,5 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
     @Override
     public Promise doMarkAsRead(List<String> feedIds) {
         throw new NotImplementedException("pim");
-    }
-
-    @Override
-    public Provider getProvider() {
-        return Provider.INOREADER;
     }
 }
