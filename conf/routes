@@ -18,6 +18,7 @@ GET     /api/deliveries                 controllers.api.DeliveryController.getDe
 GET     /api/feeds                      controllers.api.FeedController.getFeeds()
 POST    /api/feeds/unread               controllers.api.FeedController.getUnread()
 POST    /api/feeds/unreadCount          controllers.api.FeedController.getUnreadCount()
+POST    /api/feeds/markAsRead           controllers.api.FeedController.markAsRead()
 
 GET     /api/users/:id                  controllers.api.UserController.getUser(id: String)
 PATCH   /api/users/:id                  controllers.api.UserController.updateUser(id: String)

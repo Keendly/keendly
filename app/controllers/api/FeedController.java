@@ -19,10 +19,13 @@ import play.mvc.With;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @With(SecuredAction.class)
 public class FeedController extends AbstractController<Feed> {
+
+    private static Logger LOG = Logger.getLogger(FeedController.class.getCanonicalName());
 
     private SubscriptionDao subscriptionDao = new SubscriptionDao();
     private DeliveryDao deliveryDao = new DeliveryDao();
@@ -91,6 +94,20 @@ public class FeedController extends AbstractController<Feed> {
         }
         return getAdaptor().getUnreadCount(feedIds).map(response -> {
             return ok(Json.toJson(response));
+        });
+    }
+
+    public Promise<Result> markAsRead(){
+        JsonNode node = request().body().asJson();
+        List<String> feedIds = new ArrayList<>();
+        for (JsonNode id : node){
+            feedIds.add(id.asText());
+        }
+        return getAdaptor().markAsRead(feedIds).map(response -> {
+            if (!response){
+                LOG.warning(String.format("Marking as read not successfull for: %s", node.toString()));
+            }
+            return ok();
         });
     }
 

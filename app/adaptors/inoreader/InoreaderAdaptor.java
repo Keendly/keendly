@@ -7,12 +7,12 @@ import adaptors.model.ExternalFeed;
 import adaptors.model.ExternalUser;
 import adaptors.model.Token;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.http.HttpStatus;
 import play.libs.F.Promise;
 import play.libs.ws.WS;
 import play.libs.ws.WSResponse;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,11 +64,7 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
 
     @Override
     protected  <T> Promise<T> get(String url, Function<WSResponse, T> callback){
-        Promise<WSResponse> res =  WS.url(URL + url)
-                .setHeader("AppId", APP_ID)
-                .setHeader("AppKey", APP_KEY)
-                .setHeader("Authorization", "GoogleLogin auth=" + token.getAccessToken())
-                .get();
+        Promise<WSResponse> res = getGetPromise(url);
         return res
                 .flatMap(response -> {
                    if (isOk(response.getStatus())){
@@ -81,11 +77,7 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
 
     @Override
     protected <T> Promise<T> getFlat(String url, Function<WSResponse, Promise<T>> callback){
-        Promise<WSResponse> res =  WS.url(URL + url)
-                .setHeader("AppId", APP_ID)
-                .setHeader("AppKey", APP_KEY)
-                .setHeader("Authorization", "GoogleLogin auth=" + token.getAccessToken())
-                .get();
+        Promise<WSResponse> res = getGetPromise(url);
         return res
                 .flatMap(response -> {
                     if (isOk(response.getStatus())){
@@ -94,6 +86,14 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
                         throw new ApiException(response.getStatus(), response.getBody());
                     }
                 });
+    }
+
+    private Promise<WSResponse> getGetPromise(String url) {
+        return WS.url(URL + url)
+                .setHeader("AppId", APP_ID)
+                .setHeader("AppKey", APP_KEY)
+                .setHeader("Authorization", "GoogleLogin auth=" + token.getAccessToken())
+                .get();
     }
 
     @Override
@@ -112,6 +112,20 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
 
     @Override
     public Promise doMarkAsRead(List<String> feedIds) {
-        throw new NotImplementedException("pim");
+        List<Promise<WSResponse>> promises = new ArrayList<>();
+
+        for (String feedId : feedIds){
+            Promise<WSResponse> promise = getGetPromise("/mark-all-as-read?s=" + feedId);
+            promises.add(promise);
+        }
+
+        return Promise.sequence(promises).map(responses -> {
+            for (WSResponse response : responses){
+                if (response.getStatus() != HttpStatus.SC_OK){
+                    return Boolean.FALSE;
+                }
+            }
+            return Boolean.TRUE;
+        });
     }
 }

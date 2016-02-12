@@ -9,6 +9,7 @@ import play.libs.F.Promise;
 import play.libs.ws.WS;
 import play.libs.ws.WSResponse;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,8 +74,30 @@ public class OldReaderAdaptor extends GoogleReaderTypeAdaptor {
     }
 
     @Override
-    protected Promise doMarkAsRead(List<String> feedIds) {
-        return null;
+    protected Promise<Boolean> doMarkAsRead(List<String> feedIds) {
+        List<Promise<WSResponse>> promises = new ArrayList<>();
+
+        for (String feedId : feedIds){
+            Map<String, Object> data = new HashMap<>();
+            data.put("s", feedId);
+            data.put("ts", String.valueOf(System.currentTimeMillis()));
+
+            Promise<WSResponse> promise = WS.url(URL + "/mark-all-as-read")
+                    .setHeader("Authorization", "GoogleLogin auth=" + token.getAccessToken())
+                    .setHeader("Content-Type", "application/x-www-form-urlencoded")
+                    .post("s=" + feedId + "&ts=" + String.valueOf(System.currentTimeMillis()));
+
+            promises.add(promise);
+        }
+
+        return Promise.sequence(promises).map(responses -> {
+            for (WSResponse response : responses){
+                if (response.getStatus() != HttpStatus.SC_OK){
+                    return Boolean.FALSE;
+                }
+            }
+            return Boolean.TRUE;
+        });
     }
 
     @Override
