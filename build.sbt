@@ -16,7 +16,9 @@ libraryDependencies ++= Seq(
   "org.powermock" % "powermock-api-mockito" % "1.6.2",
   "org.powermock" % "powermock-module-junit4" % "1.6.2",
   "postgresql" % "postgresql" % "9.1-901.jdbc4",
-  "io.jsonwebtoken" % "jjwt" % "0.6.0"
+  "io.jsonwebtoken" % "jjwt" % "0.6.0",
+  "com.google.protobuf" % "protobuf-java" % "2.6.1",
+  "com.amazonaws" % "aws-java-sdk-s3" % "1.10.52"
 )
 
 // Play provides two styles of routers, one expects its actions to be injected, the
