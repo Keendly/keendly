@@ -27,6 +27,10 @@ public abstract class AbstractController<T> extends Controller {
         return new Token(token.refreshToken, token.accessToken);
     }
 
+    /**
+     * Utility method to be used when creating new entities and we need to set up relation with current user.
+     * @return Fake UserEntity object
+     */
     protected UserEntity getUserEntity(){
         UserEntity userEntity = new UserEntity();
         AuthToken token = getAuthToken();

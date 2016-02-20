@@ -19,7 +19,7 @@ public class UserController extends AbstractController<User> {
     private UserDao userDao = new UserDao();
 
     @With(SecuredAction.class)
-    public Result getUser(String id)throws Exception{
+    public Result getUser(String id) throws Exception{
         List<User> users = new ArrayList<>();
         JPA.withTransaction(() -> {
             UserEntity userEntity = lookupUser(id);
@@ -59,7 +59,10 @@ public class UserController extends AbstractController<User> {
         return ok();
     }
 
-    private UserEntity lookupUser(String id){
+    /**
+     * HACK for deliveryEmail check in DeliveryController, should not be public probably
+     */
+    public UserEntity lookupUser(String id){
         Long userId;
         if (SELF.equals(id)){
             userId = getUserEntity().id;

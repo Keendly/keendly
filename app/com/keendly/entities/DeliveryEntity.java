@@ -31,4 +31,7 @@ public class DeliveryEntity extends BaseEntity {
     @ManyToOne(optional = true)
     @JoinColumn(name = "subscription_id", referencedColumnName = "id")
     public SubscriptionEntity subscription;
+
+    @Column
+    public String s3Dir;
 }

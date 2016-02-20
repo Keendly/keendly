@@ -17,7 +17,7 @@ import play.libs.Json;
 import play.libs.ws.WS;
 import play.libs.ws.WSRequest;
 import play.libs.ws.WSResponse;
-import utils.ConfigUtils;
+import com.keendly.utils.ConfigUtils;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -58,7 +58,7 @@ public class FeedlyAdaptorTest {
                         "\"token_type\":\"Bearer\"," +
                         "\"provider\":\"GooglePlus\"" +
                 "}";
-        mockPOST("/auth/token", json, HttpStatus.SC_OK);
+        mockPOST("/com/keendly/auth/token", json, HttpStatus.SC_OK);
 
         // when
         Promise<Token> tokensPromise = feedlyAdaptor.getTokens("doesnt_matter");
@@ -73,7 +73,7 @@ public class FeedlyAdaptorTest {
     @Test(expected = ApiException.class)
     public void getTokenByCode_notOkFeedlyResponse(){
         // given
-        mockPOST("/auth/token", StringUtils.EMPTY, HttpStatus.SC_INTERNAL_SERVER_ERROR);
+        mockPOST("/com/keendly/auth/token", StringUtils.EMPTY, HttpStatus.SC_INTERNAL_SERVER_ERROR);
 
         // when
         Promise<Token> tokensPromise = feedlyAdaptor.getTokens("doesnt_matter");
@@ -124,7 +124,7 @@ public class FeedlyAdaptorTest {
                 "{" +
                         "\"access_token\":\"newAccessToken\"" +
                 "}";
-        mockPOST("/auth/token", refreshTokenResponse, HttpStatus.SC_OK);
+        mockPOST("/com/keendly/auth/token", refreshTokenResponse, HttpStatus.SC_OK);
         Token token = new Token();
 
         // when
@@ -134,14 +134,14 @@ public class FeedlyAdaptorTest {
         // then
         assertEquals("newAccessToken", token.getAccessToken());
         PowerMockito.verifyStatic();
-        WS.url(FEEDLY_URL + "/auth/token"); // refresh token called
+        WS.url(FEEDLY_URL + "/com/keendly/auth/token"); // refresh token called
     }
 
     @Test(expected = ApiException.class)
     public void getUser_refreshTokenExpired(){
         // given
         mockGET("/profile", StringUtils.EMPTY, HttpStatus.SC_UNAUTHORIZED);
-        mockPOST("/auth/token", StringUtils.EMPTY, HttpStatus.SC_UNAUTHORIZED);
+        mockPOST("/com/keendly/auth/token", StringUtils.EMPTY, HttpStatus.SC_UNAUTHORIZED);
 
         // when
         Promise<ExternalUser> userPromise = feedlyAdaptor.getUser(new Token());

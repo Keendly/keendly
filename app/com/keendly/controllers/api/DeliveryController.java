@@ -2,16 +2,18 @@ package com.keendly.controllers.api;
 
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.keendly.adaptors.model.Entry;
 import com.keendly.dao.DeliveryDao;
 import com.keendly.entities.DeliveryArticleEntity;
 import com.keendly.entities.DeliveryEntity;
 import com.keendly.entities.DeliveryItemEntity;
+import com.keendly.entities.UserEntity;
 import com.keendly.mappers.MappingMode;
 import com.keendly.model.Delivery;
 import com.keendly.model.DeliveryArticle;
 import com.keendly.model.DeliveryItem;
 import com.keendly.schema.DeliveryProtos;
+import com.keendly.schema.utils.Mapper;
+import com.keendly.utils.ConfigUtils;
 import play.db.jpa.JPA;
 import play.libs.F.Promise;
 import play.libs.Json;
@@ -20,10 +22,11 @@ import play.mvc.With;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -33,13 +36,27 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
 
     private static Logger LOG = Logger.getLogger(DeliveryController.class.getCanonicalName());
 
+    private static String S3_BUCKET = ConfigUtils.parameter("s3.bucket_name");
+    private static String S3_PATH = ConfigUtils.parameter("s3.delivery_path");
+
+    private AmazonS3Client amazonS3Client = new AmazonS3Client();
+
     private DeliveryDao deliveryDao = new DeliveryDao();
     private DeliveryMapper deliveryMapper = new DeliveryMapper();
 
-    private static AmazonS3Client amazonS3Client = new AmazonS3Client();
-
     public Promise<Result> createDelivery() {
-        // validate if delivery email is configured
+        // HACK WARNING
+        StringBuilder deliveryEmail = new StringBuilder();
+        JPA.withTransaction(() -> {
+            UserEntity userEntity = new UserController().lookupUser("self");
+            if (userEntity.deliveryEmail != null){
+                deliveryEmail.append(userEntity.deliveryEmail);
+            }
+        });
+        if (deliveryEmail.toString().isEmpty()){
+            return Promise.pure(badRequest());
+        }
+
         Delivery delivery = fromRequest();
         DeliveryEntity deliveryEntity = deliveryMapper.toEntity(delivery);
         JPA.withTransaction(() ->  deliveryDao.createDelivery(deliveryEntity));
@@ -47,45 +64,35 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
         List<String> feedIds = delivery.items.stream().map(item -> item.feedId).collect(Collectors.toList());
         return getAdaptor().getUnread(feedIds).map(unread -> {
 
-            DeliveryProtos.DeliveryRequest.Builder builder = DeliveryProtos.DeliveryRequest.newBuilder()
-                    .setId(deliveryEntity.id)
-                   // .setEmail(getUserEntity().deliveryEmail)
-                    .setTimestamp(System.currentTimeMillis());
-            for (Map.Entry<String, List<Entry>> unreadFeed : unread.entrySet()){
-                DeliveryItem deliveryItem
-                        = delivery.items.stream().filter(item -> item.feedId.equals(unreadFeed.getKey())).findFirst().get();
+            DeliveryProtos.DeliveryRequest deliveryRequest
+                    = Mapper.mapToDeliveryRequest(delivery, unread, deliveryEntity.id, deliveryEmail.toString());
 
-                DeliveryProtos.DeliveryRequest.Item.Builder itemBuilder
-                        = DeliveryProtos.DeliveryRequest.Item.newBuilder()
-                        .setFeedId(unreadFeed.getKey())
-                        .setTitle(deliveryItem.title)
-                        .setWithImages(deliveryItem.includeImages)
-                        .setMarkAsRead(deliveryItem.markAsRead)
-                        .setFullArticle(deliveryItem.fullArticle);
-
-                for (Entry article : unreadFeed.getValue()){
-                    DeliveryProtos.DeliveryRequest.Item.Article article1
-                            = DeliveryProtos.DeliveryRequest.Item.Article.newBuilder()
-                            .setUrl(article.getUrl())
-                            .setTitle(article.getTitle())
-                            .setAuthor(article.getAuthor())
-                            .setTimestamp(article.getPublished().getTime())
-                            .setContent(article.getContent()).build();
-
-                    itemBuilder.addArticles(article1);
-                }
-
-                builder.addItems(itemBuilder.build());
+            try {
+                String uid = generateDirName();
+                storeInS3(deliveryRequest, uid);
+                deliveryEntity.s3Dir = uid;
+                JPA.withTransaction(() -> deliveryDao.updateDelivery(deliveryEntity));
+                LOG.fine(String.format("Delivery request for id %d stored in s3 dir %s", deliveryEntity.id, uid));
+            } catch (Exception e){
+                LOG.severe("Error storing delivery request to S3");
+                LOG.severe(e.getMessage());
+                return internalServerError();
             }
 
-            File f = new File("/tmp/elo");
-            DeliveryProtos.DeliveryRequest deliveryRequest = builder.build();
-            FileOutputStream fos = new FileOutputStream(f);
-            deliveryRequest.writeTo(fos);
-
-            amazonS3Client.putObject(new PutObjectRequest("keendly", "delivery.request", f));
-           return status(202);
+           return status(202); // 'Accepted' because delivery happens asynchronously
         });
+    }
+
+    private String generateDirName(){
+        return UUID.randomUUID().toString().replaceAll("-", "");
+    }
+
+    private void storeInS3(DeliveryProtos.DeliveryRequest deliveryRequest, String uid) throws IOException {
+        File f = new File("/tmp/" + uid);
+        f.createNewFile();
+        FileOutputStream fos = new FileOutputStream(f);
+        deliveryRequest.writeTo(fos);
+        amazonS3Client.putObject(new PutObjectRequest(S3_BUCKET, S3_PATH + "/" + uid + "/delivery.req", f));
     }
 
     public Promise<Result> updateDelivery(Long id) {
