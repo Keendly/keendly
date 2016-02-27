@@ -14,6 +14,7 @@ import com.keendly.model.DeliveryItem;
 import com.keendly.schema.DeliveryProtos;
 import com.keendly.schema.utils.Mapper;
 import com.keendly.utils.ConfigUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import play.db.jpa.JPA;
 import play.libs.F.Promise;
 import play.libs.Json;
@@ -23,10 +24,11 @@ import play.mvc.With;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -83,8 +85,10 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
         });
     }
 
+    private SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmssS");
     private String generateDirName(){
-        return UUID.randomUUID().toString().replaceAll("-", "");
+        String d = format.format(new Date());
+        return d + "_" + RandomStringUtils.randomAlphanumeric(5);
     }
 
     private void storeInS3(DeliveryProtos.DeliveryRequest deliveryRequest, String uid) throws IOException {
