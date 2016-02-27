@@ -70,7 +70,7 @@ var Delivery = React.createClass({
     return (
       <tr>
         <td>
-            {items != null ? items : ''}
+            {items != null ? items.join(" | ") : ''}
         </td>
         <td>
             {this.props.date != null ? moment(this.props.date).format('llll') : ''}
