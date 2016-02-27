@@ -1,5 +1,6 @@
 package com.keendly.adaptors;
 
+import com.google.common.net.UrlEscapers;
 import com.keendly.adaptors.model.Entry;
 import com.keendly.adaptors.model.ExternalFeed;
 import com.keendly.adaptors.model.ExternalUser;
@@ -48,7 +49,7 @@ public abstract class GoogleReaderTypeAdaptor extends Adaptor {
 
     private F.Promise<Map<String, List<Entry>>> doGetUnread(String feedId, int unreadCount, String continuation){
         int count = unreadCount > MAX_ARTICLES_PER_FEED ? MAX_ARTICLES_PER_FEED : unreadCount; // TODO inform user
-        String url ="/stream/contents/" + feedId + "?xt=user/-/state/com.google/read";
+        String url ="/stream/contents/" + UrlEscapers.urlPathSegmentEscaper().escape(feedId) + "?xt=user/-/state/com.google/read";
         url = continuation == null ? url : url + "&continuation=" + continuation;
         return getFlat(url, response -> {
             JsonNode items = response.asJson().get("items");
