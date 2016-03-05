@@ -168,3 +168,16 @@ body > #wrapper {
 .login_btns {
   box-sizing: unset
 }
+
+span.badge {
+  float: right;
+  right: 0;
+  position: static;
+}
+
+.error-icon {
+  float: right;
+  color: red;
+  line-height: unset;
+  margin-right: 3px;
+}

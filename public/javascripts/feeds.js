@@ -120,6 +120,7 @@ var DeliverModal = React.createClass({
             this.setState({
               feeds: newFeeds
             });
+            $('.tooltipped').tooltip({delay: 50});
          }.bind(this)
       });
   },
@@ -249,6 +250,12 @@ var SelectedFeed_Simple = React.createClass({
       <li className='collection-item'>
         <div feed_id={feed.feedId} title={feed.title}>
         {feed.title}<span className="new badge">{feed.unread}</span>
+        {function(){
+          if (feed.unread > 100) {
+            return <i className="tiny material-icons error-icon tooltipped" data-position="left" data-delay="50" data-tooltip="Only 100 will be delivered">error_outline</i>
+          }
+        }.call(this)
+        }
         </div>
       </li>
     )
