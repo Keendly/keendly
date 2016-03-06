@@ -50,7 +50,7 @@ public abstract class GoogleReaderTypeAdaptor extends Adaptor {
     private F.Promise<Map<String, List<Entry>>> doGetUnread(String feedId, int unreadCount, String continuation){
         int count = unreadCount > MAX_ARTICLES_PER_FEED ? MAX_ARTICLES_PER_FEED : unreadCount; // TODO inform user
         String url ="/stream/contents/" + UrlEscapers.urlPathSegmentEscaper().escape(feedId) + "?xt=user/-/state/com.google/read";
-        url = continuation == null ? url : url + "&continuation=" + continuation;
+        url = continuation == null ? url : url + "&c=" + continuation;
         return getFlat(url, response -> {
             JsonNode items = response.asJson().get("items");
             if (items == null){
@@ -68,7 +68,7 @@ public abstract class GoogleReaderTypeAdaptor extends Adaptor {
             }
             Map<String, List<Entry>> ret = new HashMap<>();
             ret.put(feedId, entries);
-            if (ret.size() < count){
+            if (ret.get(feedId).size() < count){
                 JsonNode continuationNode = response.asJson().get("continuation");
                 boolean hasContinuation = continuationNode != null;
                 if (hasContinuation){
