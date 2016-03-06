@@ -2,6 +2,8 @@ package com.keendly.controllers.api;
 
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.keendly.controllers.api.error.Error;
 import com.keendly.dao.DeliveryDao;
 import com.keendly.entities.DeliveryArticleEntity;
 import com.keendly.entities.DeliveryEntity;
@@ -25,10 +27,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -40,6 +39,8 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
 
     private static String S3_BUCKET = ConfigUtils.parameter("s3.bucket_name");
     private static String S3_PATH = ConfigUtils.parameter("s3.delivery_path");
+
+    private static int MAX_FEEDS_IN_DELIVERY = 20;
 
     private AmazonS3Client amazonS3Client = new AmazonS3Client();
 
@@ -56,10 +57,15 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
             }
         });
         if (deliveryEmail.toString().isEmpty()){
-            return Promise.pure(badRequest());
+            return Promise.pure(badRequest(toJson(Error.DELIVERY_EMAIL_NOT_CONFIGURED)));
         }
 
         Delivery delivery = fromRequest();
+
+        if (delivery.items.size() > MAX_FEEDS_IN_DELIVERY){
+            return Promise.pure(badRequest(toJson(Error.TOO_MANY_ITEMS, MAX_FEEDS_IN_DELIVERY)));
+        }
+
         DeliveryEntity deliveryEntity = deliveryMapper.toEntity(delivery);
         JPA.withTransaction(() ->  deliveryDao.createDelivery(deliveryEntity));
 
@@ -83,6 +89,13 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
 
            return status(202); // 'Accepted' because delivery happens asynchronously
         });
+    }
+
+    private JsonNode toJson(Error error, Object... msgParams){
+        Map<String, String> map = new HashMap<>();
+        map.put("code", error.name());
+        map.put("description", String.format(error.getMessage(), msgParams));
+        return Json.toJson(map);
     }
 
     private SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmssS");
