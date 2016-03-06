@@ -114,13 +114,23 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
 
     public Promise<Result> updateDelivery(Long id) {
         Delivery delivery = fromRequest();
+
+        boolean[] updateAllowed = {false};
         JPA.withTransaction(() -> {
             DeliveryEntity currentEntity = deliveryDao.getDelivery(id);
-            deliveryMapper.toEntity(delivery, currentEntity);
-            deliveryDao.updateDelivery(currentEntity);
+            if (getUserEntity().id == currentEntity.user.id || isAdminToken()){
+                deliveryMapper.toEntity(delivery, currentEntity);
+                deliveryDao.updateDelivery(currentEntity);
+                updateAllowed[0] = true;
+            }
         });
 
-        return Promise.pure(ok());
+        if (updateAllowed[0]){
+            return Promise.pure(ok());
+        } else {
+            return Promise.pure(unauthorized());
+        }
+
     }
 
     public Promise<Result> getDelivery(Long id) {

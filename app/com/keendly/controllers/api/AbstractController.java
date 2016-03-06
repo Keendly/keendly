@@ -6,6 +6,7 @@ import com.keendly.adaptors.model.Token;
 import com.keendly.auth.AuthToken;
 import com.keendly.auth.Authenticator;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.keendly.auth.TokenType;
 import com.keendly.entities.Provider;
 import com.keendly.entities.UserEntity;
 import play.libs.Json;
@@ -40,6 +41,11 @@ public abstract class AbstractController<T> extends Controller {
 
     private AuthToken getAuthToken(){
         return (AuthToken) ctx().args.get("token");
+    }
+
+    protected boolean isAdminToken(){
+        AuthToken token = getAuthToken();
+        return token.type == TokenType.ADMIN;
     }
 
     protected DateTimeFormatter dateTimeFormatter(){

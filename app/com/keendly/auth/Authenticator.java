@@ -18,6 +18,7 @@ public class Authenticator {
         claims.put("accessToken", externalToken.getAccessToken());
         claims.put("refreshToken", externalToken.getRefreshToken());
         claims.put("provider", provider.name());
+        claims.put("type", TokenType.USER.name());
 
         return Jwts.builder().setClaims(claims).signWith(SignatureAlgorithm.HS512, KEY).compact();
     }
@@ -29,6 +30,7 @@ public class Authenticator {
         authToken.userId = Long.valueOf(claims.get("userId", String.class));
         authToken.provider = Provider.valueOf(claims.get("provider", String.class));
         authToken.refreshToken = claims.get("refreshToken", String.class);
+        authToken.type = TokenType.valueOf(claims.get("type", String.class));
         return authToken;
     }
 }

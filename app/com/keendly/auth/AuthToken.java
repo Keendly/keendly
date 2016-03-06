@@ -8,4 +8,5 @@ public class AuthToken {
     public Provider provider;
     public String accessToken;
     public String refreshToken;
+    public TokenType type;
 }
