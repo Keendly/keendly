@@ -25,11 +25,12 @@
             <div class='error_div' style="margin: auto; text-align: center; width: 50%">@error</div>
         }
         <div class="login_btns">
-            <a class="button primary feedly" href="@play.Play.application().configuration().getString("feedly.url")/auth/auth?response_type=code&client_id=@play.Play.application().configuration().getString("feedly.client_id")&redirect_uri=@play.Play.application().configuration().getString("feedly.redirect_uri")&scope=https://cloud.feedly.com/subscriptions">Log in with <b>Feedly</b></a>
             <a class="button primary inoreader modal-trigger" href="#inoreader_modal">Log in with <b>Inoreader</b></a>
             <a class="button primary oldreader modal-trigger" href="#oldreader_modal">Log in with <b>The Old Reader</b></a>
+            <!--<a class="button primary feedly disabled" href="@play.Play.application().configuration().getString("feedly.url")/auth/auth?response_type=code&client_id=@play.Play.application().configuration().getString("feedly.client_id")&redirect_uri=@play.Play.application().configuration().getString("feedly.redirect_uri")&scope=https://cloud.feedly.com/subscriptions">Log in with <b>Feedly</b></a>-->
+            <a class="button primary feedly disabled" href="#">Log in with <b>Feedly</b></a>
             <a class="button primary aol disabled" href="#">Log in with <b>AOL Reader</b></a>
-            <!--<a class="button primary digg disabled" href="#">Log in with <b>Digg Reader</b></a> -->
+            <a class="button primary digg disabled" href="#">Log in with <b>Digg Reader</b></a>
         </div>
         @inoreaderModal
         @oldreaderModal

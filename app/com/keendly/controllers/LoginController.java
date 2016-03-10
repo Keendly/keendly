@@ -10,6 +10,7 @@ import com.keendly.dao.UserDao;
 import com.keendly.entities.Provider;
 import com.keendly.entities.UserEntity;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.LoggerFactory;
 import play.Logger;
 import play.db.jpa.JPA;
 import play.libs.F;
@@ -21,6 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LoginController extends Controller {
+
+    private static final Logger.ALogger LOG = Logger.of(LoginController.class);
 
     private Authenticator authenticator = new Authenticator();
     private UserDao userDao = new UserDao();
@@ -43,6 +46,7 @@ public class LoginController extends Controller {
         credentials.setUsername(email);
         credentials.setPassword(password);
         return loginUser(credentials, Provider.INOREADER).recover(f -> {
+            LOG.error("Error loggin in with inoReader", f);
             return redirect(routes.WebController.login("Login error"));
         });
     }
@@ -54,6 +58,7 @@ public class LoginController extends Controller {
         credentials.setUsername(email);
         credentials.setPassword(password);
         return loginUser(credentials, Provider.OLDREADER).recover(f -> {
+            LOG.error("Error loggin in with theOldReader", f);
             return redirect(routes.WebController.login("Login error"));
         });
     }

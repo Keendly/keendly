@@ -28,14 +28,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 
 @With(com.keendly.controllers.api.SecuredAction.class)
 public class DeliveryController extends com.keendly.controllers.api.AbstractController<Delivery> {
 
-    private static Logger LOG = Logger.getLogger(DeliveryController.class.getCanonicalName());
+    private static final play.Logger.ALogger LOG = play.Logger.of(DeliveryController.class);
 
     private static String S3_BUCKET = ConfigUtils.parameter("s3.bucket_name");
     private static String S3_PATH = ConfigUtils.parameter("s3.delivery_path");
@@ -80,10 +79,9 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
                 storeInS3(deliveryRequest, uid);
                 deliveryEntity.s3Dir = uid;
                 JPA.withTransaction(() -> deliveryDao.updateDelivery(deliveryEntity));
-                LOG.fine(String.format("Delivery request for id %d stored in s3 dir %s", deliveryEntity.id, uid));
+                LOG.debug("Delivery request for id {} stored in s3 dir {}", deliveryEntity.id, uid);
             } catch (Exception e){
-                LOG.severe("Error storing delivery request to S3");
-                LOG.severe(e.getMessage());
+                LOG.error("Error storing delivery to S3", e);
                 return internalServerError();
             }
 
@@ -179,7 +177,7 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
                 if (item.id != null){
                     Optional<DeliveryItemEntity> s = entity.items.stream().filter(it -> it.id == item.id).findFirst();
                     if (!s.isPresent()){
-                        LOG.warning(String.format("Wrong number of found items with id: %d, skipping", item.id));
+                        LOG.warn("Wrong number of found items with id: {}, skipping", item.id);
                         continue;
                     }
                     itemEntity = s.get();
