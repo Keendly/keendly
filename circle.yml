@@ -1,0 +1,23 @@
+machine:
+  java:
+    version: oraclejdk8
+  services:
+    - docker
+
+test:
+  pre:
+  override:
+    - ./activator test
+  post:
+    - mkdir -p $CIRCLE_TEST_REPORTS/junit/
+    - find . -type f -regex ".*/target/test-reports/.*xml" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \;
+
+deployment:
+  master:
+    branch: master
+    commands:
+      - ./activator clean stage
+      - docker build -t keendly .
+      - aws ecr get-login --region us-east-1 | sh
+      - docker tag keendly:latest 625416862388.dkr.ecr.us-east-1.amazonaws.com/keendly:latest
+      - docker push 625416862388.dkr.ecr.us-east-1.amazonaws.com/keendly:latest
