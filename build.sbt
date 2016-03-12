@@ -27,3 +27,4 @@ routesGenerator := InjectedRoutesGenerator
 
 // needed to allow remote debugging
 fork in run := false
+PlayKeys.externalizeResources := false
