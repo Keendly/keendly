@@ -8,7 +8,7 @@ var FeedBox = React.createClass({
         this.setState({data: data});
       }.bind(this),
       error: function(xhr, status, err) {
-        window.location.replace("login?error=Log in first");
+        window.location.replace("login");
       }.bind(this)
     });
   },
