@@ -18,8 +18,11 @@
         </script>
     </head>
     <body>
-        <div style="text-align: center; margin: 50px">
-            <img src="assets/images/logo_login.png">
+        <div class="hide-on-small-only" style="text-align: center; margin: 50px">
+           <img src="assets/images/logo_login.png">
+        </div>
+        <div class="hide-on-med-and-up" style="text-align: center; margin: 50px">
+            <img src="assets/images/logo_nav.png">
         </div>
         @if(error != null) {
             <div class='error_div' style="margin: auto; text-align: center; width: 50%">@error</div>
@@ -45,7 +48,7 @@
 
     <form action="inoreaderLogin" method="POST">
         <div class="modal-content" id="delivery_form">
-            <h4>Log in with Inoreader</h4>
+            <h4 class="hide-on-small-only">Log in with Inoreader</h4>
             <div class="row">
                 <div class="input-field col s12">
                     <input id="email" type="email" class="validate" name="email">
@@ -60,7 +63,7 @@
             </div>
         </div>
         <div class="modal-footer">
-            <a href="#!" onclick="$(this).closest('form').submit()" class="modal-action waves-effect waves-green btn submit save" id="delivery_save_btn">Log in</a>
+            <a href="#!" onclick="$(this).closest('form').submit()" class="modal-action waves-effect waves-green btn submit save ino-save-btn" id="delivery_save_btn">Log in</a>
         </div>
     </form>
 </div>
@@ -71,7 +74,7 @@
 
     <form action="oldReaderLogin" method="POST">
         <div class="modal-content" id="delivery_form">
-            <h4>Log in with The Old Reader</h4>
+            <h4 class="hide-on-small-only">Log in with The Old Reader</h4>
             <div class="row">
                 <div class="input-field col s12">
                     <input id="email" type="email" class="validate" name="email">
@@ -86,7 +89,7 @@
             </div>
         </div>
         <div class="modal-footer">
-            <a href="#!" onclick="$(this).closest('form').submit()" class="modal-action waves-effect waves-green btn submit save" id="delivery_save_btn">Log in</a>
+            <a href="#!" onclick="$(this).closest('form').submit()" class="modal-action waves-effect waves-green btn submit save old-save-btn" id="delivery_save_btn">Log in</a>
         </div>
     </form>
 </div>

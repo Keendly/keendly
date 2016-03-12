@@ -181,3 +181,11 @@ span.badge {
   line-height: unset;
   margin-right: 3px;
 }
+
+.old-save-btn {
+  background-color: #30a67c
+}
+
+.ino-save-btn {
+  background-color: #30517E
+}
