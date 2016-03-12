@@ -111,11 +111,16 @@ var DeliverModal = React.createClass({
          success: function(data) {
             var newFeeds = []
             $.each(this.state.feeds, function(index, value) {
+                var found = false;
                 $.each(data, function(feedId, unread) {
                   if (feedId == value.feedId) {
                     newFeeds.push({'title': value.title, 'feedId': value.feedId, 'unread': unread})
+                    found = true;
                   }
                 });
+                if (!found){
+                  newFeeds.push({'title': value.title, 'feedId': value.feedId})
+                }
             });
             this.setState({
               feeds: newFeeds
@@ -249,7 +254,13 @@ var SelectedFeed_Simple = React.createClass({
     return (
       <li className='collection-item'>
         <div feed_id={feed.feedId} title={feed.title}>
-        {feed.title}<span className="new badge">{feed.unread}</span>
+        {feed.title}
+        {function(){
+          if (typeof feed.unread !== 'undefined'){
+            return <span className="new badge">{feed.unread}</span>
+          }
+        }.call(this)
+        }
         {function(){
           if (feed.unread > 100) {
             return <i className="tiny material-icons error-icon tooltipped" data-position="left" data-delay="50" data-tooltip="Only 100 will be delivered">error_outline</i>
@@ -268,7 +279,13 @@ var SelectedFeed_Detailed = React.createClass({
     return (
       <li className='collection-item' key={feed.feedId}>
        <div feed_id={feed.feedId} id={feed.feedId} title={feed.title}>
-           {feed.title}<span className="new badge">{feed.unread}</span>
+           {feed.title}
+           {function(){
+             if (typeof feed.unread !== 'undefined'){
+               return <span className="new badge">{feed.unread}</span>
+             }
+           }.call(this)
+           }
          <p>
            <input type="checkbox" id={feed.feedId + 'img'} className="filled-in" defaultChecked/>
            <label htmlFor={feed.feedId + 'img'}>Include images</label>
