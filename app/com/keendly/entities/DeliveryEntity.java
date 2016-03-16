@@ -19,7 +19,7 @@ public class DeliveryEntity extends BaseEntity {
     public Boolean manual;
 
     @Column
-    public String info;
+    public String errorDescription;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "user_id", referencedColumnName = "id")
