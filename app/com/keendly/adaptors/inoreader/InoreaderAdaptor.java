@@ -1,5 +1,6 @@
 package com.keendly.adaptors.inoreader;
 
+import com.google.common.net.UrlEscapers;
 import com.keendly.adaptors.GoogleReaderTypeAdaptor;
 import com.keendly.adaptors.exception.ApiException;
 import com.keendly.adaptors.model.Credentials;
@@ -127,5 +128,10 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
             }
             return Boolean.TRUE;
         });
+    }
+
+    @Override
+    protected String normalizeFeedId(String feedId){
+        return UrlEscapers.urlPathSegmentEscaper().escape(feedId);
     }
 }

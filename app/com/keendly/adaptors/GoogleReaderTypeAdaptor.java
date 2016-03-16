@@ -1,11 +1,10 @@
 package com.keendly.adaptors;
 
-import com.google.common.net.UrlEscapers;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.keendly.adaptors.model.Entry;
 import com.keendly.adaptors.model.ExternalFeed;
 import com.keendly.adaptors.model.ExternalUser;
 import com.keendly.adaptors.model.Token;
-import com.fasterxml.jackson.databind.JsonNode;
 import play.libs.F;
 import play.libs.ws.WSResponse;
 
@@ -16,6 +15,10 @@ public abstract class GoogleReaderTypeAdaptor extends Adaptor {
 
     protected abstract <T> F.Promise<T> get(String url, Function<WSResponse, T> callback);
     protected abstract <T> F.Promise<T> getFlat(String url, Function<WSResponse, F.Promise<T>> callback);
+
+    protected String normalizeFeedId(String feedId){
+        return feedId;
+    }
 
     public GoogleReaderTypeAdaptor(){
 
@@ -49,7 +52,7 @@ public abstract class GoogleReaderTypeAdaptor extends Adaptor {
 
     private F.Promise<Map<String, List<Entry>>> doGetUnread(String feedId, int unreadCount, String continuation){
         int count = unreadCount > MAX_ARTICLES_PER_FEED ? MAX_ARTICLES_PER_FEED : unreadCount; // TODO inform user
-        String url ="/stream/contents/" + UrlEscapers.urlPathSegmentEscaper().escape(feedId) + "?xt=user/-/state/com.google/read";
+        String url ="/stream/contents/" +normalizeFeedId(feedId) + "?xt=user/-/state/com.google/read";
         url = continuation == null ? url : url + "&c=" + continuation;
         return getFlat(url, response -> {
             JsonNode items = response.asJson().get("items");
