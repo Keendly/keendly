@@ -7,11 +7,10 @@ import play.mvc.Action;
 import play.mvc.Http.Context;
 import play.mvc.Result;
 
-import java.util.logging.Logger;
-
 public class SecuredAction extends Action.Simple {
 
-    private static Logger LOG = Logger.getLogger(SecuredAction.class.getCanonicalName());
+    private static final play.Logger.ALogger LOG = play.Logger.of(SecuredAction.class);
+
 
     private Authenticator authenticator = new Authenticator();
 
@@ -34,8 +33,7 @@ public class SecuredAction extends Action.Simple {
 //                return internalServerError();
 //            });
         } catch (Exception e){
-            LOG.severe("Exception authenticating");
-            e.printStackTrace();
+            LOG.error("Exception authenticating", e);
             return Promise.pure(unauthorized());
         }
     }

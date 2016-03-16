@@ -27,6 +27,7 @@ public class Authenticator {
         if (token.equals("gfUb$2^UG7:jU>=K")) { // hard hack
             AuthToken authToken = new AuthToken();
             authToken.type = TokenType.ADMIN;
+            authToken.userId = -1;
             return authToken;
         }
         Claims claims = Jwts.parser().setSigningKey(KEY).parseClaimsJws(token).getBody();

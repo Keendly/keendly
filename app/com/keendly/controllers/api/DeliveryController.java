@@ -116,7 +116,8 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
         boolean[] updateAllowed = {false};
         JPA.withTransaction(() -> {
             DeliveryEntity currentEntity = deliveryDao.getDelivery(id);
-            if (getUserEntity().id == currentEntity.user.id || isAdminToken()){
+            if (getUserEntity().id < 0 || // admin i -1
+                    getUserEntity().id == currentEntity.user.id || isAdminToken()){
                 deliveryMapper.toEntity(delivery, currentEntity);
                 deliveryDao.updateDelivery(currentEntity);
                 updateAllowed[0] = true;
