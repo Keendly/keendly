@@ -134,6 +134,20 @@ var DeliverModal = React.createClass({
       'mode': event.target.checked ? 'detailed' : 'simple'
     });
   },
+  checkDeliveryState: function(id) {
+    $.ajax({
+      url: "api/deliveries/" + id,
+      dataType: 'json',
+      cache: false,
+      success: function(data) {
+        if (data.deliveryDate != null){
+           Materialize.toast('Articles delivered!', 4000)
+        } else {
+          setTimeout( this.checkDeliveryState.bind(null, data.id), 5000);
+        }
+      }.bind(this)
+    });
+  },
   handleSubmit: function() {
      if (this.state.mode == 'detailed'){
          $.each( this.state.feeds, function( i, feed ) {
@@ -153,9 +167,10 @@ var DeliverModal = React.createClass({
        type: "POST",
        data: JSON.stringify({'items': this.state.feeds}, ["items", "title", "feedId", "includeImages", "fullArticle", "markAsRead"]),
        contentType: "application/json; charset=utf-8",
-       success: function() {
+       success: function(data) {
          $('#delivery_modal').closeModal();
          this.props.success()
+         setTimeout( this.checkDeliveryState.bind(null, data.id), 5000);
        }.bind(this),
        error: function(xhr, status, err) {
          $('#delivery_modal').closeModal();

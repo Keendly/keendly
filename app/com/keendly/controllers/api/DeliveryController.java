@@ -85,7 +85,7 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
                 return internalServerError();
             }
 
-           return status(202); // 'Accepted' because delivery happens asynchronously
+           return ok(Json.toJson(deliveryMapper.toModel(deliveryEntity, MappingMode.SIMPLE)));
         });
     }
 
