@@ -173,6 +173,9 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
             if (delivery.deliveryDate != null){
                 entity.date = delivery.deliveryDate;
             }
+            if (delivery.error != null){
+                entity.errorDescription = delivery.error;
+            }
             for (DeliveryItem item : delivery.items){
                 DeliveryItemEntity itemEntity;
                 if (item.id != null){
@@ -228,6 +231,7 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
             delivery.deliveryDate = entity.date;
             List<DeliveryItem> feeds = new ArrayList<>();
             delivery.items = feeds;
+            delivery.error = entity.errorDescription;
             for (DeliveryItemEntity deliveryItem : entity.items) {
                 DeliveryItem feed = new DeliveryItem();
                 feed.id = deliveryItem.id;

@@ -11,4 +11,5 @@ public class Delivery {
     public Long id;
     public List<DeliveryItem> items;
     public Date deliveryDate;
+    public String error;
 }
