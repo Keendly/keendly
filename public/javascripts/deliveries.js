@@ -38,7 +38,7 @@ var DeliveryList = React.createClass({
   render: function() {
     var deliveryNodes = this.props.data.map(function(delivery) {
       return (
-        <Delivery items={delivery.items} key={delivery.id} date={delivery.deliveryDate} />
+        <Delivery items={delivery.items} key={delivery.id} date={delivery.deliveryDate} error={delivery.error} />
       );
     });
     return (
@@ -59,6 +59,13 @@ var DeliveryList = React.createClass({
 });
 
 var Delivery = React.createClass({
+  transformError: function(error) {
+    if (error === 'TOO BIG'){
+      return 'Couldn\'t deliver articles, file too big. Excluding images may help decreasing file size.'
+    }
+    return 'Error occured during delivery'
+  },
+
   render: function() {
     if (this.props.items != null){
       var items = this.props.items.map(function(item) {
@@ -71,6 +78,7 @@ var Delivery = React.createClass({
       <tr>
         <td>
             {items != null ? items.join(" \u2022 ") : ''}
+            <p className='delivery-error'>{this.props.error != null ? this.transformError(this.props.error) : ''}</p>
         </td>
         <td>
             {this.props.date != null ? moment(this.props.date).format('llll') : ''}

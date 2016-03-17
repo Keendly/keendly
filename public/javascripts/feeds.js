@@ -134,16 +134,22 @@ var DeliverModal = React.createClass({
       'mode': event.target.checked ? 'detailed' : 'simple'
     });
   },
-  checkDeliveryState: function(id) {
+  checkDeliveryState: function(id, count) {
+    if (count > 24){
+      return; // 2 minutes
+    }
     $.ajax({
       url: "api/deliveries/" + id,
       dataType: 'json',
       cache: false,
+      global: false,
       success: function(data) {
         if (data.deliveryDate != null){
            Materialize.toast('Articles delivered!', 4000)
+        } else if (data.error != null){
+           // error, stop polling
         } else {
-          setTimeout( this.checkDeliveryState.bind(null, data.id), 5000);
+          setTimeout( this.checkDeliveryState.bind(null, data.id, count+1), 5000);
         }
       }.bind(this)
     });
@@ -170,7 +176,7 @@ var DeliverModal = React.createClass({
        success: function(data) {
          $('#delivery_modal').closeModal();
          this.props.success()
-         setTimeout( this.checkDeliveryState.bind(null, data.id), 5000);
+         setTimeout( this.checkDeliveryState.bind(null, data.id, 1), 5000);
        }.bind(this),
        error: function(xhr, status, err) {
          $('#delivery_modal').closeModal();
