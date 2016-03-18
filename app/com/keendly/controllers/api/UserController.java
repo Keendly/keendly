@@ -1,6 +1,9 @@
 package com.keendly.controllers.api;
 
 
+import com.amazonaws.util.StringUtils;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.keendly.controllers.api.error.Error;
 import com.keendly.dao.UserDao;
 import com.keendly.entities.UserEntity;
 import com.keendly.model.User;
@@ -9,12 +12,13 @@ import play.libs.Json;
 import play.mvc.Result;
 import play.mvc.With;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class UserController extends AbstractController<User> {
 
     private final static String SELF = "self";
+
+    private static final String[] ALLOWED_DOMAINS = {"kindle.com", "free.kindle.com", "kindle.cn"};
 
     private UserDao userDao = new UserDao();
 
@@ -45,6 +49,11 @@ public class UserController extends AbstractController<User> {
     @With(SecuredAction.class)
     public Result updateUser(String id) throws Throwable{
         User user = fromRequest();
+        if (user.deliveryEmail != null){
+            if (!validateEmail(user.deliveryEmail)){
+                return badRequest(toJson(Error.WRONG_EMAIL, StringUtils.join(", ", ALLOWED_DOMAINS)));
+            }
+        }
         JPA.withTransaction(() -> {
             UserEntity userEntity = lookupUser(id);
             // TODO mapper again
@@ -57,6 +66,28 @@ public class UserController extends AbstractController<User> {
             userDao.updateUser(userEntity);
         });
         return ok();
+    }
+
+    private JsonNode toJson(Error error, Object... msgParams){
+        Map<String, String> map = new HashMap<>();
+        map.put("code", error.name());
+        map.put("description", String.format(error.getMessage(), msgParams));
+        return Json.toJson(map);
+    }
+
+    private boolean validateEmail(String email){
+        String[] split = email.split("\\@");
+        if (split.length != 2){
+            return false;
+        }
+        boolean valid = false;
+        for (String allowedDomain : ALLOWED_DOMAINS){
+            if (split[1].equals(allowedDomain)){
+                valid = true;
+                break;
+            }
+        }
+        return valid;
     }
 
     /**
