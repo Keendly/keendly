@@ -77,13 +77,83 @@
             <script src="@routes.Assets.at("javascripts/3rdparty/materialize.js")" type="text/javascript"></script>
         </div>
         <div id="footer">
+            <script type='text/babel'>
+                var ContactModal = React.createClass({
+                  getInitialState: function() {
+                    return {};
+                  },
+                  componentDidMount: function() {
+                    $('#contact_modal_btn').click(function() {
+                      $('#contact_modal').openModal()
+                    });
+                  },
+                  handleSubmit: function() {
+                     $.ajax({
+                       url: "//formspree.io/contact@@keendly.com",
+                       type: "POST",
+                       data: JSON.stringify({'email': this.state.sender, 'message': this.state.message}),
+                       contentType: "application/json; charset=utf-8",
+                       dataType: "json",
+                       success: function(data) {
+                         $('#contact_modal').closeModal();
+                       }.bind(this),
+                       error: function(xhr, status, err) {
+                         this.setState({success: false, error: true})
+                       }.bind(this)
+                     });
+                  },
+                  handleMsgChange: function(event) {
+                    this.setState({
+                      message: event.target.value
+                    });
+                  },
+                  handleEmailChange: function(event) {
+                    this.setState({
+                      sender: event.target.value
+                    });
+                  },
+                  render: function() {
+                    return (
+                      <div id="contact_modal" className="modal">
+                          <div className="modal-content" id="feedback_form">
+                              <h4>Leave feedback</h4>
+                                {this.state.error == true ? <div className='error_div'>Error occured :-(, please send your feedback to <a href="mailto:contact@@keendly.com" target="_top">contact@@keendly.com</a></div> : ''}
+                                <form className="col s12" id="contact_form" method="POST">
+                                  <div className="row">
+                                      <div className="input-field col s12">
+                                        <input value={this.state.sender} onChange={this.handleEmailChange} name="email" id="email" type="email" className="validate"/>
+                                        <label className="active" htmlFor="email">Your email</label>
+                                    </div>
+                                  </div>
+                                  <div className="row">
+                                      <div className="input-field col s12">
+                                        <textarea value={this.state.message} className="materialize-textarea" onChange={this.handleMsgChange} name="message" id="message" type="text"/>
+                                        <label className="active" htmlFor="message">Message</label>
+                                    </div>
+                                  </div>
+                              </form>
+                          </div>
+                          <div className="modal-footer">
+                              <a href="#!" className="modal-action modal-close waves-effect waves-red btn-flat">Cancel</a>
+                              <a href="#!" onClick={this.handleSubmit} className="modal-action waves-effect waves-green btn-flat submit save" id="contact_send_btn">Send</a>
+                          </div>
+                      </div>
+                    );
+                  }
+                });
+
+                ReactDOM.render(
+                  <ContactModal url="" />,
+                  document.getElementById('modal')
+                );
+            </script>
             <footer class="page-footer">
                 <div class="container">
                     <div class="row">
                         <div class="col l12 s12">
                             <h5 class="white-text">Share your opinion</h5>
                             <p class="grey-text text-lighten-4">Help us improve Keendly by giving your feedback.</p>
-                            <a class="waves-effect waves-light btn modal-trigger" id="delivery_modal_btn" href="#delivery_modal">Feedback</a>
+                            <a class="waves-effect waves-light btn modal-trigger" id="contact_modal_btn" href="#contact_modal">Feedback</a>
                         </div>
                         <!--<div class="col l4 offset-l2 s12">
                             <ul>
@@ -92,6 +162,7 @@
                         </div>-->
                     </div>
                 </div>
+                <div id="modal"></div>
                 <div class="footer-copyright">
                     <div class="container">
                         © 2016 Keendly
