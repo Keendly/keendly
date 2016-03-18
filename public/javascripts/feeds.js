@@ -145,7 +145,7 @@ var DeliverModal = React.createClass({
       global: false,
       success: function(data) {
         if (data.deliveryDate != null){
-           Materialize.toast('Articles delivered!', 4000)
+           Materialize.toast('Articles delivered!', 4000, 'pink')
         } else if (data.error != null){
            // error, stop polling
         } else {
