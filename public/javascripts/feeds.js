@@ -159,13 +159,15 @@ var DeliverModal = React.createClass({
          $.each( this.state.feeds, function( i, feed ) {
            feed['includeImages'] = $(document.getElementById(feed.feedId + 'img')).is(':checked');
            feed['fullArticle'] =  $(document.getElementById(feed.feedId + 'full')).is(':checked');
-           feed['markAsRead'] = $(document.getElementById(feed.feedId + 'mark')).is(':checked');
+           feed['markAsRead'] = false;
+//           feed['markAsRead'] = $(document.getElementById(feed.feedId + 'mark')).is(':checked');
          });
      } else {
         $.each( this.state.feeds, function( i, feed ) {
           feed['includeImages'] = $('#include_images').is(':checked');
           feed['fullArticle'] =  $('#full_article').is(':checked');
-          feed['markAsRead'] = $('#mark_as_read').is(':checked');
+          feed['markAsRead'] = false;
+//          feed['markAsRead'] = $('#mark_as_read').is(':checked');
         });
      }
      $.ajax({
@@ -227,10 +229,6 @@ var DeliverModal = React.createClass({
        <p>
          <input type="checkbox" className="filled-in" id="include_images" defaultChecked/>
          <label htmlFor="include_images">Include images</label>
-       </p>
-       <p>
-         <input type="checkbox" className="filled-in" id="mark_as_read" defaultChecked/>
-         <label htmlFor="mark_as_read">Mark as read</label>
        </p>
        <p>
          <input type="checkbox" className="filled-in" id="full_article" defaultChecked/>
@@ -310,10 +308,6 @@ var SelectedFeed_Detailed = React.createClass({
          <p>
            <input type="checkbox" id={feed.feedId + 'img'} className="filled-in" defaultChecked/>
            <label htmlFor={feed.feedId + 'img'}>Include images</label>
-         </p>
-         <p>
-           <input type="checkbox" id={feed.feedId + 'mark'} className="filled-in" defaultChecked/>
-           <label htmlFor={feed.feedId + 'mark'}>Mark as read</label>
          </p>
          <p>
            <input type="checkbox" id={feed.feedId + 'full'} className="filled-in" defaultChecked/>
