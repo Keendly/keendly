@@ -18,7 +18,7 @@ public class UserController extends AbstractController<User> {
 
     private final static String SELF = "self";
 
-    private static final String[] ALLOWED_DOMAINS = {"kindle.com", "free.kindle.com", "kindle.cn"};
+    private static final String[] ALLOWED_DOMAINS = {"kindle.com", "free.kindle.com", "kindle.cn", "pbsync.com"};
 
     private UserDao userDao = new UserDao();
 
