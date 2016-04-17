@@ -56,7 +56,7 @@ public class Authenticator {
         Provider p = Provider.valueOf(provider);
         Claims claims = new DefaultClaims();
         claims.put("provider", p.name());
-        claims.put("expirationDate", DateTime.now().plus(Minutes.minutes(1)).toDate().getTime());
+        claims.put("expirationDate", DateTime.now().plus(Minutes.minutes(5)).toDate().getTime());
 
         String token = Jwts.builder().setClaims(claims).signWith(SignatureAlgorithm.HS256, KEY).compact();
         return URLEncoder.encode(token);
