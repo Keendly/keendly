@@ -2,7 +2,7 @@ package com.keendly.controllers;
 
 import com.keendly.adaptors.Adaptor;
 import com.keendly.adaptors.AdaptorFactory;
-import com.keendly.adaptors.model.Credentials;
+import com.keendly.adaptors.model.auth.Credentials;
 import com.keendly.adaptors.model.ExternalUser;
 import com.keendly.auth.Authenticator;
 import com.keendly.controllers.api.KeendlyHeader;
@@ -10,7 +10,6 @@ import com.keendly.dao.UserDao;
 import com.keendly.entities.Provider;
 import com.keendly.entities.UserEntity;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.LoggerFactory;
 import play.Logger;
 import play.db.jpa.JPA;
 import play.libs.F;
@@ -20,6 +19,7 @@ import play.mvc.Result;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Date;
 
 public class LoginController extends Controller {
 
@@ -39,16 +39,15 @@ public class LoginController extends Controller {
         }
     }
 
-    public Promise<Result> inoReaderLogin(){
-        String email = request().body().asFormUrlEncoded().get("email")[0];
-        String password = request().body().asFormUrlEncoded().get("password")[0];
-        Credentials credentials = new Credentials();
-        credentials.setUsername(email);
-        credentials.setPassword(password);
-        return loginUser(credentials, Provider.INOREADER).recover(f -> {
-            LOG.error("Error loggin in with inoReader", f);
-            return redirect(routes.WebController.login("Login error"));
-        });
+    public Promise<Result> inoReaderCallback(String code, String error){
+        if (StringUtils.isNotBlank(error)){
+            Logger.error("Error got in inoreader callback: {}", error);
+            return F.Promise.pure(redirect(routes.WebController.login(error)));
+        } else {
+            Credentials credentials = new Credentials();
+            credentials.setAuthorizationCode(code);
+            return loginUser(credentials, Provider.INOREADER);
+        }
     }
 
     public Promise<Result> oldReaderLogin(){
@@ -71,7 +70,10 @@ public class LoginController extends Controller {
                     List<Long> id = new ArrayList<>();
                     JPA.withTransaction(() -> {
                         UserEntity userEntity = findUser(user, p);
-                        userEntity.token = token.getRefreshToken();
+                        userEntity.refreshToken = token.getRefreshToken();
+                        userEntity.accessToken = token.getAccessToken();
+                        userEntity.accessTokenExpiration = token.getAccessTokenExpiration().toDate();
+                        userEntity.lastLogin = new Date();
                         userEntity = JPA.em().merge(userEntity);
                         id.add(userEntity.id); // why so hacky
                     });

@@ -1,7 +1,11 @@
 package com.keendly.adaptors;
 
-import com.keendly.adaptors.model.*;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.keendly.adaptors.model.ExternalFeed;
+import com.keendly.adaptors.model.ExternalUser;
+import com.keendly.adaptors.model.FeedEntry;
+import com.keendly.adaptors.model.auth.Token;
+import com.keendly.adaptors.model.auth.Credentials;
 import org.apache.http.HttpStatus;
 import play.libs.F.Promise;
 
@@ -17,7 +21,7 @@ public abstract class Adaptor {
     protected abstract Promise<Token> doLogin(Credentials credentials);
     protected abstract Promise<ExternalUser> doGetUser();
     protected abstract Promise<List<ExternalFeed>> doGetFeeds();
-    protected abstract Promise<Map<String, List<Entry>>> doGetUnread(List<String> feedIds);
+    protected abstract Promise<Map<String, List<FeedEntry>>> doGetUnread(List<String> feedIds);
     protected abstract Promise<Map<String, Integer>> doGetUnreadCount(List<String> feedIds);
     protected abstract Promise doMarkAsRead(List<String> feedIds);
 
@@ -51,7 +55,7 @@ public abstract class Adaptor {
         return doGetFeeds();
     }
 
-    public Promise<Map<String, List<Entry>>> getUnread(List<String> feedIds){
+    public Promise<Map<String, List<FeedEntry>>> getUnread(List<String> feedIds){
         validateLoggedIn();
         return doGetUnread(feedIds);
     }
@@ -61,13 +65,10 @@ public abstract class Adaptor {
         return doGetUnreadCount(feedIds);
     }
 
-
-
     public Promise<Boolean> markAsRead(List<String> feedIds){
         validateLoggedIn();
         return doMarkAsRead(feedIds);
     }
-
 
     private void validateLoggedIn(){
         if (!isLoggedIn){

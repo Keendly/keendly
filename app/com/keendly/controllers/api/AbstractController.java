@@ -2,7 +2,7 @@ package com.keendly.controllers.api;
 
 import com.keendly.adaptors.Adaptor;
 import com.keendly.adaptors.AdaptorFactory;
-import com.keendly.adaptors.model.Token;
+import com.keendly.adaptors.model.auth.Token;
 import com.keendly.auth.AuthToken;
 import com.keendly.auth.Authenticator;
 import com.fasterxml.jackson.databind.JsonNode;

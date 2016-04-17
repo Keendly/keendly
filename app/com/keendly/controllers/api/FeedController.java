@@ -1,7 +1,7 @@
 package com.keendly.controllers.api;
 
 import com.keendly.adaptors.model.ExternalFeed;
-import com.keendly.adaptors.model.Token;
+import com.keendly.adaptors.model.auth.Token;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.keendly.dao.DeliveryDao;
 import com.keendly.dao.SubscriptionDao;

@@ -28,13 +28,12 @@
             <div class='error_div' style="margin: auto; text-align: center; width: 50%">@error</div>
         }
         <div class="login_btns">
-            <a class="button primary inoreader modal-trigger" href="#inoreader_modal">Log in with <b>Inoreader</b></a>
+            <a class="button primary inoreader" href="https://www.inoreader.com/oauth2/auth?client_id=@play.Play.application().configuration().getString("inoreader.client_id")&redirect_uri=@play.Play.application().configuration().getString("inoreader.redirect_uri")&response_type=code&scope=write&state=la">Log in with <b>Inoreader</b></a>
             <a class="button primary oldreader modal-trigger" href="#oldreader_modal">Log in with <b>The Old Reader</b></a>
             <!--<a class="button primary feedly disabled" href="@play.Play.application().configuration().getString("feedly.url")/auth/auth?response_type=code&client_id=@play.Play.application().configuration().getString("feedly.client_id")&redirect_uri=@play.Play.application().configuration().getString("feedly.redirect_uri")&scope=https://cloud.feedly.com/subscriptions">Log in with <b>Feedly</b></a>-->
             <a class="button primary feedly disabled" href="#">Log in with <b>Feedly</b></a>
             <a class="button primary newsblur disabled" href="#">Log in with <b>NewsBlur</b></a>
         </div>
-        @inoreaderModal
         @oldreaderModal
         <script src="@routes.Assets.at("javascripts/3rdparty/materialize.js")" type="text/javascript"></script>
         <script>
@@ -49,34 +48,6 @@
         </script>
     </body>
 </html>
-
-
-
-@inoreaderModal = {
-<div id="inoreader_modal" class="modal login-modal">
-
-    <form action="inoreaderLogin" method="POST">
-        <div class="modal-content" id="delivery_form">
-            <h4 class="hide-on-small-only">Log in with Inoreader</h4>
-            <div class="row">
-                <div class="input-field col s12">
-                    <input id="email" type="email" class="validate" name="email">
-                    <label for="email">Email</label>
-                </div>
-            </div>
-            <div class="row">
-                <div class="input-field col s12">
-                    <input id="pass" type="password" class="validate" name="password">
-                    <label for="pass">Password</label>
-                </div>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <a href="#!" onclick="$(this).closest('form').submit()" class="modal-action waves-effect waves-green btn submit save ino-save-btn" id="delivery_save_btn">Log in</a>
-        </div>
-    </form>
-</div>
-}
 
 @oldreaderModal = {
 <div id="oldreader_modal" class="modal login-modal">

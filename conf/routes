@@ -26,9 +26,9 @@ PATCH   /api/users/:id                  com.keendly.controllers.api.UserControll
 # WEB
 GET     /                               com.keendly.controllers.WebController.index()
 GET     /login                          com.keendly.controllers.WebController.login(error: String ?= null)
-POST    /inoreaderLogin                 com.keendly.controllers.LoginController.inoReaderLogin()
 POST    /oldReaderLogin                 com.keendly.controllers.LoginController.oldReaderLogin()
 GET     /feedlyCallback                 com.keendly.controllers.LoginController.feedlyCallback(code: String, error: String)
+GET     /inoreaderCallback              com.keendly.controllers.LoginController.inoReaderCallback(code: String, error: String ?= null)
 GET     /feeds                          com.keendly.controllers.WebController.feeds()
 GET     /deliveries                     com.keendly.controllers.WebController.deliveries()
 GET     /user                           com.keendly.controllers.WebController.user()

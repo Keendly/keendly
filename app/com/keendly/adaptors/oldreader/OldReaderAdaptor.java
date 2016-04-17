@@ -1,9 +1,12 @@
 package com.keendly.adaptors.oldreader;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.keendly.adaptors.GoogleReaderTypeAdaptor;
 import com.keendly.adaptors.exception.ApiException;
-import com.keendly.adaptors.model.*;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.keendly.adaptors.model.ExternalFeed;
+import com.keendly.adaptors.model.ExternalUser;
+import com.keendly.adaptors.model.auth.Credentials;
+import com.keendly.adaptors.model.auth.Token;
 import org.apache.http.HttpStatus;
 import play.libs.F.Promise;
 import play.libs.ws.WS;
@@ -42,7 +45,7 @@ public class OldReaderAdaptor extends GoogleReaderTypeAdaptor {
                         if (token == null){
                             throw new ApiException(HttpStatus.SC_SERVICE_UNAVAILABLE);
                         }
-                        return new Token(null, token); // HACK
+                        return new Token(token);
                     } else {
                         throw new ApiException(response.getStatus(), response.getBody());
                     }

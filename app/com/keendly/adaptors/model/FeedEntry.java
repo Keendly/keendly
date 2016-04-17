@@ -2,7 +2,7 @@ package com.keendly.adaptors.model;
 
 import java.util.Date;
 
-public class Entry {
+public class FeedEntry {
 
     private String url;
     private String title;

@@ -1,10 +1,10 @@
 package com.keendly.adaptors;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.keendly.adaptors.model.Entry;
 import com.keendly.adaptors.model.ExternalFeed;
 import com.keendly.adaptors.model.ExternalUser;
-import com.keendly.adaptors.model.Token;
+import com.keendly.adaptors.model.FeedEntry;
+import com.keendly.adaptors.model.auth.Token;
 import play.libs.F;
 import play.libs.ws.WSResponse;
 
@@ -30,18 +30,18 @@ public abstract class GoogleReaderTypeAdaptor extends Adaptor {
 
 
     @Override
-    public F.Promise<Map<String, List<Entry>>> doGetUnread(List<String> feedIds) {
+    public F.Promise<Map<String, List<FeedEntry>>> doGetUnread(List<String> feedIds) {
         return getUnreadCount(feedIds).flatMap(unreadCounts -> {
-            List<F.Promise<Map<String, List<Entry>>>> resultsPromises = new ArrayList<>();
+            List<F.Promise<Map<String, List<FeedEntry>>>> resultsPromises = new ArrayList<>();
             for (Map.Entry<String, Integer> entry : unreadCounts.entrySet()){
-                F.Promise<Map<String, List<Entry>>> entries = doGetUnread(entry.getKey(), entry.getValue(), null);
+                F.Promise<Map<String, List<FeedEntry>>> entries = doGetUnread(entry.getKey(), entry.getValue(), null);
                 resultsPromises.add(entries);
             }
 
             return F.Promise.sequence(resultsPromises).map(ret -> {
-                Map<String, List<Entry>> entries = new HashMap<>();
-                for (Map<String, List<Entry>> entry : ret) {
-                    for (Map.Entry<String, List<Entry>> mapEntry : entry.entrySet()) {
+                Map<String, List<FeedEntry>> entries = new HashMap<>();
+                for (Map<String, List<FeedEntry>> entry : ret) {
+                    for (Map.Entry<String, List<FeedEntry>> mapEntry : entry.entrySet()) {
                         entries.put(mapEntry.getKey(), mapEntry.getValue());
                     }
                 }
@@ -50,7 +50,7 @@ public abstract class GoogleReaderTypeAdaptor extends Adaptor {
         });
     }
 
-    private F.Promise<Map<String, List<Entry>>> doGetUnread(String feedId, int unreadCount, String continuation){
+    private F.Promise<Map<String, List<FeedEntry>>> doGetUnread(String feedId, int unreadCount, String continuation){
         int count = unreadCount > MAX_ARTICLES_PER_FEED ? MAX_ARTICLES_PER_FEED : unreadCount; // TODO inform user
         String url ="/stream/contents/" +normalizeFeedId(feedId) + "?xt=user/-/state/com.google/read";
         url = continuation == null ? url : url + "&c=" + continuation;
@@ -59,9 +59,9 @@ public abstract class GoogleReaderTypeAdaptor extends Adaptor {
             if (items == null){
                 return F.Promise.pure(Collections.emptyMap());
             }
-            List<Entry> entries = new ArrayList<>();
+            List<FeedEntry> entries = new ArrayList<>();
             for (JsonNode item : items){
-                Entry entry = new Entry();
+                FeedEntry entry = new FeedEntry();
                 entry.setUrl(extractArticleUrl(item));
                 entry.setTitle(asText(item, "title"));
                 entry.setAuthor(asText(item, "author"));
@@ -69,13 +69,13 @@ public abstract class GoogleReaderTypeAdaptor extends Adaptor {
                 entry.setContent(extractContent(item));
                 entries.add(entry);
             }
-            Map<String, List<Entry>> ret = new HashMap<>();
+            Map<String, List<FeedEntry>> ret = new HashMap<>();
             ret.put(feedId, entries);
             if (ret.get(feedId).size() < count){
                 JsonNode continuationNode = response.asJson().get("continuation");
                 boolean hasContinuation = continuationNode != null;
                 if (hasContinuation){
-                    F.Promise<Map<String, List<Entry>>> nextPagePromise =
+                    F.Promise<Map<String, List<FeedEntry>>> nextPagePromise =
                             doGetUnread(feedId, count - ret.get(feedId).size(), continuationNode.asText());
                     return nextPagePromise.map(nextPage -> {
                         ret.get(feedId).addAll(nextPage.get(feedId));

@@ -2,7 +2,7 @@ package com.keendly.adaptors;
 
 import com.keendly.adaptors.feedly.FeedlyAdaptor;
 import com.keendly.adaptors.inoreader.InoreaderAdaptor;
-import com.keendly.adaptors.model.Token;
+import com.keendly.adaptors.model.auth.Token;
 import com.keendly.adaptors.oldreader.OldReaderAdaptor;
 import com.keendly.entities.Provider;
 import org.apache.commons.lang3.NotImplementedException;

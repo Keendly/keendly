@@ -1,9 +1,13 @@
 package com.keendly.adaptors.feedly;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.keendly.adaptors.Adaptor;
 import com.keendly.adaptors.exception.ApiException;
-import com.keendly.adaptors.model.*;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.keendly.adaptors.model.ExternalFeed;
+import com.keendly.adaptors.model.ExternalUser;
+import com.keendly.adaptors.model.FeedEntry;
+import com.keendly.adaptors.model.auth.Credentials;
+import com.keendly.adaptors.model.auth.Token;
 import play.libs.F.Promise;
 import play.libs.Json;
 import play.libs.ws.WS;
@@ -111,23 +115,23 @@ public class FeedlyAdaptor extends Adaptor {
     }
 
     @Override
-    public Promise<Map<String, List<Entry>>> doGetUnread(List<String> feedIds){
+    public Promise<Map<String, List<FeedEntry>>> doGetUnread(List<String> feedIds){
         return doGetFlat(feedlyUrl + "/markers/counts", token, response -> {
             JsonNode json = response.asJson();
-            List<Promise<Map<String, List<Entry>>>> resultsPromises = new ArrayList<>();
+            List<Promise<Map<String, List<FeedEntry>>>> resultsPromises = new ArrayList<>();
             for (JsonNode feedCount : json.get("unreadcounts")) {
                 String feedId = feedCount.get("id").asText();
                 if (feedIds.contains(feedId)) {
                     int count = feedCount.get("count").asInt();
-                    Promise<Map<String, List<Entry>>> entries = getUnread(feedId, count, null);
+                    Promise<Map<String, List<FeedEntry>>> entries = getUnread(feedId, count, null);
                     resultsPromises.add(entries);
                 }
             }
 
             return Promise.sequence(resultsPromises).map(ret -> {
-                Map<String, List<Entry>> entries = new HashMap<>();
-                for (Map<String, List<Entry>> entry : ret) {
-                    for (Map.Entry<String, List<Entry>> mapEntry : entry.entrySet()) {
+                Map<String, List<FeedEntry>> entries = new HashMap<>();
+                for (Map<String, List<FeedEntry>> entry : ret) {
+                    for (Map.Entry<String, List<FeedEntry>> mapEntry : entry.entrySet()) {
                         entries.put(mapEntry.getKey(), mapEntry.getValue());
                     }
                 }
@@ -152,13 +156,13 @@ public class FeedlyAdaptor extends Adaptor {
         });
     }
 
-    private Promise<Map<String, List<Entry>>> getUnread(String feedId, int unreadCount, String continuation) {
+    private Promise<Map<String, List<FeedEntry>>> getUnread(String feedId, int unreadCount, String continuation) {
         int count = unreadCount > MAX_ARTICLES_PER_FEED ? MAX_ARTICLES_PER_FEED : unreadCount; // TODO inform user
         String url = feedlyUrl + "/streams/" + urlEncode(feedId) + "/contents";
         url = continuation == null ? url : url + "?continuation=" + continuation;
         return doGetFlat(url, token,
                 response -> {
-                    List<Entry> entries = new ArrayList<>();
+                    List<FeedEntry> entries = new ArrayList<>();
                     for (JsonNode item : response.asJson().get("items")) {
                         if (item.get("unread").asBoolean()) {
                             String articleUrl = null;
@@ -173,7 +177,7 @@ public class FeedlyAdaptor extends Adaptor {
                                 }
                             }
                             if (articleUrl != null) {
-                                Entry entry = new Entry();
+                                FeedEntry entry = new FeedEntry();
                                 entry.setUrl(articleUrl);
                                 entry.setTitle(asText(item, "title"));
                                 entry.setAuthor(asText(item, "author"));
@@ -186,13 +190,13 @@ public class FeedlyAdaptor extends Adaptor {
                             }
                         }
                     }
-                    Map<String, List<Entry>> ret = new HashMap<>();
+                    Map<String, List<FeedEntry>> ret = new HashMap<>();
                     ret.put(feedId, entries);
                     if (ret.size() < count) {
                         JsonNode continuationNode = response.asJson().get("continuation");
                         boolean hasContinuation = continuationNode != null;
                         if (hasContinuation){
-                            Promise<Map<String, List<Entry>>> nextPagePromise =
+                            Promise<Map<String, List<FeedEntry>>> nextPagePromise =
                                     getUnread(feedId, count - ret.get(feedId).size(), continuationNode.asText());
                             return nextPagePromise.map(nextPage -> {
                                 ret.get(feedId).addAll(nextPage.get(feedId));

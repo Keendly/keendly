@@ -1,6 +1,6 @@
 package com.keendly.schema.utils;
 
-import com.keendly.adaptors.model.Entry;
+import com.keendly.adaptors.model.FeedEntry;
 import com.keendly.model.Delivery;
 import com.keendly.model.DeliveryItem;
 import com.keendly.schema.DeliveryProtos;
@@ -11,14 +11,14 @@ import java.util.Map;
 
 public class Mapper {
 
-    public static DeliveryRequest mapToDeliveryRequest(Delivery delivery, Map<String, List<Entry>> unread,
+    public static DeliveryRequest mapToDeliveryRequest(Delivery delivery, Map<String, List<FeedEntry>> unread,
                                                        long entityId, String deliveryEmail){
 
         DeliveryProtos.DeliveryRequest.Builder builder = DeliveryProtos.DeliveryRequest.newBuilder()
                 .setId(entityId)
                 .setEmail(deliveryEmail)
                 .setTimestamp(System.currentTimeMillis());
-        for (Map.Entry<String, List<Entry>> unreadFeed : unread.entrySet()){
+        for (Map.Entry<String, List<FeedEntry>> unreadFeed : unread.entrySet()){
             DeliveryItem deliveryItem
                     = delivery.items.stream().filter(item -> item.feedId.equals(unreadFeed.getKey())).findFirst().get();
 
@@ -30,7 +30,7 @@ public class Mapper {
                     .setMarkAsRead(deliveryItem.markAsRead)
                     .setFullArticle(deliveryItem.fullArticle);
 
-            for (Entry article : unreadFeed.getValue()){
+            for (FeedEntry article : unreadFeed.getValue()){
                 DeliveryProtos.DeliveryRequest.Item.Article article1
                         = DeliveryProtos.DeliveryRequest.Item.Article.newBuilder()
                         .setUrl(article.getUrl())

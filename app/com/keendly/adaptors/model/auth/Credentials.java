@@ -1,10 +1,8 @@
-package com.keendly.adaptors.model;
+package com.keendly.adaptors.model.auth;
 
 public class Credentials {
 
-    private String authorizationCode; // for OAuth
-    private String username;
-    private String password;
+    private String authorizationCode;
 
     public String getAuthorizationCode() {
         return authorizationCode;
@@ -12,6 +10,17 @@ public class Credentials {
 
     public void setAuthorizationCode(String authorizationCode) {
         this.authorizationCode = authorizationCode;
+    }
+
+    private String username;
+    private String password;
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public String getUsername() {
@@ -22,11 +31,4 @@ public class Credentials {
         this.username = username;
     }
 
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
 }

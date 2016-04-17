@@ -1,16 +1,18 @@
 package com.keendly.auth;
 
 
-import com.keendly.adaptors.model.Token;
+import com.keendly.adaptors.model.auth.Token;
 import com.keendly.entities.Provider;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.impl.DefaultClaims;
 
+import static com.keendly.utils.ConfigUtils.parameter;
+
 public class Authenticator {
 
-    private static final String KEY = "UTVLLZ+VfExnLnf455kffeameR+EwljJRqlMcUGCia9Op0jXTmeQMXCtKm5hKSa6sYbOtaeRfu9G4Ujs2pvOUA==";
+    private static final String KEY = parameter("auth.key");
 
     public String generate(long userId, Provider provider, Token externalToken){
         Claims claims = new DefaultClaims();
