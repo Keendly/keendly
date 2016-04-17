@@ -39,10 +39,14 @@ public class LoginController extends Controller {
         }
     }
 
-    public Promise<Result> inoReaderCallback(String code, String error){
-        if (StringUtils.isNotBlank(error)){
+    public Promise<Result> inoReaderCallback(String code, String state, String error){
+        if (StringUtils.isNotBlank(error)) {
             Logger.error("Error got in inoreader callback: {}", error);
             return F.Promise.pure(redirect(routes.WebController.login(error)));
+
+        } else if (!Authenticator.validateStateToken(state, Provider.INOREADER)){
+            Logger.error("Incorrect state received: {}", state);
+            return F.Promise.pure(redirect(routes.WebController.login("Login error, please try again")));
         } else {
             Credentials credentials = new Credentials();
             credentials.setAuthorizationCode(code);

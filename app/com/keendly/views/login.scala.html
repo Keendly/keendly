@@ -28,7 +28,7 @@
             <div class='error_div' style="margin: auto; text-align: center; width: 50%">@error</div>
         }
         <div class="login_btns">
-            <a class="button primary inoreader" href="https://www.inoreader.com/oauth2/auth?client_id=@play.Play.application().configuration().getString("inoreader.client_id")&redirect_uri=@play.Play.application().configuration().getString("inoreader.redirect_uri")&response_type=code&scope=write&state=la">Log in with <b>Inoreader</b></a>
+            <a class="button primary inoreader" href="https://www.inoreader.com/oauth2/auth?client_id=@play.Play.application().configuration().getString("inoreader.client_id")&redirect_uri=@play.Play.application().configuration().getString("inoreader.redirect_uri")&response_type=code&scope=write&state=@com.keendly.auth.Authenticator.generateStateToken("INOREADER")">Log in with <b>Inoreader</b></a>
             <a class="button primary oldreader modal-trigger" href="#oldreader_modal">Log in with <b>The Old Reader</b></a>
             <!--<a class="button primary feedly disabled" href="@play.Play.application().configuration().getString("feedly.url")/auth/auth?response_type=code&client_id=@play.Play.application().configuration().getString("feedly.client_id")&redirect_uri=@play.Play.application().configuration().getString("feedly.redirect_uri")&scope=https://cloud.feedly.com/subscriptions">Log in with <b>Feedly</b></a>-->
             <a class="button primary feedly disabled" href="#">Log in with <b>Feedly</b></a>
