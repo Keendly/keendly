@@ -1,8 +1,6 @@
 package com.keendly.adaptors;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.keendly.adaptors.model.ExternalFeed;
-import com.keendly.adaptors.model.ExternalUser;
 import com.keendly.adaptors.model.FeedEntry;
 import com.keendly.adaptors.model.auth.Token;
 import play.libs.F;
@@ -30,7 +28,7 @@ public abstract class GoogleReaderTypeAdaptor extends Adaptor {
 
 
     @Override
-    public F.Promise<Map<String, List<FeedEntry>>> doGetUnread(List<String> feedIds) {
+    protected F.Promise<Map<String, List<FeedEntry>>> doGetUnread(List<String> feedIds) {
         return getUnreadCount(feedIds).flatMap(unreadCounts -> {
             List<F.Promise<Map<String, List<FeedEntry>>>> resultsPromises = new ArrayList<>();
             for (Map.Entry<String, Integer> entry : unreadCounts.entrySet()){
@@ -55,24 +53,25 @@ public abstract class GoogleReaderTypeAdaptor extends Adaptor {
         String url ="/stream/contents/" +normalizeFeedId(feedId) + "?xt=user/-/state/com.google/read";
         url = continuation == null ? url : url + "&c=" + continuation;
         return getFlat(url, response -> {
-            JsonNode items = response.asJson().get("items");
+            JsonNode jsonResponse = response.asJson();
+            JsonNode items = jsonResponse.get("items");
             if (items == null){
                 return F.Promise.pure(Collections.emptyMap());
             }
             List<FeedEntry> entries = new ArrayList<>();
             for (JsonNode item : items){
                 FeedEntry entry = new FeedEntry();
-                entry.setUrl(extractArticleUrl(item));
+                entry.setUrl(GoogleReaderMapper.extractArticleUrl(item));
                 entry.setTitle(asText(item, "title"));
                 entry.setAuthor(asText(item, "author"));
                 entry.setPublished(asDate(item, "published"));
-                entry.setContent(extractContent(item));
+                entry.setContent(GoogleReaderMapper.extractContent(item));
                 entries.add(entry);
             }
             Map<String, List<FeedEntry>> ret = new HashMap<>();
             ret.put(feedId, entries);
             if (ret.get(feedId).size() < count){
-                JsonNode continuationNode = response.asJson().get("continuation");
+                JsonNode continuationNode = jsonResponse.get("continuation");
                 boolean hasContinuation = continuationNode != null;
                 if (hasContinuation){
                     F.Promise<Map<String, List<FeedEntry>>> nextPagePromise =
@@ -89,29 +88,6 @@ public abstract class GoogleReaderTypeAdaptor extends Adaptor {
     }
 
 
-    private String extractArticleUrl(JsonNode node){
-        if (node.get("alternate") != null){
-            for (JsonNode alternate : node.get("alternate")) {
-                if (alternate.get("type").asText().equals("text/html")) {
-                    return alternate.get("href").asText();
-                }
-            }
-        } else if (node.get("canonical") != null) {
-            for (JsonNode canonical : node.get("canonical")) {
-                return canonical.get("href").asText();
-            }
-        }
-        return null;
-    }
-
-    private String extractContent(JsonNode item){
-        if (item.get("content") != null && item.get("content").get("content") != null){
-            return item.get("content").get("content").asText();
-        } else if (item.get("summary") != null && item.get("summary").get("content") != null){
-            return item.get("summary").get("content").asText();
-        }
-        return null;
-    }
 
     protected String extractToken(byte[] response){
         String s = new String(response);
@@ -124,25 +100,4 @@ public abstract class GoogleReaderTypeAdaptor extends Adaptor {
         }
         return null;
     }
-
-    protected ExternalUser toUser(JsonNode node){
-        ExternalUser user = new ExternalUser();
-        user.setId(node.get("userId").asText());
-        user.setUserName(node.get("userEmail").asText());
-        user.setDisplayName(node.get("userName").asText());
-        return user;
-    }
-
-    protected List<ExternalFeed> toFeeds(JsonNode node){
-        JsonNode subs = node.get("subscriptions");
-        List<ExternalFeed> externalSubscriptions = new ArrayList<>();
-        for (JsonNode sub : subs){
-            ExternalFeed externalSubscription = new ExternalFeed();
-            externalSubscription.setFeedId(sub.get("id").asText());
-            externalSubscription.setTitle(sub.get("title").asText());
-            externalSubscriptions.add(externalSubscription);
-        }
-        return externalSubscriptions;
-    }
-
 }

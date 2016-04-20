@@ -2,6 +2,7 @@ package com.keendly.adaptors.inoreader;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.net.UrlEscapers;
+import com.keendly.adaptors.GoogleReaderMapper;
 import com.keendly.adaptors.GoogleReaderTypeAdaptor;
 import com.keendly.adaptors.exception.ApiException;
 import com.keendly.adaptors.model.ExternalFeed;
@@ -13,6 +14,7 @@ import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 import play.libs.F.Promise;
 import play.libs.ws.WS;
+import play.libs.ws.WSClient;
 import play.libs.ws.WSResponse;
 
 import java.util.ArrayList;
@@ -21,26 +23,56 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+import static com.keendly.adaptors.inoreader.InoreaderAdaptor.InoreaderParam.*;
 import static com.keendly.utils.ConfigUtils.parameter;
 
 public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
 
-    private static final String URL = "https://www.inoreader.com/reader/api/0";
-    private static final String CLIENT_ID = parameter("inoreader.client_id");
-    private static final String CLIENT_SECRET = parameter("inoreader.client_secret");
-    private static final String REDIRECT_URL = parameter("inoreader.redirect_uri");
+    enum InoreaderParam {
+        URL,
+        AUTH_URL,
+        CLIENT_ID,
+        CLIENT_SECRET,
+        REDIRECT_URL
+    }
+
+    private Map<InoreaderParam, String> config;
+    private WSClient client;
 
     public InoreaderAdaptor(){
+        this(defaultConfig(), WS.client());
+    }
 
+    public InoreaderAdaptor(Map<InoreaderParam, String> config, WSClient client){
+        this.config = config;
+        this.client = client;
     }
 
     public InoreaderAdaptor(Token token) {
-        super(token);
+        this(token, defaultConfig(), WS.client());
+    }
+
+    public InoreaderAdaptor(Token token, Map<InoreaderParam, String> config, WSClient client) {
+        this(config, client);
+        this.token = token;
+    }
+
+    private static Map<InoreaderParam, String> defaultConfig(){
+        Map<InoreaderParam, String> config = new HashMap<>();
+        config.put(URL, parameter("inoreader.url"));
+        config.put(AUTH_URL, parameter("inoreader.auth_url"));
+        config.put(CLIENT_ID, parameter("inoreader.client_id"));
+        config.put(CLIENT_SECRET, parameter("inoreader.client_secret"));
+        config.put(REDIRECT_URL, parameter("inoreader.redirect_uri"));
+
+        return config;
     }
 
     @Override
-    public Promise<Token> doLogin(Credentials credentials) {
-        return WS.url("https://www.inoreader.com/oauth2/token")
+    protected Promise<Token> doLogin(Credentials credentials) {
+        System.out.println(config.get(URL));
+
+        return client.url(config.get(AUTH_URL))
                 .setContentType("application/x-www-form-urlencoded; charset=utf-8")
                 .post(String.format("code=%s&" +
                         "redirect_uri=%s&" +
@@ -48,7 +80,8 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
                         "client_secret=%s" +
                         "&scope=write" +
                         "&grant_type=authorization_code",
-                        credentials.getAuthorizationCode(), REDIRECT_URL, CLIENT_ID, CLIENT_SECRET))
+                        credentials.getAuthorizationCode(),
+                        config.get(REDIRECT_URL), config.get(CLIENT_ID), config.get(CLIENT_SECRET)))
                 .map(response -> {
                     if (isOk(response.getStatus())) {
                         JsonNode node = response.asJson();
@@ -66,13 +99,13 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
     }
 
     @Override
-    public Promise<ExternalUser> doGetUser() {
-        return get("/user-info", response -> toUser(response.asJson()));
+    protected Promise<ExternalUser> doGetUser() {
+        return get("/user-info", response -> GoogleReaderMapper.toUser(response.asJson()));
     }
 
     @Override
-    public Promise<List<ExternalFeed>> doGetFeeds() {
-        return get("/subscription/list", response ->  toFeeds(response.asJson()));
+    protected Promise<List<ExternalFeed>> doGetFeeds() {
+        return get("/subscription/list", response ->  GoogleReaderMapper.toFeeds(response.asJson()));
     }
 
     @Override
@@ -102,7 +135,7 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
     }
 
     private Promise<WSResponse> getGetPromise(String url) {
-        return WS.url(URL + url)
+        return client.url(config.get(URL) + url)
                 .setHeader("Authorization", "Bearer " + token.getAccessToken())
                 .get();
     }
@@ -122,7 +155,7 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
     }
 
     @Override
-    public Promise doMarkAsRead(List<String> feedIds) {
+    protected Promise doMarkAsRead(List<String> feedIds) {
         List<Promise<WSResponse>> promises = new ArrayList<>();
 
         for (String feedId : feedIds){

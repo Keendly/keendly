@@ -1,0 +1,641 @@
+package com.keendly.adaptors.inoreader;
+
+import com.github.tomakehurst.wiremock.client.ValueMatchingStrategy;
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.stubbing.Scenario;
+import com.keendly.adaptors.exception.ApiException;
+import com.keendly.adaptors.model.ExternalFeed;
+import com.keendly.adaptors.model.ExternalUser;
+import com.keendly.adaptors.model.FeedEntry;
+import com.keendly.adaptors.model.auth.Credentials;
+import com.keendly.adaptors.model.auth.Token;
+import com.ning.http.client.AsyncHttpClientConfig;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+import org.apache.http.message.BasicNameValuePair;
+import org.json.JSONObject;
+import org.junit.Rule;
+import org.junit.Test;
+import play.libs.ws.WSClient;
+import play.libs.ws.ning.NingWSClient;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static java.util.Arrays.asList;
+import static org.junit.Assert.*;
+
+public class InoreaderAdaptorTest {
+
+    private static final int PORT = 8089;
+    private static final String CLIENT_ID = "test";
+    private static final String CLIENT_SECRET = "test2";
+    private static final String REDIRECT_URI = "redirect_uri";
+
+    @Rule
+    public WireMockRule wireMockRule = new WireMockRule(PORT);
+
+    private static WSClient wsClient;
+    static {
+        AsyncHttpClientConfig.Builder builder = new AsyncHttpClientConfig.Builder();
+        wsClient = new NingWSClient(builder.build());
+    }
+
+    @Test
+    public void given_ResponseOK_when_login_then_ReturnToken() throws Exception {
+        String AUTHORIZATION_CODE = "dummy_auth_code";
+        String ACCESS_TOKEN = "dummy_access_token";
+        String REFRESH_TOKEN = "dummy_refresh_token";
+        int EXPIRES_IN = 60;
+
+        // given
+        JSONObject response = new JSONObject();
+        response.put("access_token", ACCESS_TOKEN);
+        response.put("token_type", "Bearer");
+        response.put("expires_in", EXPIRES_IN);
+        response.put("refresh_token", REFRESH_TOKEN);
+        response.put("scope", "write");
+
+        stubFor(post(urlEqualTo("/auth"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(response.toString())));
+
+        // when
+        Credentials credentials = new Credentials();
+        credentials.setAuthorizationCode(AUTHORIZATION_CODE);
+
+        InoreaderAdaptor adaptor = new InoreaderAdaptor(config(), wsClient);
+        Token token = adaptor.login(credentials).get(1000);
+
+        // then
+        assertEquals(ACCESS_TOKEN, token.getAccessToken());
+        assertEquals(REFRESH_TOKEN, token.getRefreshToken());
+
+
+        verify(postRequestedFor(urlMatching("/auth"))
+                .withRequestBody(thatContainsParams(
+                        param("code", AUTHORIZATION_CODE),
+                        param("redirect_uri", REDIRECT_URI),
+                        param("client_id", CLIENT_ID),
+                        param("client_secret", CLIENT_SECRET),
+                        param("scope", "write"),
+                        param("grant_type", "authorization_code")))
+                .withHeader("Content-Type", equalTo("application/x-www-form-urlencoded; charset=utf-8")));
+    }
+
+    private ValueMatchingStrategy thatContainsParams(BasicNameValuePair... params){
+        StringBuilder sb = new StringBuilder();
+        for (BasicNameValuePair param : params){
+            sb.append(".*");
+            sb.append(param.getName());
+            sb.append("=");
+            sb.append(param.getValue());
+            sb.append(".*");
+        }
+        return matching(sb.toString());
+    }
+
+    private BasicNameValuePair param(String key, String value){
+        return new BasicNameValuePair(key, value);
+    }
+
+    @Test
+    public void given_Error_when_login_then_ThrowException() throws Exception {
+        int ERROR_STATUS_CODE = 500;
+        String RESPONSE = "error";
+
+        // given
+        stubFor(post(urlEqualTo("/auth"))
+                .willReturn(aResponse()
+                        .withStatus(ERROR_STATUS_CODE)
+                        .withBody(RESPONSE)));
+
+        // when
+        Exception thrown = null;
+        try {
+            inoreaderAdaptor(null).login(new Credentials()).get(1000);
+        } catch (Exception e){
+            thrown = e;
+        }
+
+        // then
+        assertNotNull(thrown);
+        assertEquals(ERROR_STATUS_CODE, ((ApiException) thrown).getStatus());
+        assertEquals(RESPONSE, ((ApiException) thrown).getResponse());
+    }
+
+    @Test
+    public void given_ResponseOK_when_getUser_then_ReturnUser() throws Exception {
+        String ACCESS_TOKEN = "my_token";
+        String USER_ID = "1001921515";
+        String USER_NAME = "BenderIsGreat";
+        String USER_EMAIL = "bender@inoreader.com";
+
+        // given
+        JSONObject response = new JSONObject();
+        response.put("userId", USER_ID);
+        response.put("userName", USER_NAME);
+        response.put("userProfileId", "1001921515");
+        response.put("userEmail", USER_EMAIL);
+        response.put("isBloggerUser", true);
+        response.put("signupTimeSec", 1163850013);
+        response.put("isMultiLoginEnabled", false);
+
+        stubFor(get(urlEqualTo("/user-info"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBody(response.toString())));
+
+        // when
+        ExternalUser user = inoreaderAdaptor(ACCESS_TOKEN).getUser().get(1000);
+
+        // then
+        assertEquals(USER_ID, user.getId());
+        assertEquals(USER_NAME, user.getDisplayName());
+        assertEquals(USER_EMAIL, user.getUserName());
+
+        verify(getRequestedFor(urlMatching("/user-info"))
+                .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
+    }
+
+    @Test
+    public void given_Unauthorized_when_getUser_then_RefreshTokenAndRetry() throws Exception {
+        // check that retried and token has refreshed = true
+        fail();
+    }
+
+    @Test
+    public void given_Error_when_getUser_then_ThrowException() throws Exception {
+        int ERROR_STATUS_CODE = 500;
+        String RESPONSE = "error";
+
+        // given
+        stubFor(get(urlEqualTo("/user-info"))
+                .willReturn(aResponse()
+                        .withStatus(ERROR_STATUS_CODE)
+                        .withBody(RESPONSE)));
+
+        // when
+        Exception thrown = null;
+        try {
+            inoreaderAdaptor(null).getUser().get(1000);
+        } catch (Exception e){
+            thrown = e;
+        }
+
+        // then
+        assertNotNull(thrown);
+        assertEquals(ERROR_STATUS_CODE, ((ApiException) thrown).getStatus());
+        assertEquals(RESPONSE, ((ApiException) thrown).getResponse());
+    }
+
+    @Test
+    public void given_ResponseOK_when_getUnreadCount_then_ReturnUnreadCount() throws Exception {
+        String ACCESS_TOKEN = "my_token";
+        String FEED_ID = "test_feed_123";
+        int UNREAD_COUNT = 2;
+
+        // given
+        JSONObject response = new JSONObject();
+        JSONObject feed = new JSONObject();
+        feed.put("id", FEED_ID);
+        feed.put("count", UNREAD_COUNT);
+        response.put("unreadcounts", asList(feed));
+
+        stubFor(get(urlEqualTo("/unread-count"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBody(response.toString())));
+
+        // when
+        Map<String, Integer> unreadCount =
+                inoreaderAdaptor(ACCESS_TOKEN).getUnreadCount(asList(FEED_ID)).get(1000);
+
+        // then
+        assertEquals(UNREAD_COUNT, unreadCount.get(FEED_ID).intValue());
+
+        verify(getRequestedFor(urlMatching("/unread-count"))
+                .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
+    }
+
+    @Test
+    public void given_Unauthorized_when_getUnreadCount_then_RefreshTokenAndRetry() throws Exception {
+        fail();
+    }
+
+    @Test
+    public void given_Error_when_getUnreadCount_then_ThrowException() throws Exception {
+        String FEED_ID = "test_feed_123";
+        int ERROR_STATUS_CODE = 500;
+        String RESPONSE = "error";
+
+        // given
+        stubFor(get(urlEqualTo("/unread-count"))
+                .willReturn(aResponse()
+                        .withStatus(ERROR_STATUS_CODE)
+                        .withBody(RESPONSE)));
+
+        // when
+        Exception thrown = null;
+
+        try {
+            inoreaderAdaptor(null).getUnreadCount(asList(FEED_ID)).get(1000);
+        } catch (Exception e){
+            thrown = e;
+        }
+
+        // then
+        assertNotNull(thrown);
+        assertEquals(ERROR_STATUS_CODE, ((ApiException) thrown).getStatus());
+        assertEquals(RESPONSE, ((ApiException) thrown).getResponse());
+    }
+
+    @Test
+    public void given_ResponseOK_when_getUnread_then_ReturnUnreadFeeds() throws Exception {
+        String ACCESS_TOKEN = "my_token";
+        String FEED_ID = "feed_id";
+
+        String TITLE1 = "Through the Google lens: Search trends January 16-22";
+        String AUTHOR1 = "Emily Wood";
+        int PUBLISHED1 = 1422046320;
+        String URL1 = "http://feedproxy.google.com/~r/blogspot/MKuf/~3/_Hkdwh7yKMo/blabla.html";
+        String CONTENT1 = "test_content";
+
+        String TITLE2 = "Google Maps Engine deprecated";
+        String AUTHOR2 = "Timothy Whitehead";
+        int PUBLISHED2 = 1422262271;
+        String URL2 = "http://feedproxy.google.com/~r/GoogleEarthBlog/~3/HqKBr0Se8K8/google-maps-engine-deprecated.html";
+        String CONTENT2 = "test_content2";
+
+        // given
+        JSONObject item1 =new FeedItem()
+                .title(TITLE1)
+                .author(AUTHOR1)
+                .published(PUBLISHED1)
+                .url(URL1)
+                .content(CONTENT1)
+                .build();
+
+        JSONObject item2 =new FeedItem()
+                .title(TITLE2)
+                .author(AUTHOR2)
+                .published(PUBLISHED2)
+                .url(URL2)
+                .content(CONTENT2)
+                .build();
+
+        JSONObject response = new JSONObject();
+        response.put("items", asList(item1, item2));
+
+        stubFor(get(urlMatching("/stream/contents/.*"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBody(response.toString())));
+
+
+        JSONObject unreadResponse = new JSONObject();
+        JSONObject feed1 = new JSONObject();
+        feed1.put("id", FEED_ID);
+        feed1.put("count", 2);
+        unreadResponse.put("unreadcounts", asList(feed1));
+
+        stubFor(get(urlEqualTo("/unread-count"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBody(unreadResponse.toString())));
+
+        // when
+        Map<String, List<FeedEntry>> unread =
+                inoreaderAdaptor(ACCESS_TOKEN).getUnread(asList(FEED_ID)).get(1000);
+
+        // then
+        assertTrue(unread.containsKey(FEED_ID));
+        assertEquals(2, unread.get(FEED_ID).size());
+        assertEntryCorrect(unread.get(FEED_ID).get(0), TITLE1, AUTHOR1, PUBLISHED1, URL1, CONTENT1);
+        assertEntryCorrect(unread.get(FEED_ID).get(1), TITLE2, AUTHOR2, PUBLISHED2, URL2, CONTENT2);
+
+        verify(getRequestedFor(urlPathEqualTo("/stream/contents/" + FEED_ID))
+                .withQueryParam("xt", equalTo("user/-/state/com.google/read"))
+                .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
+
+        verify(getRequestedFor(urlEqualTo("/unread-count"))
+                .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
+    }
+
+    @Test
+    public void given_MoreResults_when_getUnread_then_FetchNextPage() throws Exception {
+        String ACCESS_TOKEN = "my_token";
+        String FEED_ID = "feed_id";
+
+        String TITLE1 = "Through the Google lens: Search trends January 16-22";
+        String AUTHOR1 = "Emily Wood";
+        int PUBLISHED1 = 1422046320;
+        String URL1 = "http://feedproxy.google.com/~r/blogspot/MKuf/~3/_Hkdwh7yKMo/blabla.html";
+        String CONTENT1 = "test_content";
+
+        String TITLE2 = "Google Maps Engine deprecated";
+        String AUTHOR2 = "Timothy Whitehead";
+        int PUBLISHED2 = 1422262271;
+        String URL2 = "http://feedproxy.google.com/~r/GoogleEarthBlog/~3/HqKBr0Se8K8/google-maps-engine-deprecated.html";
+        String CONTENT2 = "test_content2";
+
+        String CONTINUATION = "trMnkg7wWT62";
+
+        // given
+        JSONObject item1 =new FeedItem()
+                .title(TITLE1)
+                .author(AUTHOR1)
+                .published(PUBLISHED1)
+                .url(URL1)
+                .content(CONTENT1)
+                .build();
+
+        JSONObject firstResponse = new JSONObject();
+        firstResponse.put("items", asList(item1));
+        firstResponse.put("continuation", CONTINUATION);
+
+        stubFor(get(urlMatching("/stream/contents/.*")).inScenario("Many pages")
+                .whenScenarioStateIs(Scenario.STARTED)
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBody(firstResponse.toString()))
+                .willSetStateTo("First page fetched"));
+
+        JSONObject item2 =new FeedItem()
+                .title(TITLE2)
+                .author(AUTHOR2)
+                .published(PUBLISHED2)
+                .url(URL2)
+                .content(CONTENT2)
+                .build();
+
+        JSONObject secondResponse = new JSONObject();
+        secondResponse.put("items", asList(item2));
+
+        stubFor(get(urlMatching("/stream/contents/.*")).inScenario("Many pages")
+                .whenScenarioStateIs("First page fetched")
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBody(secondResponse.toString())));
+
+
+        JSONObject unreadResponse = new JSONObject();
+        JSONObject feed1 = new JSONObject();
+        feed1.put("id", FEED_ID);
+        feed1.put("count", 2);
+        unreadResponse.put("unreadcounts", asList(feed1));
+
+        stubFor(get(urlEqualTo("/unread-count"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBody(unreadResponse.toString())));
+
+        // when
+        Map<String, List<FeedEntry>> unread =
+                inoreaderAdaptor(ACCESS_TOKEN).getUnread(asList(FEED_ID)).get(1000);
+
+        // then
+        assertTrue(unread.containsKey(FEED_ID));
+        assertEquals(2, unread.get(FEED_ID).size());
+        assertEntryCorrect(unread.get(FEED_ID).get(0), TITLE1, AUTHOR1, PUBLISHED1, URL1, CONTENT1);
+        assertEntryCorrect(unread.get(FEED_ID).get(1), TITLE2, AUTHOR2, PUBLISHED2, URL2, CONTENT2);
+
+        verify(getRequestedFor(urlPathEqualTo("/stream/contents/" + FEED_ID))
+                .withQueryParam("xt", equalTo("user/-/state/com.google/read"))
+                .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
+
+        verify(getRequestedFor(urlPathEqualTo("/stream/contents/" + FEED_ID))
+                .withQueryParam("c", equalTo(CONTINUATION))
+                .withQueryParam("xt", equalTo("user/-/state/com.google/read"))
+                .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
+
+        verify(getRequestedFor(urlEqualTo("/unread-count"))
+                .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
+    }
+
+    @Accessors(fluent = true)
+    @Setter
+    private class FeedItem {
+        String title, author, url, content;
+        int published;
+
+        JSONObject build() throws Exception {
+            JSONObject item = new JSONObject();
+            item.put("title", title);
+            item.put("author", author);
+            item.put("published", published);
+            JSONObject uri = new JSONObject();
+            uri.put("href", url);
+            uri.put("type", "text/html");
+            item.put("alternate", asList(uri));
+            JSONObject summary = new JSONObject();
+            summary.put("content", content);
+            item.put("summary", summary);
+            return item;
+        }
+    }
+
+    private void assertEntryCorrect(FeedEntry entry, String title, String author, int published,
+                                    String url, String content){
+        assertEquals(title, entry.getTitle());
+        assertEquals(author, entry.getAuthor());
+        assertEquals(url, entry.getUrl());
+        assertEquals(content, entry.getContent());
+        assertEquals(published, entry.getPublished().getTime());
+    }
+
+    @Test
+    public void given_Unauthorized_when_getUnread_then_RefreshTokenAndRetry() throws Exception {
+        fail();
+    }
+
+    @Test
+    public void given_Error_when_getUnread_then_ThrowException() throws Exception {
+        String FEED_ID = "feed_id";
+        int ERROR_STATUS_CODE = 500;
+        String RESPONSE = "error";
+
+        // given
+        JSONObject unreadResponse = new JSONObject();
+        JSONObject feed1 = new JSONObject();
+        feed1.put("id", FEED_ID);
+        feed1.put("count", 1);
+        unreadResponse.put("unreadcounts", asList(feed1));
+
+        stubFor(get(urlEqualTo("/unread-count"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBody(unreadResponse.toString())));
+
+
+        stubFor(get(urlMatching("/stream/contents/.*"))
+                .willReturn(aResponse()
+                        .withStatus(ERROR_STATUS_CODE)
+                        .withBody(RESPONSE)));
+
+        // when
+        Exception thrown = null;
+        try {
+            inoreaderAdaptor(null).getUnread(asList(FEED_ID)).get(1000);
+        } catch (Exception e){
+            thrown = e;
+        }
+
+        // then
+        assertNotNull(thrown);
+        assertEquals(ERROR_STATUS_CODE, ((ApiException) thrown).getStatus());
+        assertEquals(RESPONSE, ((ApiException) thrown).getResponse());
+    }
+
+    @Test
+    public void given_ResponseOK_when_markAsRead_then_ReturnSuccess() throws Exception {
+        String ACCESS_TOKEN = "my_token";
+        String FEED_ID1 = "test_feed_123";
+        String FEED_ID2 = "test_feed_124";
+
+        // given
+        stubFor(get(urlMatching("/mark-all-as-read.*"))
+                .willReturn(aResponse()
+                        .withStatus(200)));
+
+        // when
+        boolean success = inoreaderAdaptor(ACCESS_TOKEN).markAsRead(asList(FEED_ID1, FEED_ID2)).get(1000);
+
+        // then
+        assertTrue(success);
+
+        verify(getRequestedFor(urlPathEqualTo("/mark-all-as-read"))
+                .withQueryParam("s", equalTo(FEED_ID1))
+                .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
+
+        verify(getRequestedFor(urlPathEqualTo("/mark-all-as-read"))
+                .withQueryParam("s", equalTo(FEED_ID2))
+                .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
+    }
+
+    @Test
+    public void given_Unauthorized_when_markAsRead_then_RefreshTokenAndRetry() throws Exception {
+        fail();
+    }
+
+    @Test
+    public void given_Error_when_markAsRead_then_ReturnError() throws Exception {
+        String ACCESS_TOKEN = "my_token";
+        String FEED_ID = "test_feed_123";
+
+        // given
+        stubFor(get(urlMatching("/mark-all-as-read.*"))
+                .willReturn(aResponse()
+                        .withStatus(500)));
+
+        // when
+        boolean success = inoreaderAdaptor(ACCESS_TOKEN).markAsRead(asList(FEED_ID)).get(1000);
+
+        // then
+        assertFalse(success);
+
+        verify(getRequestedFor(urlPathEqualTo("/mark-all-as-read"))
+                .withQueryParam("s", equalTo(FEED_ID))
+                .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
+    }
+
+    @Test
+    public void given_ResponseOK_when_getFeeds_then_ReturnFeeds() throws Exception {
+        String ACCESS_TOKEN = "my_token";
+        String FEED_ID1 = "feed/http://www.theanimationblog.com/feed/";
+        String FEED_TITLE1 = "The Animation Blog.com | Est. 2007";
+        String FEED_ID2 = "feed/http://amanita-design.net/blog/feed/";
+        String FEED_TITLE2 = "Amanita Design Blog";
+
+        // given
+        JSONObject response = new JSONObject();
+        JSONObject feed1 = new Feed().id(FEED_ID1).title(FEED_TITLE1).build();
+        JSONObject feed2 = new Feed().id(FEED_ID2).title(FEED_TITLE2).build();
+        response.put("subscriptions", asList(feed1, feed2));
+
+        stubFor(get(urlEqualTo("/subscription/list"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBody(response.toString())));
+
+        // when
+        List<ExternalFeed> feeds = inoreaderAdaptor(ACCESS_TOKEN).getFeeds().get(1000);
+
+        // then
+        assertEquals(2, feeds.size());
+        assertFeedCorrect(feeds.get(0), FEED_TITLE1, FEED_ID1);
+        assertFeedCorrect(feeds.get(1), FEED_TITLE2, FEED_ID2);
+
+
+        verify(getRequestedFor(urlPathEqualTo("/subscription/list"))
+                .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
+    }
+
+    @Accessors(fluent = true)
+    @Setter
+    private class Feed {
+        String title, id;
+
+        JSONObject build() throws Exception {
+            JSONObject item = new JSONObject();
+            item.put("title", title);
+            item.put("id", id);
+            return item;
+        }
+    }
+
+    private void assertFeedCorrect(ExternalFeed feed, String title, String id){
+        assertEquals(title, feed.getTitle());
+        assertEquals(id, feed.getFeedId());
+    }
+
+    @Test
+    public void given_Unauthorized_when_getFeeds_then_RefreshTokenAndRetry() throws Exception {
+        fail();
+    }
+
+    @Test
+    public void given_Error_when_getFeeds_then_ThrowException() throws Exception {
+        int ERROR_STATUS_CODE = 500;
+        String RESPONSE = "error";
+
+        // given
+        stubFor(get(urlEqualTo("/subscription/list"))
+                .willReturn(aResponse()
+                        .withStatus(ERROR_STATUS_CODE)
+                        .withBody(RESPONSE)));
+
+        // when
+        Exception thrown = null;
+
+        try {
+            inoreaderAdaptor(null).getFeeds().get(1000);
+        } catch (Exception e){
+            thrown = e;
+        }
+
+        // then
+        assertNotNull(thrown);
+        assertEquals(ERROR_STATUS_CODE, ((ApiException) thrown).getStatus());
+        assertEquals(RESPONSE, ((ApiException) thrown).getResponse());
+    }
+
+    private static Map<InoreaderAdaptor.InoreaderParam, String> config(){
+        Map<InoreaderAdaptor.InoreaderParam, String> config = new HashMap<>();
+        config.put(InoreaderAdaptor.InoreaderParam.URL, "http://localhost:" + PORT);
+        config.put(InoreaderAdaptor.InoreaderParam.AUTH_URL, "http://localhost:" + PORT + "/auth");
+        config.put(InoreaderAdaptor.InoreaderParam.CLIENT_ID, CLIENT_ID);
+        config.put(InoreaderAdaptor.InoreaderParam.CLIENT_SECRET, CLIENT_SECRET);
+        config.put(InoreaderAdaptor.InoreaderParam.REDIRECT_URL, REDIRECT_URI);
+        return config;
+    }
+
+    private static InoreaderAdaptor inoreaderAdaptor(String accessToken){
+        Token token = new Token(null, accessToken);
+        return new InoreaderAdaptor(token, config(), wsClient);
+    }
+}

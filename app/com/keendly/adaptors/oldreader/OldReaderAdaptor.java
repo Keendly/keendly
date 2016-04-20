@@ -1,6 +1,7 @@
 package com.keendly.adaptors.oldreader;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.keendly.adaptors.GoogleReaderMapper;
 import com.keendly.adaptors.GoogleReaderTypeAdaptor;
 import com.keendly.adaptors.exception.ApiException;
 import com.keendly.adaptors.model.ExternalFeed;
@@ -54,12 +55,12 @@ public class OldReaderAdaptor extends GoogleReaderTypeAdaptor {
 
     @Override
     protected Promise<ExternalUser> doGetUser() {
-        return get("/user-info", response -> toUser(response.asJson()));
+        return get("/user-info", response -> GoogleReaderMapper.toUser(response.asJson()));
     }
 
     @Override
     protected Promise<List<ExternalFeed>> doGetFeeds() {
-        return get("/subscription/list", response ->  toFeeds(response.asJson()));
+        return get("/subscription/list", response ->  GoogleReaderMapper.toFeeds(response.asJson()));
     }
 
     @Override

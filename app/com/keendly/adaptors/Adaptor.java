@@ -26,7 +26,6 @@ public abstract class Adaptor {
     protected abstract Promise doMarkAsRead(List<String> feedIds);
 
     protected Token token;
-    protected boolean isLoggedIn = false;
 
     public Adaptor(){
 
@@ -34,12 +33,10 @@ public abstract class Adaptor {
 
     public Adaptor(Token token){
         this.token = token;
-        this.isLoggedIn = true;
     }
 
     public Promise<Token> login(Credentials credentials){
         return this.doLogin(credentials).map(token -> {
-            this.isLoggedIn = true;
             this.token = token;
             return token;
         });
@@ -71,7 +68,7 @@ public abstract class Adaptor {
     }
 
     private void validateLoggedIn(){
-        if (!isLoggedIn){
+        if (token == null){
             throw new IllegalStateException("Log in first");
         }
     }
