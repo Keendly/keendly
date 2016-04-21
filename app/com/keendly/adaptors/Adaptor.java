@@ -101,4 +101,8 @@ public abstract class Adaptor {
         }
         return null;
     }
+
+    public Token getToken(){
+        return token;
+    }
 }

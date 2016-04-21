@@ -76,7 +76,6 @@ public class LoginController extends Controller {
                         UserEntity userEntity = findUser(user, p);
                         userEntity.refreshToken = token.getRefreshToken();
                         userEntity.accessToken = token.getAccessToken();
-                        userEntity.accessTokenExpiration = token.getAccessTokenExpiration().toDate();
                         userEntity.lastLogin = new Date();
                         userEntity = JPA.em().merge(userEntity);
                         id.add(userEntity.id); // why so hacky

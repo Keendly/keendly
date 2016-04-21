@@ -30,9 +30,6 @@ public class UserEntity extends BaseEntity {
     @Column(length = 1000, name = "access_token")
     public String accessToken;
 
-    @Column(name = "access_token_expiration")
-    public Date accessTokenExpiration;
-
     @Column(name = "last_login")
     public Date lastLogin;
 }

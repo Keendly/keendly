@@ -1,11 +1,10 @@
 package com.keendly.controllers.api;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.keendly.adaptors.Adaptor;
 import com.keendly.adaptors.AdaptorFactory;
 import com.keendly.adaptors.model.auth.Token;
 import com.keendly.auth.AuthToken;
-import com.keendly.auth.Authenticator;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.keendly.auth.TokenType;
 import com.keendly.entities.Provider;
 import com.keendly.entities.UserEntity;
@@ -39,7 +38,7 @@ public abstract class AbstractController<T> extends Controller {
         return userEntity;
     }
 
-    private AuthToken getAuthToken(){
+    protected AuthToken getAuthToken(){
         return (AuthToken) ctx().args.get("token");
     }
 
@@ -60,13 +59,5 @@ public abstract class AbstractController<T> extends Controller {
     private Class<T> getGenericClass(){
         return (Class<T>) ((ParameterizedType) getClass()
                 .getGenericSuperclass()).getActualTypeArguments()[0];
-    }
-
-    protected void refreshTokenIfNeeded(Token externalToken){
-        if (externalToken.gotRefreshed()){
-            AuthToken token = getAuthToken();
-            String newToken = new Authenticator().generate(token.userId, token.provider, externalToken);
-            ctx().response().setCookie(KeendlyHeader.SESSION_COOKIE.value, newToken);
-        }
     }
 }

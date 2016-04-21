@@ -1,12 +1,17 @@
 package com.keendly.controllers.api;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.keendly.adaptors.Adaptor;
 import com.keendly.adaptors.model.ExternalFeed;
 import com.keendly.adaptors.model.auth.Token;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.keendly.auth.AuthToken;
+import com.keendly.auth.Authenticator;
 import com.keendly.dao.DeliveryDao;
 import com.keendly.dao.SubscriptionDao;
+import com.keendly.dao.UserDao;
 import com.keendly.entities.DeliveryItemEntity;
 import com.keendly.entities.SubscriptionItemEntity;
+import com.keendly.entities.UserEntity;
 import com.keendly.model.Delivery;
 import com.keendly.model.Feed;
 import com.keendly.model.Subscription;
@@ -29,11 +34,12 @@ public class FeedController extends AbstractController<Feed> {
 
     private SubscriptionDao subscriptionDao = new SubscriptionDao();
     private DeliveryDao deliveryDao = new DeliveryDao();
+    private UserDao userDao = new UserDao();
     private FeedMapper feedMapper = new FeedMapper();
 
     public Promise<Result> getFeeds(){
-        Token externalToken = getExternalToken();
-        return getAdaptor().getFeeds().map(subscribedFeeds ->
+        Adaptor adaptor = getAdaptor();
+        return adaptor.getFeeds().map(subscribedFeeds ->
                 JPA.withTransaction(() -> {
                     List<Feed> feeds = new ArrayList<>();
 
@@ -69,10 +75,22 @@ public class FeedController extends AbstractController<Feed> {
                         }
                         feeds.add(feed);
                     }
-                    refreshTokenIfNeeded(externalToken);
+                    refreshTokenIfNeeded(adaptor.getToken());
                     return ok(Json.toJson(feeds));
                 })
         );
+    }
+
+
+    protected void refreshTokenIfNeeded(Token externalToken){
+        if (externalToken.gotRefreshed()){
+            AuthToken token = getAuthToken();
+            String newToken = new Authenticator().generate(token.userId, token.provider, externalToken);
+            UserEntity entity = userDao.findById(token.userId);
+            entity.accessToken = externalToken.getAccessToken();
+            JPA.em().merge(entity);
+            ctx().response().setCookie(KeendlyHeader.SESSION_COOKIE.value, newToken);
+        }
     }
 
     public Promise<Result> getUnread(){

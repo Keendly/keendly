@@ -10,8 +10,6 @@ import com.keendly.adaptors.model.ExternalUser;
 import com.keendly.adaptors.model.auth.Credentials;
 import com.keendly.adaptors.model.auth.Token;
 import org.apache.http.HttpStatus;
-import org.joda.time.DateTime;
-import org.joda.time.Seconds;
 import play.libs.F.Promise;
 import play.libs.ws.WS;
 import play.libs.ws.WSClient;
@@ -87,11 +85,8 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
                         JsonNode node = response.asJson();
                         String refreshToken = node.get("refresh_token").asText();
                         String accessToken = node.get("access_token").asText();
-                        int tokenExpiresIn = node.get("expires_in").asInt();
-                        DateTime expirationDate =
-                            DateTime.now().plus(Seconds.seconds(tokenExpiresIn));
 
-                        return new Token(refreshToken, accessToken, expirationDate);
+                        return new Token(refreshToken, accessToken);
                     } else {
                         throw new ApiException(response.getStatus(), response.getBody());
                     }
@@ -115,6 +110,13 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
                 .flatMap(response -> {
                    if (isOk(response.getStatus())){
                        return Promise.pure(callback.apply(response));
+                   } else if (isUnauthorized(response.getStatus())){
+                       Promise refreshedToken = refreshAccessToken(token.getRefreshToken());
+                       return refreshedToken.flatMap(newToken -> {
+                           token.setAccessToken((String) newToken);
+                           token.setRefreshed();
+                           return doGetNoRefresh(url, callback);
+                       });
                    } else {
                        throw new ApiException(response.getStatus(), response.getBody());
                    }
@@ -126,8 +128,15 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
         Promise<WSResponse> res = getGetPromise(url);
         return res
                 .flatMap(response -> {
-                    if (isOk(response.getStatus())){
+                    if (isOk(response.getStatus())) {
                         return callback.apply(response);
+                    } else if (isUnauthorized(response.getStatus())){
+                        Promise refreshedToken = refreshAccessToken(token.getRefreshToken());
+                        return refreshedToken.flatMap(newToken -> {
+                            token.setAccessToken((String) newToken);
+                            token.setRefreshed();
+                            return doGetNoRefresh(url, callback);
+                        });
                     } else {
                         throw new ApiException(response.getStatus(), response.getBody());
                     }
@@ -138,6 +147,18 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
         return client.url(config.get(URL) + url)
                 .setHeader("Authorization", "Bearer " + token.getAccessToken())
                 .get();
+    }
+
+    private <T> Promise<T> doGetNoRefresh(String url, Function<WSResponse, T> callback){
+        Promise<WSResponse> res = getGetPromise(url);
+        return res
+                .flatMap(response -> {
+                    if (isOk(response.getStatus())){
+                        return Promise.pure(callback.apply(response));
+                    } else {
+                        throw new ApiException(response.getStatus(), response.getBody());
+                    }
+                });
     }
 
     @Override
@@ -176,5 +197,23 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
     @Override
     protected String normalizeFeedId(String feedId){
         return UrlEscapers.urlPathSegmentEscaper().escape(feedId);
+    }
+
+    private Promise<String> refreshAccessToken(String refreshToken){
+        return client.url(config.get(AUTH_URL))
+                .setContentType("application/x-www-form-urlencoded; charset=utf-8")
+                .post(String.format("client_id=%s&" +
+                                "client_secret=%s" +
+                                "&grant_type=refresh_token" +
+                                "&refresh_token=%s",
+                        config.get(CLIENT_ID), config.get(CLIENT_SECRET), refreshToken))
+                .map(response -> {
+                    if (isOk(response.getStatus())) {
+                        JsonNode node = response.asJson();
+                        return node.get("access_token").asText();
+                    } else {
+                        throw new ApiException(response.getStatus(), response.getBody());
+                    }
+                });
     }
 }
