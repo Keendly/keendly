@@ -54,6 +54,21 @@ public class LoginController extends Controller {
         }
     }
 
+    public Promise<Result> newsblurCallback(String code, String state, String error){
+        if (StringUtils.isNotBlank(error)) {
+            Logger.error("Error got in newsblur callback: {}", error);
+            return F.Promise.pure(redirect(routes.WebController.login(error)));
+
+        } else if (!Authenticator.validateStateToken(state, Provider.NEWSBLUR)){
+            Logger.error("Incorrect state received: {}", state);
+            return F.Promise.pure(redirect(routes.WebController.login("Login error, please try again")));
+        } else {
+            Credentials credentials = new Credentials();
+            credentials.setAuthorizationCode(code);
+            return loginUser(credentials, Provider.NEWSBLUR);
+        }
+    }
+
     public Promise<Result> oldReaderLogin(){
         String email = request().body().asFormUrlEncoded().get("email")[0];
         String password = request().body().asFormUrlEncoded().get("password")[0];

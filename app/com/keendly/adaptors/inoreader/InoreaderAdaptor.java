@@ -68,8 +68,6 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
 
     @Override
     protected Promise<Token> doLogin(Credentials credentials) {
-        System.out.println(config.get(URL));
-
         return client.url(config.get(AUTH_URL))
                 .setContentType("application/x-www-form-urlencoded; charset=utf-8")
                 .post(String.format("code=%s&" +

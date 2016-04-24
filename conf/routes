@@ -29,6 +29,7 @@ GET     /login                          com.keendly.controllers.WebController.lo
 POST    /oldReaderLogin                 com.keendly.controllers.LoginController.oldReaderLogin()
 GET     /feedlyCallback                 com.keendly.controllers.LoginController.feedlyCallback(code: String, error: String)
 GET     /inoreaderCallback              com.keendly.controllers.LoginController.inoReaderCallback(code: String, state: String, error: String ?= null)
+GET     /newsblurCallback               com.keendly.controllers.LoginController.newsblurCallback(code: String, state: String, error: String ?= null)
 GET     /feeds                          com.keendly.controllers.WebController.feeds()
 GET     /deliveries                     com.keendly.controllers.WebController.deliveries()
 GET     /user                           com.keendly.controllers.WebController.user()

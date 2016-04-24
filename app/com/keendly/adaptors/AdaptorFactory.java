@@ -3,6 +3,7 @@ package com.keendly.adaptors;
 import com.keendly.adaptors.feedly.FeedlyAdaptor;
 import com.keendly.adaptors.inoreader.InoreaderAdaptor;
 import com.keendly.adaptors.model.auth.Token;
+import com.keendly.adaptors.newsblur.NewsblurAdaptor;
 import com.keendly.adaptors.oldreader.OldReaderAdaptor;
 import com.keendly.entities.Provider;
 import org.apache.commons.lang3.NotImplementedException;
@@ -17,6 +18,7 @@ public class AdaptorFactory {
         ADAPTORS.put(Provider.FEEDLY, FeedlyAdaptor.class);
         ADAPTORS.put(Provider.OLDREADER, OldReaderAdaptor.class);
         ADAPTORS.put(Provider.INOREADER, InoreaderAdaptor.class);
+        ADAPTORS.put(Provider.NEWSBLUR, NewsblurAdaptor.class);
     }
 
     public static Adaptor getInstance(Provider provider){
