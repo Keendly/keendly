@@ -16,6 +16,7 @@ import play.libs.ws.WSClient;
 import play.libs.ws.WSResponse;
 
 import java.util.*;
+import java.util.function.Function;
 
 import static com.keendly.adaptors.newsblur.NewsblurAdaptor.NewsblurParam.*;
 import static com.keendly.utils.ConfigUtils.parameter;
@@ -87,43 +88,29 @@ public class NewsblurAdaptor extends Adaptor {
 
     @Override
     protected Promise<ExternalUser> doGetUser() {
-        Promise<WSResponse> res = getGetPromise("/social/profile");
-        return res
-                .map(response -> {
-                    if (isOk(response.getStatus())) {
-                        JsonNode json = response.asJson();
-                        ExternalUser user = new ExternalUser();
-                        user.setId(json.get("user_id").asText());
-                        user.setDisplayName(json.get("user_profile").get("username").asText());
-                        user.setUserName(json.get("user_profile").get("username").asText());
-                        return user;
-                    } else {
-                        throw new ApiException(response.getStatus(), response.getBody());
-                    }
-                });
+        return get("/social/profile", response ->  {
+            ExternalUser user = new ExternalUser();
+            user.setId(response.get("user_id").asText());
+            user.setDisplayName(response.get("user_profile").get("username").asText());
+            user.setUserName(response.get("user_profile").get("username").asText());
+            return user;
+        });
     }
 
     @Override
     protected Promise<List<ExternalFeed>> doGetFeeds() {
-        Promise<WSResponse> res = getGetPromise("/reader/feeds");
-        return res
-                .map(response -> {
-                    if (isOk(response.getStatus())) {
-                        JsonNode json = response.asJson();
-                        List<ExternalFeed> externalSubscriptions = new ArrayList<>();
-                        Iterator<Map.Entry<String, JsonNode>> it = json.get("feeds").fields();
-                        while (it.hasNext()){
-                            Map.Entry<String, JsonNode> feed = it.next();
-                            ExternalFeed externalSubscription = new ExternalFeed();
-                            externalSubscription.setFeedId(feed.getValue().get("id").asText());
-                            externalSubscription.setTitle(feed.getValue().get("feed_title").asText());
-                            externalSubscriptions.add(externalSubscription);
-                        }
-                        return externalSubscriptions;
-                    } else {
-                        throw new ApiException(response.getStatus(), response.getBody());
-                    }
-                });
+        return get("/reader/feeds", response ->  {
+            List<ExternalFeed> externalSubscriptions = new ArrayList<>();
+            Iterator<Map.Entry<String, JsonNode>> it = response.get("feeds").fields();
+            while (it.hasNext()){
+                Map.Entry<String, JsonNode> feed = it.next();
+                ExternalFeed externalSubscription = new ExternalFeed();
+                externalSubscription.setFeedId(feed.getValue().get("id").asText());
+                externalSubscription.setTitle(feed.getValue().get("feed_title").asText());
+                externalSubscriptions.add(externalSubscription);
+            }
+            return externalSubscriptions;
+        });
     }
 
     @Override
@@ -145,7 +132,6 @@ public class NewsblurAdaptor extends Adaptor {
                 return entries;
             });
         });
-
     }
 
     private F.Promise<Map<String, List<FeedEntry>>> doGetUnread(String feedId, int unreadCount, int page) {
@@ -189,24 +175,17 @@ public class NewsblurAdaptor extends Adaptor {
 
     @Override
     protected Promise<Map<String, Integer>> doGetUnreadCount(List<String> feedIds) {
-        Promise<WSResponse> res = getGetPromise("/reader/refresh_feeds");
-        return res
-                .map(response -> {
-                    if (isOk(response.getStatus())) {
-                        Map<String, Integer> unreadCount = new HashMap<>();
-                        JsonNode json = response.asJson();
-                        Iterator<Map.Entry<String, JsonNode>> it = json.get("feeds").fields();
-                        while (it.hasNext()){
-                            Map.Entry<String, JsonNode> feed = it.next();
-                            if (feedIds.contains(feed.getKey())){
-                                unreadCount.put(feed.getKey(), feed.getValue().get("nt").asInt());
-                            }
-                        }
-                        return unreadCount;
-                    } else {
-                        throw new ApiException(response.getStatus(), response.getBody());
-                    }
-                });
+        return get("/reader/refresh_feeds", response ->  {
+            Map<String, Integer> unreadCount = new HashMap<>();
+            Iterator<Map.Entry<String, JsonNode>> it = response.get("feeds").fields();
+            while (it.hasNext()){
+                Map.Entry<String, JsonNode> feed = it.next();
+                if (feedIds.contains(feed.getKey())){
+                    unreadCount.put(feed.getKey(), feed.getValue().get("nt").asInt());
+                }
+            }
+            return unreadCount;
+        });
     }
 
     @Override
@@ -218,5 +197,29 @@ public class NewsblurAdaptor extends Adaptor {
         return client.url(config.get(URL) + url)
                 .setHeader("Authorization", "Bearer " + token.getAccessToken())
                 .get();
+    }
+
+    protected  <T> Promise<T> get(String url, Function<JsonNode, T> callback){
+        Promise<WSResponse> res = getGetPromise(url);
+        return res
+                .flatMap(response -> {
+                    if (isOk(response.getStatus())){
+                        JsonNode json = response.asJson();
+                        if (json.has("authenticated") && !json.get("authenticated").asBoolean()){
+                            throw new ApiException(401, "not authenticated");
+                        } else {
+                            return Promise.pure(callback.apply(json));
+                        }
+//                    } else if (isUnauthorized(response.getStatus())){
+//                        Promise refreshedToken = refreshAccessToken(token.getRefreshToken());
+//                        return refreshedToken.flatMap(newToken -> {
+//                            token.setAccessToken((String) newToken);
+//                            token.setRefreshed();
+//                            return doGetNoRefresh(url, callback);
+//                        });
+                    } else {
+                        throw new ApiException(response.getStatus(), response.getBody());
+                    }
+                });
     }
 }

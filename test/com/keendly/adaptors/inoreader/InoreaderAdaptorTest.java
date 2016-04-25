@@ -1,6 +1,5 @@
 package com.keendly.adaptors.inoreader;
 
-import com.github.tomakehurst.wiremock.client.ValueMatchingStrategy;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.github.tomakehurst.wiremock.stubbing.Scenario;
 import com.keendly.adaptors.exception.ApiException;
@@ -12,7 +11,6 @@ import com.keendly.adaptors.model.auth.Token;
 import com.ning.http.client.AsyncHttpClientConfig;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONObject;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -25,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.keendly.adaptors.AssertHelpers.*;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.*;
 
@@ -59,7 +58,7 @@ public class InoreaderAdaptorTest {
         response.put("refresh_token", REFRESH_TOKEN);
         response.put("scope", "write");
 
-        stubFor(post(urlEqualTo("/auth"))
+        givenThat(post(urlEqualTo("/auth"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")
@@ -88,29 +87,13 @@ public class InoreaderAdaptorTest {
                 .withHeader("Content-Type", equalTo("application/x-www-form-urlencoded; charset=utf-8")));
     }
 
-    private ValueMatchingStrategy thatContainsParams(BasicNameValuePair... params){
-        StringBuilder sb = new StringBuilder();
-        for (BasicNameValuePair param : params){
-            sb.append(".*");
-            sb.append(param.getName());
-            sb.append("=");
-            sb.append(param.getValue());
-            sb.append(".*");
-        }
-        return matching(sb.toString());
-    }
-
-    private BasicNameValuePair param(String key, String value){
-        return new BasicNameValuePair(key, value);
-    }
-
     @Test
     public void given_Error_when_login_then_ThrowException() throws Exception {
         int ERROR_STATUS_CODE = 500;
         String RESPONSE = "error";
 
         // given
-        stubFor(post(urlEqualTo("/auth"))
+        givenThat(post(urlEqualTo("/auth"))
                 .willReturn(aResponse()
                         .withStatus(ERROR_STATUS_CODE)
                         .withBody(RESPONSE)));
@@ -146,7 +129,7 @@ public class InoreaderAdaptorTest {
         response.put("signupTimeSec", 1163850013);
         response.put("isMultiLoginEnabled", false);
 
-        stubFor(get(urlEqualTo("/user-info"))
+        givenThat(get(urlEqualTo("/user-info"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withBody(response.toString())));
@@ -173,7 +156,7 @@ public class InoreaderAdaptorTest {
         String USER_EMAIL = "bender@inoreader.com";
 
         // given
-        stubFor(get(urlEqualTo("/user-info")).inScenario("Get user with refresh")
+        givenThat(get(urlEqualTo("/user-info")).inScenario("Get user with refresh")
                 .whenScenarioStateIs(Scenario.STARTED)
                 .willReturn(aResponse()
                         .withStatus(403))
@@ -182,7 +165,7 @@ public class InoreaderAdaptorTest {
         JSONObject refreshTokenResponse = new JSONObject();
         refreshTokenResponse.put("access_token", NEW_ACCESS_TOKEN);
 
-        stubFor(post(urlEqualTo("/auth"))
+        givenThat(post(urlEqualTo("/auth"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withBody(refreshTokenResponse.toString())));
@@ -192,7 +175,7 @@ public class InoreaderAdaptorTest {
         response.put("userName", USER_NAME);
         response.put("userEmail", USER_EMAIL);
 
-        stubFor(get(urlEqualTo("/user-info")).inScenario("Get user with refresh")
+        givenThat(get(urlEqualTo("/user-info")).inScenario("Get user with refresh")
                 .whenScenarioStateIs("Forbidden")
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -229,11 +212,11 @@ public class InoreaderAdaptorTest {
         String RESPONSE = "error";
 
         // given
-        stubFor(get(urlEqualTo("/user-info"))
+        givenThat(get(urlEqualTo("/user-info"))
                 .willReturn(aResponse()
                         .withStatus(403)));
 
-        stubFor(post(urlEqualTo("/auth"))
+        givenThat(post(urlEqualTo("/auth"))
                 .willReturn(aResponse()
                         .withStatus(ERROR_STATUS_CODE)
                         .withBody(RESPONSE)));
@@ -270,7 +253,7 @@ public class InoreaderAdaptorTest {
         String RESPONSE = "error";
 
         // given
-        stubFor(get(urlEqualTo("/user-info"))
+        givenThat(get(urlEqualTo("/user-info"))
                 .willReturn(aResponse()
                         .withStatus(ERROR_STATUS_CODE)
                         .withBody(RESPONSE)));
@@ -302,7 +285,7 @@ public class InoreaderAdaptorTest {
         feed.put("count", UNREAD_COUNT);
         response.put("unreadcounts", asList(feed));
 
-        stubFor(get(urlEqualTo("/unread-count"))
+        givenThat(get(urlEqualTo("/unread-count"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withBody(response.toString())));
@@ -331,7 +314,7 @@ public class InoreaderAdaptorTest {
         String RESPONSE = "error";
 
         // given
-        stubFor(get(urlEqualTo("/unread-count"))
+        givenThat(get(urlEqualTo("/unread-count"))
                 .willReturn(aResponse()
                         .withStatus(ERROR_STATUS_CODE)
                         .withBody(RESPONSE)));
@@ -388,7 +371,7 @@ public class InoreaderAdaptorTest {
         JSONObject response = new JSONObject();
         response.put("items", asList(item1, item2));
 
-        stubFor(get(urlMatching("/stream/contents/.*"))
+        givenThat(get(urlMatching("/stream/contents/.*"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withBody(response.toString())));
@@ -400,7 +383,7 @@ public class InoreaderAdaptorTest {
         feed1.put("count", 2);
         unreadResponse.put("unreadcounts", asList(feed1));
 
-        stubFor(get(urlEqualTo("/unread-count"))
+        givenThat(get(urlEqualTo("/unread-count"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withBody(unreadResponse.toString())));
@@ -455,7 +438,7 @@ public class InoreaderAdaptorTest {
         firstResponse.put("items", asList(item1));
         firstResponse.put("continuation", CONTINUATION);
 
-        stubFor(get(urlMatching("/stream/contents/.*")).inScenario("Many pages")
+        givenThat(get(urlMatching("/stream/contents/.*")).inScenario("Many pages")
                 .whenScenarioStateIs(Scenario.STARTED)
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -473,7 +456,7 @@ public class InoreaderAdaptorTest {
         JSONObject secondResponse = new JSONObject();
         secondResponse.put("items", asList(item2));
 
-        stubFor(get(urlMatching("/stream/contents/.*")).inScenario("Many pages")
+        givenThat(get(urlMatching("/stream/contents/.*")).inScenario("Many pages")
                 .whenScenarioStateIs("First page fetched")
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -486,7 +469,7 @@ public class InoreaderAdaptorTest {
         feed1.put("count", 2);
         unreadResponse.put("unreadcounts", asList(feed1));
 
-        stubFor(get(urlEqualTo("/unread-count"))
+        givenThat(get(urlEqualTo("/unread-count"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withBody(unreadResponse.toString())));
@@ -528,7 +511,7 @@ public class InoreaderAdaptorTest {
         String CONTENT1 = "test_content";
 
         // given
-        stubFor(get(urlEqualTo("/unread-count")).inScenario("Get unread with refresh")
+        givenThat(get(urlEqualTo("/unread-count")).inScenario("Get unread with refresh")
                 .whenScenarioStateIs(Scenario.STARTED)
                 .willReturn(aResponse()
                         .withStatus(403))
@@ -537,7 +520,7 @@ public class InoreaderAdaptorTest {
         JSONObject refreshTokenResponse = new JSONObject();
         refreshTokenResponse.put("access_token", NEW_ACCESS_TOKEN);
 
-        stubFor(post(urlEqualTo("/auth"))
+        givenThat(post(urlEqualTo("/auth"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withBody(refreshTokenResponse.toString())));
@@ -548,7 +531,7 @@ public class InoreaderAdaptorTest {
         feed1.put("count", 2);
         unreadResponse.put("unreadcounts", asList(feed1));
 
-        stubFor(get(urlEqualTo("/unread-count")).inScenario("Get unread with refresh")
+        givenThat(get(urlEqualTo("/unread-count")).inScenario("Get unread with refresh")
                 .whenScenarioStateIs("Forbidden")
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -564,7 +547,7 @@ public class InoreaderAdaptorTest {
         JSONObject response = new JSONObject();
         response.put("items", asList(item1));
 
-        stubFor(get(urlMatching("/stream/contents/.*"))
+        givenThat(get(urlMatching("/stream/contents/.*"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withBody(response.toString())));
@@ -606,15 +589,6 @@ public class InoreaderAdaptorTest {
         }
     }
 
-    private void assertEntryCorrect(FeedEntry entry, String title, String author, int published,
-                                    String url, String content){
-        assertEquals(title, entry.getTitle());
-        assertEquals(author, entry.getAuthor());
-        assertEquals(url, entry.getUrl());
-        assertEquals(content, entry.getContent());
-        assertEquals(published, entry.getPublished().getTime());
-    }
-
     @Test
     public void given_Error_when_getUnread_then_ThrowException() throws Exception {
         String FEED_ID = "feed_id";
@@ -628,13 +602,13 @@ public class InoreaderAdaptorTest {
         feed1.put("count", 1);
         unreadResponse.put("unreadcounts", asList(feed1));
 
-        stubFor(get(urlEqualTo("/unread-count"))
+        givenThat(get(urlEqualTo("/unread-count"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withBody(unreadResponse.toString())));
 
 
-        stubFor(get(urlMatching("/stream/contents/.*"))
+        givenThat(get(urlMatching("/stream/contents/.*"))
                 .willReturn(aResponse()
                         .withStatus(ERROR_STATUS_CODE)
                         .withBody(RESPONSE)));
@@ -660,7 +634,7 @@ public class InoreaderAdaptorTest {
         String FEED_ID2 = "test_feed_124";
 
         // given
-        stubFor(get(urlMatching("/mark-all-as-read.*"))
+        givenThat(get(urlMatching("/mark-all-as-read.*"))
                 .willReturn(aResponse()
                         .withStatus(200)));
 
@@ -691,7 +665,7 @@ public class InoreaderAdaptorTest {
         String FEED_ID = "test_feed_123";
 
         // given
-        stubFor(get(urlMatching("/mark-all-as-read.*"))
+        givenThat(get(urlMatching("/mark-all-as-read.*"))
                 .willReturn(aResponse()
                         .withStatus(500)));
 
@@ -720,7 +694,7 @@ public class InoreaderAdaptorTest {
         JSONObject feed2 = new Feed().id(FEED_ID2).title(FEED_TITLE2).build();
         response.put("subscriptions", asList(feed1, feed2));
 
-        stubFor(get(urlEqualTo("/subscription/list"))
+        givenThat(get(urlEqualTo("/subscription/list"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withBody(response.toString())));
@@ -751,11 +725,6 @@ public class InoreaderAdaptorTest {
         }
     }
 
-    private void assertFeedCorrect(ExternalFeed feed, String title, String id){
-        assertEquals(title, feed.getTitle());
-        assertEquals(id, feed.getFeedId());
-    }
-
     @Test
     @Ignore("same refresh token logic as un getUser")
     public void given_Unauthorized_when_getFeeds_then_RefreshTokenAndRetry() throws Exception {
@@ -768,7 +737,7 @@ public class InoreaderAdaptorTest {
         String RESPONSE = "error";
 
         // given
-        stubFor(get(urlEqualTo("/subscription/list"))
+        givenThat(get(urlEqualTo("/subscription/list"))
                 .willReturn(aResponse()
                         .withStatus(ERROR_STATUS_CODE)
                         .withBody(RESPONSE)));
