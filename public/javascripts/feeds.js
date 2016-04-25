@@ -29,13 +29,22 @@ var FeedBox = React.createClass({
   handleDeliverySuccess: function() {
     this.setState({success: true, error: false})
   },
-  handleDeliveryError: function(description) {
-     this.setState({success: false, error: true, errorDescription: description})
+  handleDeliveryError: function(code, description) {
+     this.setState({success: false, error: true, errorCode: code, errorDescription: description})
   },
   render: function() {
     return (
       <div className="container" id="subs-container">
-        {this.state.error == true ? <div className='error_div'>{this.state.errorDescription}</div> : ''}
+        {
+          this.state.error == true ?
+            (this.state.errorCode == 'DELIVERY_EMAIL_NOT_CONFIGURED' ?
+            <div className='error_div'>
+              <b>Send-to-Kindle</b> email address not set, configure it in <a href="/user">settings</a>.
+            </div> :
+            <div className='error_div'>
+              {this.state.errorDescription}
+            </div>)
+              : ''}
         {this.state.success == true ? <div className='success_div'>Delivery started :-) Give us few minutes to deliver articles to your Kindle.</div> : ''}
         <div className="row" id="button_row">
           <div className="col s12 m6">
@@ -182,7 +191,7 @@ var DeliverModal = React.createClass({
        }.bind(this),
        error: function(xhr, status, err) {
          $('#delivery_modal').closeModal();
-         this.props.error(xhr.responseJSON.description)
+         this.props.error(xhr.responseJSON.code, xhr.responseJSON.description)
        }.bind(this)
      });
   },
