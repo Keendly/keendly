@@ -110,12 +110,49 @@ public class NewsblurAdaptorTest {
         String ACCESS_TOKEN = "my_token";
         String USER_ID = "1001921515";
         String USER_NAME = "moomeen";
+        String USER_EMAIL = "moomeen@gmail.com";
 
         // given
         givenThat(get(urlEqualTo("/social/profile"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withBodyFile("newsblur/given_ResponseOK_when_getUser_then_ReturnUser.json")));
+
+        givenThat(get(urlEqualTo("/profile/payment_history"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBodyFile("newsblur/given_ResponseOK_when_getUser_then_ReturnUser_email.json")));
+
+        // when
+        ExternalUser user = newsblurAdaptor(ACCESS_TOKEN).getUser().get(1000);
+
+        // then
+        assertEquals(USER_ID, user.getId());
+        assertEquals(USER_NAME, user.getDisplayName());
+        assertEquals(USER_EMAIL, user.getUserName());
+
+        verify(getRequestedFor(urlMatching("/social/profile"))
+                .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
+
+        verify(getRequestedFor(urlMatching("/profile/payment_history"))
+                .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
+    }
+
+    @Test
+    public void given_EmailGetError_when_getUser_then_ReturnOnlyUsername() throws Exception {
+        String ACCESS_TOKEN = "my_token";
+        String USER_ID = "1001921515";
+        String USER_NAME = "moomeen";
+
+        // given
+        givenThat(get(urlEqualTo("/social/profile"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBodyFile("newsblur/given_ResponseOK_when_getUser_then_ReturnUser.json")));
+
+        givenThat(get(urlEqualTo("/profile/payment_history"))
+                .willReturn(aResponse()
+                        .withStatus(500)));
 
         // when
         ExternalUser user = newsblurAdaptor(ACCESS_TOKEN).getUser().get(1000);
@@ -126,6 +163,9 @@ public class NewsblurAdaptorTest {
         assertEquals(USER_NAME, user.getUserName());
 
         verify(getRequestedFor(urlMatching("/social/profile"))
+                .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
+
+        verify(getRequestedFor(urlMatching("/profile/payment_history"))
                 .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
     }
 

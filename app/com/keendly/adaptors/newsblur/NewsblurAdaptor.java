@@ -88,12 +88,18 @@ public class NewsblurAdaptor extends Adaptor {
 
     @Override
     protected Promise<ExternalUser> doGetUser() {
-        return get("/social/profile", response ->  {
+        return doGetFlat("/social/profile", response ->  {
             ExternalUser user = new ExternalUser();
             user.setId(response.get("user_id").asText());
             user.setDisplayName(response.get("user_profile").get("username").asText());
             user.setUserName(response.get("user_profile").get("username").asText());
-            return user;
+
+            return get("/profile/payment_history", profile -> {
+                if (profile.has("statistics") && profile.get("statistics").has("email")){
+                    user.setUserName(profile.get("statistics").get("email").asText());
+                }
+                return user;
+            }).recover(f -> user);
         });
     }
 
@@ -199,7 +205,7 @@ public class NewsblurAdaptor extends Adaptor {
                 .get();
     }
 
-    protected  <T> Promise<T> get(String url, Function<JsonNode, T> callback){
+    protected <T> Promise<T> get(String url, Function<JsonNode, T> callback){
         Promise<WSResponse> res = getGetPromise(url);
         return res
                 .flatMap(response -> {
@@ -210,13 +216,23 @@ public class NewsblurAdaptor extends Adaptor {
                         } else {
                             return Promise.pure(callback.apply(json));
                         }
-//                    } else if (isUnauthorized(response.getStatus())){
-//                        Promise refreshedToken = refreshAccessToken(token.getRefreshToken());
-//                        return refreshedToken.flatMap(newToken -> {
-//                            token.setAccessToken((String) newToken);
-//                            token.setRefreshed();
-//                            return doGetNoRefresh(url, callback);
-//                        });
+                    } else {
+                        throw new ApiException(response.getStatus(), response.getBody());
+                    }
+                });
+    }
+
+    private <T> Promise<T> doGetFlat(String url, Function<JsonNode, Promise<T>> callback){
+        Promise<WSResponse> res = getGetPromise(url);
+        return res
+                .flatMap(response -> {
+                    if (isOk(response.getStatus())) {
+                        JsonNode json = response.asJson();
+                        if (json.has("authenticated") && !json.get("authenticated").asBoolean()){
+                            throw new ApiException(401, "not authenticated");
+                        } else {
+                            return callback.apply(json);
+                        }
                     } else {
                         throw new ApiException(response.getStatus(), response.getBody());
                     }
