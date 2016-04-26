@@ -15,6 +15,7 @@ import play.libs.ws.WS;
 import play.libs.ws.WSClient;
 import play.libs.ws.WSResponse;
 
+import java.net.URI;
 import java.util.*;
 import java.util.function.Function;
 
@@ -154,7 +155,12 @@ public class NewsblurAdaptor extends Adaptor {
             for (JsonNode item : items){
                 if (item.get("read_status").asInt() == 0){
                     FeedEntry entry = new FeedEntry();
-                    entry.setUrl(asText(item, "id"));
+                    String id = asText(item, "id");
+                    if (isURL(id)){
+                        entry.setUrl(id);
+                    } else {
+                        entry.setUrl(asText(item, "story_permalink"));
+                    }
                     entry.setTitle(asText(item, "story_title"));
                     entry.setAuthor(asText(item, "story_authors"));
                     entry.setPublished(asDate(item, "story_timestamp"));
@@ -177,6 +183,18 @@ public class NewsblurAdaptor extends Adaptor {
             return F.Promise.pure(ret);
 
         });
+    }
+
+    private boolean isURL(String s){
+        try {
+            URI uri = new URI(s);
+            if (uri.getScheme() == null || uri.getHost() == null){
+                return false;
+            }
+            return true;
+        } catch (Exception e){
+            return false;
+        }
     }
 
     @Override

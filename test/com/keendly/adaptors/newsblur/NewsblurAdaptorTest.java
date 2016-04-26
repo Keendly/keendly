@@ -298,6 +298,33 @@ public class NewsblurAdaptorTest {
     }
 
     @Test
+    public void given_IdNotUrl_when_getUnread_then_ReturnPermalinkAsUrl() throws Exception {
+        String ACCESS_TOKEN = "my_token";
+        String FEED_ID = "feed_id";
+
+        String URL1 = "http://feedproxy.google.com/~r/AmazonWebServicesBlog/~3/49pMIkRfTWY/";
+
+        // given
+        givenThat(get(urlMatching("/reader/feed/.*"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBodyFile("newsblur/given_IdNotUrl_when_getUnread_then_ReturnPermalinkAsUrl.json")));
+
+        givenThat(get(urlEqualTo("/reader/refresh_feeds"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBody(unreadCountResponse(FEED_ID, 6))));
+
+        // when
+        Map<String, List<FeedEntry>> unread =
+                newsblurAdaptor(ACCESS_TOKEN).getUnread(asList(FEED_ID)).get(1000);
+
+        // then
+        assertTrue(unread.containsKey(FEED_ID));
+        assertEquals(URL1, (unread.get(FEED_ID).get(0).getUrl()));
+    }
+
+    @Test
     public void given_MoreResults_when_getUnread_then_FetchNextPage() throws Exception {
         String ACCESS_TOKEN = "my_token";
         String FEED_ID = "feed_id";
