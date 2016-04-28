@@ -1,6 +1,5 @@
 package com.keendly.controllers.api;
 
-import com.keendly.auth.AuthToken;
 import com.keendly.auth.Authenticator;
 import play.libs.F.Promise;
 import play.mvc.Action;
@@ -11,13 +10,12 @@ public class SecuredAction extends Action.Simple {
 
     private static final play.Logger.ALogger LOG = play.Logger.of(SecuredAction.class);
 
-
     private Authenticator authenticator = new Authenticator();
 
     public Promise<Result> call(Context ctx) throws Throwable {
         try {
-            AuthToken token = authenticator.parse(findToken(ctx));
-            ctx.args.put("token", token);
+            String userId = authenticator.parse(findToken(ctx));
+            ctx.args.put("authenticatedUser", userId);
             return delegate.call(ctx);
 //            return adaptor.getUser(externalToken).flatMap(user -> {
 //                ctx.args.put("user", user);
@@ -40,6 +38,9 @@ public class SecuredAction extends Action.Simple {
 
     private String findToken(Context ctx){
         String token = ctx.request().getHeader(KeendlyHeader.AUTHORIZATION.value);
+        if (token != null && token.contains(" ")){
+            token = token.split(" ")[1];
+        }
         if (token == null){
             token = ctx.request().cookie(KeendlyHeader.SESSION_COOKIE.value).value();
         }

@@ -12,11 +12,12 @@ import java.util.Map;
 public class Mapper {
 
     public static DeliveryRequest mapToDeliveryRequest(Delivery delivery, Map<String, List<FeedEntry>> unread,
-                                                       long entityId, String deliveryEmail){
+                                                       long entityId, String deliveryEmail, long userId){
 
         DeliveryProtos.DeliveryRequest.Builder builder = DeliveryProtos.DeliveryRequest.newBuilder()
                 .setId(entityId)
                 .setEmail(deliveryEmail)
+                .setUserId(userId)
                 .setTimestamp(System.currentTimeMillis());
         for (Map.Entry<String, List<FeedEntry>> unreadFeed : unread.entrySet()){
             DeliveryItem deliveryItem

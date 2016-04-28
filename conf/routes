@@ -23,7 +23,10 @@ POST    /api/feeds/markAsRead           com.keendly.controllers.api.FeedControll
 GET     /api/users/:id                  com.keendly.controllers.api.UserController.getUser(id: String)
 PATCH   /api/users/:id                  com.keendly.controllers.api.UserController.updateUser(id: String)
 
-# WEB
+#AUTH
+POST    /auth                           com.keendly.controllers.api.AuthController.authenticate()
+
+#WEB
 GET     /                               com.keendly.controllers.WebController.index()
 GET     /login                          com.keendly.controllers.WebController.login(error: String ?= null)
 POST    /oldReaderLogin                 com.keendly.controllers.LoginController.oldReaderLogin()

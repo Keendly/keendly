@@ -81,6 +81,7 @@ public class LoginController extends Controller {
         });
     }
 
+    private static int ONE_MONTH = 60 * 60 * 24 * 30;
     public Promise<Result> loginUser(Credentials credentials, Provider p){
         Adaptor adaptor = AdaptorFactory.getInstance(p);
         return adaptor.login(credentials).flatMap(
@@ -95,7 +96,7 @@ public class LoginController extends Controller {
                         userEntity = JPA.em().merge(userEntity);
                         id.add(userEntity.id); // why so hacky
                     });
-                    String t = authenticator.generate(id.get(0), p, token);
+                    String t = authenticator.generate(id.get(0), ONE_MONTH);
                     response().setCookie(KeendlyHeader.SESSION_COOKIE.value, t);
                     return redirect(routes.WebController.feeds());
                 })

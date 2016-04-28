@@ -49,10 +49,12 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
     public Promise<Result> createDelivery() {
         // HACK WARNING
         StringBuilder deliveryEmail = new StringBuilder();
+        StringBuilder userId = new StringBuilder();
         JPA.withTransaction(() -> {
             UserEntity userEntity = new UserController().lookupUser("self");
             if (userEntity.deliveryEmail != null){
                 deliveryEmail.append(userEntity.deliveryEmail);
+                userId.append(userEntity.id);
             }
         });
         if (deliveryEmail.toString().isEmpty()){
@@ -72,7 +74,8 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
         return getAdaptor().getUnread(feedIds).map(unread -> {
 
             DeliveryProtos.DeliveryRequest deliveryRequest
-                    = Mapper.mapToDeliveryRequest(delivery, unread, deliveryEntity.id, deliveryEmail.toString());
+                    = Mapper.mapToDeliveryRequest(delivery, unread, deliveryEntity.id, deliveryEmail.toString(),
+                    Long.parseLong(userId.toString()));
 
             try {
                 String uid = generateDirName();
@@ -112,24 +115,23 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
 
     public Promise<Result> updateDelivery(Long id) {
         Delivery delivery = fromRequest();
-
-        boolean[] updateAllowed = {false};
-        JPA.withTransaction(() -> {
-            DeliveryEntity currentEntity = deliveryDao.getDelivery(id);
-            if (getUserEntity().id < 0 || // admin i -1
-                    getUserEntity().id == currentEntity.user.id || isAdminToken()){
-                deliveryMapper.toEntity(delivery, currentEntity);
-                deliveryDao.updateDelivery(currentEntity);
-                updateAllowed[0] = true;
-            }
-        });
-
-        if (updateAllowed[0]){
-            return Promise.pure(ok());
-        } else {
-            return Promise.pure(unauthorized());
+        try {
+            return JPA.withTransaction(() -> {
+                UserEntity user = getUserEntity();
+                DeliveryEntity currentEntity = deliveryDao.getDelivery(id);
+                if (user.id == currentEntity.user.id){
+                    deliveryMapper.toEntity(delivery, currentEntity);
+                    deliveryDao.updateDelivery(currentEntity);
+                    return Promise.pure(ok());
+                } else {
+                    LOG.error("User id ({}) does not match delivery id ({})", getUserEntity().id, currentEntity.user.id);
+                    return Promise.pure(forbidden());
+                }
+            });
+        } catch (Throwable throwable) {
+            LOG.error("Error updating delivery " + id, throwable);
+            return Promise.pure(internalServerError());
         }
-
     }
 
     public Promise<Result> getDelivery(Long id) {
@@ -163,7 +165,7 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
         DeliveryEntity toEntity(Delivery delivery){
             DeliveryEntity entity = new DeliveryEntity();
             entity.items = new ArrayList<>();
-            entity.user = getUserEntity();
+            entity.user = getDummyUserEntity();
             entity.manual = true;
             toEntity(delivery, entity);
             return entity;

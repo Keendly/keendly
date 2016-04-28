@@ -96,7 +96,7 @@ public class UserController extends AbstractController<User> {
     public UserEntity lookupUser(String id){
         Long userId;
         if (SELF.equals(id)){
-            userId = getUserEntity().id;
+            userId = getAuthenticatedUserId();
         } else {
             userId = Long.parseLong(id);
         }

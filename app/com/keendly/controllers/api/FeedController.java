@@ -4,8 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.keendly.adaptors.Adaptor;
 import com.keendly.adaptors.model.ExternalFeed;
 import com.keendly.adaptors.model.auth.Token;
-import com.keendly.auth.AuthToken;
-import com.keendly.auth.Authenticator;
 import com.keendly.dao.DeliveryDao;
 import com.keendly.dao.SubscriptionDao;
 import com.keendly.dao.UserDao;
@@ -84,12 +82,9 @@ public class FeedController extends AbstractController<Feed> {
 
     protected void refreshTokenIfNeeded(Token externalToken){
         if (externalToken.gotRefreshed()){
-            AuthToken token = getAuthToken();
-            String newToken = new Authenticator().generate(token.userId, token.provider, externalToken);
-            UserEntity entity = userDao.findById(token.userId);
+            UserEntity entity = getUserEntity();
             entity.accessToken = externalToken.getAccessToken();
             JPA.em().merge(entity);
-            ctx().response().setCookie(KeendlyHeader.SESSION_COOKIE.value, newToken);
         }
     }
 
@@ -123,7 +118,7 @@ public class FeedController extends AbstractController<Feed> {
         }
         return getAdaptor().markAsRead(feedIds).map(response -> {
             if (!response){
-                LOG.warning(String.format("Marking as read not successfull for: %s", node.toString()));
+                LOG.warning(String.format("Marking as read not successfull for: %text", node.toString()));
             }
             return ok();
         });

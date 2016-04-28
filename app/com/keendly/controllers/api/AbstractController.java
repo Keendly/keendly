@@ -4,10 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.keendly.adaptors.Adaptor;
 import com.keendly.adaptors.AdaptorFactory;
 import com.keendly.adaptors.model.auth.Token;
-import com.keendly.auth.AuthToken;
-import com.keendly.auth.TokenType;
-import com.keendly.entities.Provider;
+import com.keendly.dao.UserDao;
 import com.keendly.entities.UserEntity;
+import play.db.jpa.JPA;
 import play.libs.Json;
 import play.mvc.Controller;
 
@@ -17,34 +16,35 @@ import java.time.format.FormatStyle;
 
 public abstract class AbstractController<T> extends Controller {
 
+    private static final play.Logger.ALogger LOG = play.Logger.of(AbstractController.class);
+
+    private UserDao userDao = new UserDao();
+
     protected Adaptor getAdaptor(){
-        Provider provider = getAuthToken().provider;
-        return AdaptorFactory.getInstance(provider, getExternalToken());
+        UserEntity user = null;
+        try {
+            user = JPA.withTransaction(() -> getUserEntity());
+        } catch (Throwable throwable) {
+            LOG.error("Error getting user entity", throwable);
+        }
+        Token token = new Token(user.refreshToken, user.accessToken);
+        return AdaptorFactory.getInstance(user.provider, token);
     }
 
-    protected Token getExternalToken(){
-        AuthToken token = getAuthToken();
-        return new Token(token.refreshToken, token.accessToken);
-    }
-
-    /**
-     * Utility method to be used when creating new entities and we need to set up relation with current user.
-     * @return Fake UserEntity object
-     */
     protected UserEntity getUserEntity(){
-        UserEntity userEntity = new UserEntity();
-        AuthToken token = getAuthToken();
-        userEntity.id = token.userId;
-        return userEntity;
+        return userDao.findById(getAuthenticatedUserId());
     }
 
-    protected AuthToken getAuthToken(){
-        return (AuthToken) ctx().args.get("token");
+    // to set up relations when creating entities
+    protected UserEntity getDummyUserEntity(){
+        UserEntity user = new UserEntity();
+        user.id = getAuthenticatedUserId();
+        return user;
     }
 
-    protected boolean isAdminToken(){
-        AuthToken token = getAuthToken();
-        return token.type == TokenType.ADMIN;
+    protected long getAuthenticatedUserId(){
+        String userId = ctx().args.get("authenticatedUser").toString();
+        return Long.parseLong(userId);
     }
 
     protected DateTimeFormatter dateTimeFormatter(){

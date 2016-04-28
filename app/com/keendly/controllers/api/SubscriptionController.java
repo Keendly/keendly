@@ -34,7 +34,7 @@ public class SubscriptionController extends AbstractController<Subscription> {
         entity.time = time.toString();
         entity.timeZone = timezone.toZoneId().getId();
         entity.items = new ArrayList<>();
-        entity.user = getUserEntity();
+        entity.user = getDummyUserEntity();
 
         for (DeliveryItem feed : subscription.feeds){
             SubscriptionItemEntity item = new SubscriptionItemEntity();
