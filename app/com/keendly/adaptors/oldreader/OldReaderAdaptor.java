@@ -11,6 +11,7 @@ import com.keendly.adaptors.model.auth.Token;
 import org.apache.http.HttpStatus;
 import play.libs.F.Promise;
 import play.libs.ws.WS;
+import play.libs.ws.WSClient;
 import play.libs.ws.WSResponse;
 
 import java.util.ArrayList;
@@ -19,25 +20,53 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+import static com.keendly.adaptors.oldreader.OldReaderAdaptor.OldReaderParam.AUTH_URL;
+import static com.keendly.adaptors.oldreader.OldReaderAdaptor.OldReaderParam.URL;
+import static com.keendly.utils.ConfigUtils.parameter;
+
 public class OldReaderAdaptor extends GoogleReaderTypeAdaptor {
 
-    private static final String URL = "https://theoldreader.com/reader/api/0";
     private static final String APP_NAME = "Keendly";
 
-    public OldReaderAdaptor(){
+    enum OldReaderParam {
+        URL,
+        AUTH_URL
+    }
 
+    protected Map<OldReaderParam, String> config;
+
+    public OldReaderAdaptor(){
+        this(defaultConfig(), WS.client());
     }
 
     public OldReaderAdaptor(Token token){
-        super(token);
+        this(token, defaultConfig(), WS.client());
+    }
+
+    public OldReaderAdaptor(Map<OldReaderParam, String> config, WSClient client){
+        this.client = client;
+        this.config = config;
+    }
+
+    public OldReaderAdaptor(Token token, Map<OldReaderParam, String> config, WSClient client){
+        this.client = client;
+        this.config = config;
+        this.token = token;
+    }
+
+    public static Map<OldReaderParam, String> defaultConfig(){
+        Map<OldReaderParam, String> config = new HashMap<>();
+        config.put(URL, parameter("oldreader.url"));
+        config.put(AUTH_URL, parameter("oldreader.auth_url"));
+        return config;
     }
 
     @Override
     protected Promise<Token> doLogin(Credentials credentials) {
-        return WS.url("https://theoldreader.com/accounts/ClientLogin")
+        return client.url(config.get(AUTH_URL))
                 .setContentType("application/x-www-form-urlencoded; charset=utf-8")
                 .post(String.format(
-                        "%s&accountType=HOSTED_OR_GOOGLE&service=reader&Email=%s&Passwd=%s",
+                        "client=%s&accountType=HOSTED_OR_GOOGLE&service=reader&Email=%s&Passwd=%s",
                         APP_NAME, credentials.getUsername(), credentials.getPassword()
                 ))
                 .map(response -> {
@@ -51,6 +80,18 @@ public class OldReaderAdaptor extends GoogleReaderTypeAdaptor {
                         throw new ApiException(response.getStatus(), response.getBody());
                     }
                 });
+    }
+
+    private String extractToken(byte[] response){
+        String s = new String(response);
+        String[] params = s.split("\n");
+        for (String param : params){
+            String[] p = param.split("=");
+            if (p.length == 2 && p[0].equals("Auth")){
+                return p[1];
+            }
+        }
+        return null;
     }
 
     @Override
@@ -78,18 +119,14 @@ public class OldReaderAdaptor extends GoogleReaderTypeAdaptor {
     }
 
     @Override
-    protected Promise<Boolean> doMarkAsRead(List<String> feedIds) {
+    protected Promise<Boolean> doMarkAsRead(List<String> feedIds, long timestamp) {
         List<Promise<WSResponse>> promises = new ArrayList<>();
 
         for (String feedId : feedIds){
-            Map<String, Object> data = new HashMap<>();
-            data.put("s", feedId);
-            data.put("ts", String.valueOf(System.currentTimeMillis()));
-
-            Promise<WSResponse> promise = WS.url(URL + "/mark-all-as-read")
+            Promise<WSResponse> promise = client.url(config.get(URL) + "/mark-all-as-read")
                     .setHeader("Authorization", "GoogleLogin auth=" + token.getAccessToken())
                     .setHeader("Content-Type", "application/x-www-form-urlencoded")
-                    .post("s=" + feedId + "&ts=" + String.valueOf(System.currentTimeMillis()));
+                    .post("s=" + feedId + "&ts=" + String.valueOf(timestamp * 1000000)); // to nanoseconds
 
             promises.add(promise);
         }
@@ -106,7 +143,7 @@ public class OldReaderAdaptor extends GoogleReaderTypeAdaptor {
 
     @Override
     protected <T> Promise<T> get(String url, Function<WSResponse, T> callback){
-        Promise<WSResponse> res =  WS.url(URL + normalizeURL(url))
+        Promise<WSResponse> res =  client.url(config.get(URL) + normalizeURL(url))
                 .setHeader("Authorization", "GoogleLogin auth=" + token.getAccessToken())
                 .get();
         return res
@@ -121,7 +158,7 @@ public class OldReaderAdaptor extends GoogleReaderTypeAdaptor {
 
     @Override
     protected <T> Promise<T> getFlat(String url, Function<WSResponse, Promise<T>> callback){
-        Promise<WSResponse> res =  WS.url(URL + normalizeURL(url))
+        Promise<WSResponse> res =  client.url(config.get(URL) + normalizeURL(url))
                 .setHeader("Authorization", "GoogleLogin auth=" + token.getAccessToken())
                 .get();
         return res

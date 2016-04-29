@@ -632,6 +632,7 @@ public class InoreaderAdaptorTest {
         String ACCESS_TOKEN = "my_token";
         String FEED_ID1 = "test_feed_123";
         String FEED_ID2 = "test_feed_124";
+        long timestamp = System.currentTimeMillis();
 
         // given
         givenThat(get(urlMatching("/mark-all-as-read.*"))
@@ -639,17 +640,20 @@ public class InoreaderAdaptorTest {
                         .withStatus(200)));
 
         // when
-        boolean success = inoreaderAdaptor(ACCESS_TOKEN).markAsRead(asList(FEED_ID1, FEED_ID2)).get(1000);
+        boolean success = inoreaderAdaptor(ACCESS_TOKEN)
+                .markAsRead(asList(FEED_ID1, FEED_ID2), timestamp).get(1000);
 
         // then
         assertTrue(success);
 
         verify(getRequestedFor(urlPathEqualTo("/mark-all-as-read"))
                 .withQueryParam("s", equalTo(FEED_ID1))
+                .withQueryParam("ts", equalTo(Long.toString(timestamp * 1000)))
                 .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
 
         verify(getRequestedFor(urlPathEqualTo("/mark-all-as-read"))
                 .withQueryParam("s", equalTo(FEED_ID2))
+                .withQueryParam("ts", equalTo(Long.toString(timestamp * 1000)))
                 .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
     }
 
@@ -663,6 +667,7 @@ public class InoreaderAdaptorTest {
     public void given_Error_when_markAsRead_then_ReturnError() throws Exception {
         String ACCESS_TOKEN = "my_token";
         String FEED_ID = "test_feed_123";
+        long timestamp = System.currentTimeMillis();
 
         // given
         givenThat(get(urlMatching("/mark-all-as-read.*"))
@@ -670,13 +675,14 @@ public class InoreaderAdaptorTest {
                         .withStatus(500)));
 
         // when
-        boolean success = inoreaderAdaptor(ACCESS_TOKEN).markAsRead(asList(FEED_ID)).get(1000);
+        boolean success = inoreaderAdaptor(ACCESS_TOKEN).markAsRead(asList(FEED_ID), timestamp).get(1000);
 
         // then
         assertFalse(success);
 
         verify(getRequestedFor(urlPathEqualTo("/mark-all-as-read"))
                 .withQueryParam("s", equalTo(FEED_ID))
+                .withQueryParam("ts", equalTo(Long.toString(timestamp)))
                 .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
     }
 

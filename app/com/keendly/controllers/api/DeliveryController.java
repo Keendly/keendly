@@ -119,12 +119,32 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
             return JPA.withTransaction(() -> {
                 UserEntity user = getUserEntity();
                 DeliveryEntity currentEntity = deliveryDao.getDelivery(id);
+                boolean wasDeliveredBefore = currentEntity.date != null;
                 if (user.id == currentEntity.user.id){
                     deliveryMapper.toEntity(delivery, currentEntity);
-                    deliveryDao.updateDelivery(currentEntity);
-                    return Promise.pure(ok());
+                    DeliveryEntity updated = deliveryDao.updateDelivery(currentEntity);
+                    boolean isDelivered = updated.date != null;
+                    List<String> feedsToMarkAsRead = new ArrayList<>();
+                    for (DeliveryItemEntity deliveryItem : updated.items){
+                        if (deliveryItem.markAsRead){
+                            feedsToMarkAsRead.add(deliveryItem.feedId);
+                        }
+                    }
+                    if (!wasDeliveredBefore && isDelivered){
+                        return getAdaptor().markAsRead(feedsToMarkAsRead, updated.created.getTime()).map(success -> {
+                            if (success){
+                                return ok();
+                            } else {
+                                return internalServerError();
+                            }
+                        });
+                    } else {
+                        return Promise.pure(ok());
+                    }
+
                 } else {
-                    LOG.error("User id ({}) does not match delivery id ({})", getUserEntity().id, currentEntity.user.id);
+                    LOG.error("Authenticated user id ({}) does not match delivery user id ({})",
+                            getUserEntity().id, currentEntity.user.id);
                     return Promise.pure(forbidden());
                 }
             });

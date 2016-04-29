@@ -9,6 +9,7 @@ import com.keendly.adaptors.model.ExternalUser;
 import com.keendly.adaptors.model.FeedEntry;
 import com.keendly.adaptors.model.auth.Credentials;
 import com.keendly.adaptors.model.auth.Token;
+import play.Logger;
 import play.libs.F;
 import play.libs.F.Promise;
 import play.libs.ws.WS;
@@ -24,6 +25,9 @@ import static com.keendly.utils.ConfigUtils.parameter;
 
 public class NewsblurAdaptor extends Adaptor {
 
+    private static final Logger.ALogger LOG = Logger.of(NewsblurAdaptor.class);
+
+
     enum NewsblurParam {
         URL,
         CLIENT_ID,
@@ -31,24 +35,24 @@ public class NewsblurAdaptor extends Adaptor {
         REDIRECT_URL
     }
 
-    private Map<NewsblurParam, String> config;
-    private WSClient client;
+    protected Map<NewsblurParam, String> config;
 
     public NewsblurAdaptor(){
         this(defaultConfig(), WS.client());
     }
 
-    public NewsblurAdaptor(Map<NewsblurParam, String> config, WSClient client){
-        this.config = config;
-        this.client = client;
-    }
-
-    public NewsblurAdaptor(Token token) {
+    public NewsblurAdaptor(Token token){
         this(token, defaultConfig(), WS.client());
     }
 
-    public NewsblurAdaptor(Token token, Map<NewsblurParam, String> config, WSClient client) {
-        this(config, client);
+    public NewsblurAdaptor(Map<NewsblurParam, String> config, WSClient client){
+        this.client = client;
+        this.config = config;
+    }
+
+    public NewsblurAdaptor(Token token, Map<NewsblurParam, String> config, WSClient client){
+        this.client = client;
+        this.config = config;
         this.token = token;
     }
 
@@ -58,7 +62,6 @@ public class NewsblurAdaptor extends Adaptor {
         config.put(CLIENT_ID, parameter("newsblur.client_id"));
         config.put(CLIENT_SECRET, parameter("newsblur.client_secret"));
         config.put(REDIRECT_URL, parameter("newsblur.redirect_uri"));
-
         return config;
     }
 
@@ -213,8 +216,14 @@ public class NewsblurAdaptor extends Adaptor {
     }
 
     @Override
-    protected Promise doMarkAsRead(List<String> feedIds) {
-        return null;
+    protected Promise<Boolean> doMarkAsRead(List<String> feedIds, long timestamp) {
+        LOG.warn("Mark s read not implemented for Newsblur, returning success");
+
+//        return client.url(config.get(URL) + "/reader/mark_feed_as_read")
+//                .setHeader("Authorization", "Bearer " + token.getAccessToken())
+//                .post("");
+
+        return Promise.pure(Boolean.TRUE);
     }
 
     private Promise<WSResponse> getGetPromise(String url) {
@@ -224,6 +233,23 @@ public class NewsblurAdaptor extends Adaptor {
     }
 
     protected <T> Promise<T> get(String url, Function<JsonNode, T> callback){
+        Promise<WSResponse> res = getGetPromise(url);
+        return res
+                .flatMap(response -> {
+                    if (isOk(response.getStatus())){
+                        JsonNode json = response.asJson();
+                        if (json.has("authenticated") && !json.get("authenticated").asBoolean()){
+                            throw new ApiException(401, "not authenticated");
+                        } else {
+                            return Promise.pure(callback.apply(json));
+                        }
+                    } else {
+                        throw new ApiException(response.getStatus(), response.getBody());
+                    }
+                });
+    }
+
+    protected <T> Promise<T> post(String url, Function<JsonNode, T> callback){
         Promise<WSResponse> res = getGetPromise(url);
         return res
                 .flatMap(response -> {

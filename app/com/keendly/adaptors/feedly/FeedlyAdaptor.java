@@ -11,6 +11,7 @@ import com.keendly.adaptors.model.auth.Token;
 import play.libs.F.Promise;
 import play.libs.Json;
 import play.libs.ws.WS;
+import play.libs.ws.WSClient;
 import play.libs.ws.WSResponse;
 
 import java.io.UnsupportedEncodingException;
@@ -23,56 +24,58 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-import static com.keendly.utils.ConfigUtils.parameter;
+import static com.keendly.adaptors.feedly.FeedlyAdaptor.FeedlyParam.*;
 
 public class FeedlyAdaptor extends Adaptor {
 
     enum FeedlyParam {
-        URL("feedly.url"),
-        CLIENT_ID("feedly.client_id"),
-        CLIENT_SECRET("feedly.client_secret"),
-        REDIRECT_URL("feedly.redirect_uri");
-
-        String value;
-        FeedlyParam(String value){
-            this.value = value;
-        }
+        URL,
+        CLIENT_ID,
+        CLIENT_SECRET,
+        REDIRECT_URL
     }
 
-    private static String feedlyUrl;
-    private static String clientId;
-    private static String clientSecret;
-    private static String redirectUri;
-
-    static {
-        init();
-    }
+    protected Map<FeedlyParam, String> config;
 
     public FeedlyAdaptor(){
-        super();
+        this(defaultConfig(), WS.client());
     }
 
     public FeedlyAdaptor(Token token){
-        super(token);
+        this(token, defaultConfig(), WS.client());
     }
 
-    private static void init(){
-        feedlyUrl = parameter(FeedlyParam.URL.value);
-        clientId = parameter(FeedlyParam.CLIENT_ID.value);
-        clientSecret = parameter(FeedlyParam.CLIENT_SECRET.value);
-        redirectUri = parameter(FeedlyParam.REDIRECT_URL.value);
+    public FeedlyAdaptor(Map<FeedlyParam, String> config, WSClient client){
+        this.client = client;
+        this.config = config;
+    }
+
+    public FeedlyAdaptor(Token token, Map<FeedlyParam, String> config, WSClient client){
+        this.client = client;
+        this.config = config;
+        this.token = token;
+    }
+
+
+    public static Map<FeedlyParam, String> defaultConfig(){
+        Map<FeedlyParam, String> config = new HashMap<>();
+        config.put(URL, "feedly.url");
+        config.put(CLIENT_ID, "feedly.client_id");
+        config.put(CLIENT_SECRET, "feedly.client_secret");
+        config.put(REDIRECT_URL, "feedly.redirect_uri");
+        return config;
     }
 
     @Override
     public Promise<Token> doLogin(Credentials credentials){
         JsonNode json = Json.newObject()
                 .put("grant_type", "authorization_code")
-                .put("client_id", clientId)
-                .put("client_secret", clientSecret)
+                .put("client_id", config.get(CLIENT_ID))
+                .put("client_secret", config.get(CLIENT_SECRET))
                 .put("code", credentials.getAuthorizationCode())
-                .put("redirect_uri", redirectUri);
+                .put("redirect_uri", config.get(REDIRECT_URL));
 
-        return WS.url(feedlyUrl + "/com/keendly/auth/token")
+        return WS.url(config.get(URL) + "/com/keendly/auth/token")
                 .post(json)
                 .map(response -> {
                     if (isOk(response.getStatus())) {
@@ -88,7 +91,7 @@ public class FeedlyAdaptor extends Adaptor {
 
     @Override
     public Promise<ExternalUser> doGetUser(){
-        return doGet(feedlyUrl + "/profile", token, response -> {
+        return doGet(config.get(URL) + "/profile", token, response -> {
             ExternalUser user = new ExternalUser();
             JsonNode node = response.asJson();
             user.setId(node.get("id").asText());
@@ -100,7 +103,7 @@ public class FeedlyAdaptor extends Adaptor {
 
     @Override
     public Promise<List<ExternalFeed>> doGetFeeds(){
-        return doGet(feedlyUrl + "/subscriptions", token, response -> {
+        return doGet(config.get(URL) + "/subscriptions", token, response -> {
             List<ExternalFeed> externalSubscriptions = new ArrayList<>();
             JsonNode json = response.asJson();
             if (json.isArray()){
@@ -116,7 +119,7 @@ public class FeedlyAdaptor extends Adaptor {
 
     @Override
     public Promise<Map<String, List<FeedEntry>>> doGetUnread(List<String> feedIds){
-        return doGetFlat(feedlyUrl + "/markers/counts", token, response -> {
+        return doGetFlat(config.get(URL) + "/markers/counts", token, response -> {
             JsonNode json = response.asJson();
             List<Promise<Map<String, List<FeedEntry>>>> resultsPromises = new ArrayList<>();
             for (JsonNode feedCount : json.get("unreadcounts")) {
@@ -142,7 +145,7 @@ public class FeedlyAdaptor extends Adaptor {
 
     @Override
     protected Promise<Map<String, Integer>> doGetUnreadCount(List<String> feedIds) {
-        return doGet(feedlyUrl + "/markers/counts", token, response -> {
+        return doGet(config.get(URL) + "/markers/counts", token, response -> {
             JsonNode json = response.asJson();
             Map<String, Integer> unreadCount = new HashMap<>();
             for (JsonNode feedCount : json.get("unreadcounts")) {
@@ -158,7 +161,7 @@ public class FeedlyAdaptor extends Adaptor {
 
     private Promise<Map<String, List<FeedEntry>>> getUnread(String feedId, int unreadCount, String continuation) {
         int count = unreadCount > MAX_ARTICLES_PER_FEED ? MAX_ARTICLES_PER_FEED : unreadCount; // TODO inform user
-        String url = feedlyUrl + "/streams/" + urlEncode(feedId) + "/contents";
+        String url = config.get(URL) + "/streams/" + urlEncode(feedId) + "/contents";
         url = continuation == null ? url : url + "?continuation=" + continuation;
         return doGetFlat(url, token,
                 response -> {
@@ -218,7 +221,8 @@ public class FeedlyAdaptor extends Adaptor {
     }
 
     @Override
-    public Promise doMarkAsRead(List<String> feedIds){
+    public Promise doMarkAsRead(List<String> feedIds, long timestamp){
+        // TODO
         Map<String, Object> data = new HashMap<>();
         data.put("action", "markAsRead");
         data.put("feedIds", feedIds);
@@ -226,7 +230,7 @@ public class FeedlyAdaptor extends Adaptor {
         data.put("type", "items");
 
         JsonNode content = Json.toJson(data);
-        return doPost(feedlyUrl + "/markers", token, content, response -> "OK");
+        return doPost(config.get(URL) + "/markers", token, content, response -> "OK");
     }
 
     private static String urlEncode(String s){
@@ -351,11 +355,11 @@ public class FeedlyAdaptor extends Adaptor {
     private Promise<String> refreshAccessToken(String refreshToken){
         JsonNode json = Json.newObject()
                 .put("grant_type", "refresh_token")
-                .put("client_id", clientId)
-                .put("client_secret", clientSecret)
+                .put("client_id", config.get(CLIENT_ID))
+                .put("client_secret", config.get(CLIENT_SECRET))
                 .put("refresh_token", refreshToken);
 
-        return WS.url(feedlyUrl + "/com/keendly/auth/token")
+        return WS.url(config.get(URL) + "/com/keendly/auth/token")
                 .post(json)
                 .map(response -> {
                     if (isOk(response.getStatus())) {

@@ -2,7 +2,6 @@ package com.keendly.adaptors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.keendly.adaptors.model.FeedEntry;
-import com.keendly.adaptors.model.auth.Token;
 import play.libs.F;
 import play.libs.ws.WSResponse;
 
@@ -17,15 +16,6 @@ public abstract class GoogleReaderTypeAdaptor extends Adaptor {
     protected String normalizeFeedId(String feedId){
         return feedId;
     }
-
-    public GoogleReaderTypeAdaptor(){
-
-    }
-
-    public GoogleReaderTypeAdaptor(Token token) {
-        super(token);
-    }
-
 
     @Override
     protected F.Promise<Map<String, List<FeedEntry>>> doGetUnread(List<String> feedIds) {
@@ -85,19 +75,5 @@ public abstract class GoogleReaderTypeAdaptor extends Adaptor {
 
             return F.Promise.pure(ret);
         });
-    }
-
-
-
-    protected String extractToken(byte[] response){
-        String s = new String(response);
-        String[] params = s.split("\n");
-        for (String param : params){
-            String[] p = param.split("=");
-            if (p.length == 2 && p[0].equals("Auth")){
-                return p[1];
-            }
-        }
-        return null;
     }
 }

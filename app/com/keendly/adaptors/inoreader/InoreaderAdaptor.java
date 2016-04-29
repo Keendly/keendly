@@ -34,24 +34,24 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
         REDIRECT_URL
     }
 
-    private Map<InoreaderParam, String> config;
-    private WSClient client;
+    protected Map<InoreaderParam, String> config;
 
     public InoreaderAdaptor(){
         this(defaultConfig(), WS.client());
     }
 
-    public InoreaderAdaptor(Map<InoreaderParam, String> config, WSClient client){
-        this.config = config;
-        this.client = client;
-    }
-
-    public InoreaderAdaptor(Token token) {
+    public InoreaderAdaptor(Token token){
         this(token, defaultConfig(), WS.client());
     }
 
-    public InoreaderAdaptor(Token token, Map<InoreaderParam, String> config, WSClient client) {
-        this(config, client);
+    public InoreaderAdaptor(Map<InoreaderParam, String> config, WSClient client){
+        this.client = client;
+        this.config = config;
+    }
+
+    public InoreaderAdaptor(Token token, Map<InoreaderParam, String> config, WSClient client){
+        this.client = client;
+        this.config = config;
         this.token = token;
     }
 
@@ -174,11 +174,12 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
     }
 
     @Override
-    protected Promise doMarkAsRead(List<String> feedIds) {
+    protected Promise doMarkAsRead(List<String> feedIds, long timestamp) {
         List<Promise<WSResponse>> promises = new ArrayList<>();
 
         for (String feedId : feedIds){
-            Promise<WSResponse> promise = getGetPromise("/mark-all-as-read?s=" + feedId);
+            String url = "/mark-all-as-read?s=" + feedId + "&ts=" + timestamp * 1000; // to microseconds
+            Promise<WSResponse> promise = getGetPromise(url);
             promises.add(promise);
         }
 

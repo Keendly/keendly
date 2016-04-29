@@ -4,10 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.keendly.adaptors.model.ExternalFeed;
 import com.keendly.adaptors.model.ExternalUser;
 import com.keendly.adaptors.model.FeedEntry;
-import com.keendly.adaptors.model.auth.Token;
 import com.keendly.adaptors.model.auth.Credentials;
+import com.keendly.adaptors.model.auth.Token;
 import org.apache.http.HttpStatus;
 import play.libs.F.Promise;
+import play.libs.ws.WSClient;
 
 import java.util.Date;
 import java.util.List;
@@ -23,17 +24,10 @@ public abstract class Adaptor {
     protected abstract Promise<List<ExternalFeed>> doGetFeeds();
     protected abstract Promise<Map<String, List<FeedEntry>>> doGetUnread(List<String> feedIds);
     protected abstract Promise<Map<String, Integer>> doGetUnreadCount(List<String> feedIds);
-    protected abstract Promise doMarkAsRead(List<String> feedIds);
+    protected abstract Promise doMarkAsRead(List<String> feedIds, long timestamp);
 
     protected Token token;
-
-    public Adaptor(){
-
-    }
-
-    public Adaptor(Token token){
-        this.token = token;
-    }
+    protected WSClient client;
 
     public Promise<Token> login(Credentials credentials){
         return this.doLogin(credentials).map(token -> {
@@ -62,9 +56,9 @@ public abstract class Adaptor {
         return doGetUnreadCount(feedIds);
     }
 
-    public Promise<Boolean> markAsRead(List<String> feedIds){
+    public Promise<Boolean> markAsRead(List<String> feedIds, long timestamp){
         validateLoggedIn();
-        return doMarkAsRead(feedIds);
+        return doMarkAsRead(feedIds, timestamp);
     }
 
     private void validateLoggedIn(){

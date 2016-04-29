@@ -110,20 +110,6 @@ public class FeedController extends AbstractController<Feed> {
         });
     }
 
-    public Promise<Result> markAsRead(){
-        JsonNode node = request().body().asJson();
-        List<String> feedIds = new ArrayList<>();
-        for (JsonNode id : node){
-            feedIds.add(id.asText());
-        }
-        return getAdaptor().markAsRead(feedIds).map(response -> {
-            if (!response){
-                LOG.warning(String.format("Marking as read not successfull for: %text", node.toString()));
-            }
-            return ok();
-        });
-    }
-
     static class FeedMapper {
 
         Feed toModel(ExternalFeed external){

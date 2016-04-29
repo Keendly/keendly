@@ -73,7 +73,7 @@ public class NewsblurAdaptorTest {
         assertEquals(ACCESS_TOKEN, token.getAccessToken());
         assertEquals(REFRESH_TOKEN, token.getRefreshToken());
 
-        verify(postRequestedFor(urlMatching("/oauth/token"))
+        verify(postRequestedFor(urlEqualTo("/oauth/token"))
                 .withRequestBody(thatContainsParams(
                         param("code", AUTHORIZATION_CODE),
                         param("redirect_uri", REDIRECT_URI),

@@ -23,8 +23,8 @@ public class DeliveryDao {
         return JPA.em().find(DeliveryEntity.class, id);
     }
 
-    public void updateDelivery(DeliveryEntity deliveryEntity){
-        JPA.em().merge(deliveryEntity);
+    public DeliveryEntity updateDelivery(DeliveryEntity deliveryEntity){
+        return JPA.em().merge(deliveryEntity);
     }
 
     public void createDelivery(DeliveryEntity deliveryEntity){

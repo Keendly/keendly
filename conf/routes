@@ -18,7 +18,6 @@ GET     /api/deliveries                 com.keendly.controllers.api.DeliveryCont
 GET     /api/feeds                      com.keendly.controllers.api.FeedController.getFeeds()
 POST    /api/feeds/unread               com.keendly.controllers.api.FeedController.getUnread()
 POST    /api/feeds/unreadCount          com.keendly.controllers.api.FeedController.getUnreadCount()
-POST    /api/feeds/markAsRead           com.keendly.controllers.api.FeedController.markAsRead()
 
 GET     /api/users/:id                  com.keendly.controllers.api.UserController.getUser(id: String)
 PATCH   /api/users/:id                  com.keendly.controllers.api.UserController.updateUser(id: String)
@@ -31,8 +30,8 @@ GET     /                               com.keendly.controllers.WebController.in
 GET     /login                          com.keendly.controllers.WebController.login(error: String ?= null)
 POST    /oldReaderLogin                 com.keendly.controllers.LoginController.oldReaderLogin()
 GET     /feedlyCallback                 com.keendly.controllers.LoginController.feedlyCallback(code: String, error: String)
-GET     /inoreaderCallback              com.keendly.controllers.LoginController.inoReaderCallback(code: String, state: String, error: String ?= null)
-GET     /newsblurCallback               com.keendly.controllers.LoginController.newsblurCallback(code: String, state: String, error: String ?= null)
+GET     /inoreaderCallback              com.keendly.controllers.LoginController.inoReaderCallback(code: String ?= null, state: String, error: String ?= null)
+GET     /newsblurCallback               com.keendly.controllers.LoginController.newsblurCallback(code: String ?= null, state: String, error: String ?= null)
 GET     /feeds                          com.keendly.controllers.WebController.feeds()
 GET     /deliveries                     com.keendly.controllers.WebController.deliveries()
 GET     /user                           com.keendly.controllers.WebController.user()

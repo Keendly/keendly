@@ -31,7 +31,7 @@ public class SecuredAction extends Action.Simple {
 //                return internalServerError();
 //            });
         } catch (Exception e){
-            LOG.error("Exception authenticating", e);
+            LOG.warn("Exception authenticating", e);
             return Promise.pure(unauthorized());
         }
     }
