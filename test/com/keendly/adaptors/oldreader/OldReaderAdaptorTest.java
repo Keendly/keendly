@@ -2,6 +2,7 @@ package com.keendly.adaptors.oldreader;
 
 import com.github.tomakehurst.wiremock.common.SingleRootFileSource;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.google.common.net.UrlEscapers;
 import com.keendly.adaptors.model.auth.Credentials;
 import com.keendly.adaptors.model.auth.Token;
 import com.ning.http.client.AsyncHttpClientConfig;
@@ -74,8 +75,8 @@ public class OldReaderAdaptorTest {
     @Test
     public void given_ResponseOK_when_markAsRead_then_ReturnSuccess() throws Exception {
         String ACCESS_TOKEN = "my_token";
-        String FEED_ID1 = "test_feed_123";
-        String FEED_ID2 = "test_feed_124";
+        String FEED_ID1 = "feed/56afe6ac091452684a00048f";
+        String FEED_ID2 = "feed/56afe6af091452684a0004b3";
         long timestamp = System.currentTimeMillis();
 
         // given
@@ -92,14 +93,14 @@ public class OldReaderAdaptorTest {
 
         verify(postRequestedFor(urlPathEqualTo("/mark-all-as-read"))
                 .withRequestBody(thatContainsParams(
-                        param("s", FEED_ID1),
+                        param("s", UrlEscapers.urlFormParameterEscaper().escape(FEED_ID1)),
                         param("ts", Long.toString(timestamp * 1000000))
                 ))
                 .withHeader("Authorization", equalTo("GoogleLogin auth=" + ACCESS_TOKEN)));
 
         verify(postRequestedFor(urlPathEqualTo("/mark-all-as-read"))
                 .withRequestBody(thatContainsParams(
-                        param("s", FEED_ID2),
+                        param("s", UrlEscapers.urlFormParameterEscaper().escape(FEED_ID2)),
                         param("ts", Long.toString(timestamp * 1000000))
                 ))
                 .withHeader("Authorization", equalTo("GoogleLogin auth=" + ACCESS_TOKEN)));

@@ -10,8 +10,19 @@ import java.util.function.Function;
 
 public abstract class GoogleReaderTypeAdaptor extends Adaptor {
 
-    protected abstract <T> F.Promise<T> get(String url, Function<WSResponse, T> callback);
-    protected abstract <T> F.Promise<T> getFlat(String url, Function<WSResponse, F.Promise<T>> callback);
+    protected abstract <T> F.Promise<T> get(String url, Map<String, String> params,
+                                            Function<WSResponse, T> callback);
+    protected abstract <T> F.Promise<T> getFlat(String url, Map<String, String> params,
+                                                Function<WSResponse, F.Promise<T>> callback);
+
+    protected <T> F.Promise<T> get(String url, Function<WSResponse, T> callback){
+        return get(url, Collections.emptyMap(), callback);
+    }
+
+    protected <T> F.Promise<T> getFlat(String url, Function<WSResponse, F.Promise<T>> callback){
+        return getFlat(url, Collections.emptyMap(), callback);
+    }
+
 
     protected String normalizeFeedId(String feedId){
         return feedId;

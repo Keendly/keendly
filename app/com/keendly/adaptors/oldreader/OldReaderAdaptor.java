@@ -142,7 +142,7 @@ public class OldReaderAdaptor extends GoogleReaderTypeAdaptor {
     }
 
     @Override
-    protected <T> Promise<T> get(String url, Function<WSResponse, T> callback){
+    protected <T> Promise<T> get(String url, Map<String, String> params, Function<WSResponse, T> callback){
         Promise<WSResponse> res =  client.url(config.get(URL) + normalizeURL(url))
                 .setHeader("Authorization", "GoogleLogin auth=" + token.getAccessToken())
                 .get();
@@ -157,7 +157,8 @@ public class OldReaderAdaptor extends GoogleReaderTypeAdaptor {
     }
 
     @Override
-    protected <T> Promise<T> getFlat(String url, Function<WSResponse, Promise<T>> callback){
+    protected <T> Promise<T> getFlat(String url, Map<String, String> params,
+                                     Function<WSResponse, Promise<T>> callback){
         Promise<WSResponse> res =  client.url(config.get(URL) + normalizeURL(url))
                 .setHeader("Authorization", "GoogleLogin auth=" + token.getAccessToken())
                 .get();

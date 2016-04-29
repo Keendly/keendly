@@ -2,6 +2,7 @@ package com.keendly.adaptors.inoreader;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.github.tomakehurst.wiremock.stubbing.Scenario;
+import com.google.common.net.UrlEscapers;
 import com.keendly.adaptors.exception.ApiException;
 import com.keendly.adaptors.model.ExternalFeed;
 import com.keendly.adaptors.model.ExternalUser;
@@ -337,7 +338,8 @@ public class InoreaderAdaptorTest {
     @Test
     public void given_ResponseOK_when_getUnread_then_ReturnUnreadFeeds() throws Exception {
         String ACCESS_TOKEN = "my_token";
-        String FEED_ID = "feed_id";
+        String FEED_ID = "feed/https://feeds.feedburner.com/niebezpiecznik/";
+        String ESCAPED_FEED_ID =  UrlEscapers.urlPathSegmentEscaper().escape(FEED_ID);
 
         String TITLE1 = "Through the Google lens: Search trends January 16-22";
         String AUTHOR1 = "Emily Wood";
@@ -398,7 +400,7 @@ public class InoreaderAdaptorTest {
         assertEntryCorrect(unread.get(FEED_ID).get(0), TITLE1, AUTHOR1, PUBLISHED1, URL1, CONTENT1);
         assertEntryCorrect(unread.get(FEED_ID).get(1), TITLE2, AUTHOR2, PUBLISHED2, URL2, CONTENT2);
 
-        verify(getRequestedFor(urlPathEqualTo("/stream/contents/" + FEED_ID))
+        verify(getRequestedFor(urlPathEqualTo("/stream/contents/" +  ESCAPED_FEED_ID))
                 .withQueryParam("xt", equalTo("user/-/state/com.google/read"))
                 .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
 
@@ -409,7 +411,8 @@ public class InoreaderAdaptorTest {
     @Test
     public void given_MoreResults_when_getUnread_then_FetchNextPage() throws Exception {
         String ACCESS_TOKEN = "my_token";
-        String FEED_ID = "feed_id";
+        String FEED_ID = "feed/http://feeds.lifehack.org/Lifehack";
+        String ESCAPED_FEED_ID = UrlEscapers.urlPathSegmentEscaper().escape(FEED_ID);
 
         String TITLE1 = "Through the Google lens: Search trends January 16-22";
         String AUTHOR1 = "Emily Wood";
@@ -484,11 +487,11 @@ public class InoreaderAdaptorTest {
         assertEntryCorrect(unread.get(FEED_ID).get(0), TITLE1, AUTHOR1, PUBLISHED1, URL1, CONTENT1);
         assertEntryCorrect(unread.get(FEED_ID).get(1), TITLE2, AUTHOR2, PUBLISHED2, URL2, CONTENT2);
 
-        verify(getRequestedFor(urlPathEqualTo("/stream/contents/" + FEED_ID))
+        verify(getRequestedFor(urlPathEqualTo("/stream/contents/" + ESCAPED_FEED_ID))
                 .withQueryParam("xt", equalTo("user/-/state/com.google/read"))
                 .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
 
-        verify(getRequestedFor(urlPathEqualTo("/stream/contents/" + FEED_ID))
+        verify(getRequestedFor(urlPathEqualTo("/stream/contents/" + ESCAPED_FEED_ID))
                 .withQueryParam("c", equalTo(CONTINUATION))
                 .withQueryParam("xt", equalTo("user/-/state/com.google/read"))
                 .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
@@ -630,8 +633,8 @@ public class InoreaderAdaptorTest {
     @Test
     public void given_ResponseOK_when_markAsRead_then_ReturnSuccess() throws Exception {
         String ACCESS_TOKEN = "my_token";
-        String FEED_ID1 = "test_feed_123";
-        String FEED_ID2 = "test_feed_124";
+        String FEED_ID1 = "feed/http://www.sprengsatz.de/?feed=rss2";
+        String FEED_ID2 = "feed/http://warszawskibiegacz.pl/?feed=rss2";
         long timestamp = System.currentTimeMillis();
 
         // given

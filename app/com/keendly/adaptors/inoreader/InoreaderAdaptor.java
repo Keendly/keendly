@@ -13,6 +13,7 @@ import org.apache.http.HttpStatus;
 import play.libs.F.Promise;
 import play.libs.ws.WS;
 import play.libs.ws.WSClient;
+import play.libs.ws.WSRequest;
 import play.libs.ws.WSResponse;
 
 import java.util.ArrayList;
@@ -102,8 +103,8 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
     }
 
     @Override
-    protected  <T> Promise<T> get(String url, Function<WSResponse, T> callback){
-        Promise<WSResponse> res = getGetPromise(url);
+    protected  <T> Promise<T> get(String url, Map<String, String> params, Function<WSResponse, T> callback){
+        Promise<WSResponse> res = getGetPromise(url, params);
         return res
                 .flatMap(response -> {
                    if (isOk(response.getStatus())){
@@ -113,7 +114,7 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
                        return refreshedToken.flatMap(newToken -> {
                            token.setAccessToken((String) newToken);
                            token.setRefreshed();
-                           return doGetNoRefresh(url, callback);
+                           return doGetNoRefresh(url, params, callback);
                        });
                    } else {
                        throw new ApiException(response.getStatus(), response.getBody());
@@ -122,8 +123,9 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
     }
 
     @Override
-    protected <T> Promise<T> getFlat(String url, Function<WSResponse, Promise<T>> callback){
-        Promise<WSResponse> res = getGetPromise(url);
+    protected <T> Promise<T> getFlat(String url, Map<String, String> params,
+                                     Function<WSResponse, Promise<T>> callback){
+        Promise<WSResponse> res = getGetPromise(url, params);
         return res
                 .flatMap(response -> {
                     if (isOk(response.getStatus())) {
@@ -133,7 +135,7 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
                         return refreshedToken.flatMap(newToken -> {
                             token.setAccessToken((String) newToken);
                             token.setRefreshed();
-                            return doGetNoRefresh(url, callback);
+                            return doGetNoRefresh(url, params, callback);
                         });
                     } else {
                         throw new ApiException(response.getStatus(), response.getBody());
@@ -141,14 +143,18 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
                 });
     }
 
-    private Promise<WSResponse> getGetPromise(String url) {
-        return client.url(config.get(URL) + url)
-                .setHeader("Authorization", "Bearer " + token.getAccessToken())
-                .get();
+    private Promise<WSResponse> getGetPromise(String url, Map<String, String> params) {
+        WSRequest req = client.url(config.get(URL) + url)
+                .setHeader("Authorization", "Bearer " + token.getAccessToken());
+        for (Map.Entry<String, String> param : params.entrySet()){
+            req.setQueryParameter(param.getKey(), param.getValue());
+        }
+        return req.get();
     }
 
-    private <T> Promise<T> doGetNoRefresh(String url, Function<WSResponse, T> callback){
-        Promise<WSResponse> res = getGetPromise(url);
+    private <T> Promise<T> doGetNoRefresh(String url, Map<String, String> params,
+                                          Function<WSResponse, T> callback){
+        Promise<WSResponse> res = getGetPromise(url, params);
         return res
                 .flatMap(response -> {
                     if (isOk(response.getStatus())){
@@ -178,8 +184,10 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
         List<Promise<WSResponse>> promises = new ArrayList<>();
 
         for (String feedId : feedIds){
-            String url = "/mark-all-as-read?s=" + feedId + "&ts=" + timestamp * 1000; // to microseconds
-            Promise<WSResponse> promise = getGetPromise(url);
+            Map<String, String> params = new HashMap<>();
+            params.put("s", feedId);
+            params.put("ts", Long.toString(timestamp * 1000));
+            Promise<WSResponse> promise = getGetPromise("/mark-all-as-read", params);
             promises.add(promise);
         }
 

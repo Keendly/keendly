@@ -146,7 +146,7 @@ public class NewsblurAdaptor extends Adaptor {
 
     private F.Promise<Map<String, List<FeedEntry>>> doGetUnread(String feedId, int unreadCount, int page) {
         int count = unreadCount > MAX_ARTICLES_PER_FEED ? MAX_ARTICLES_PER_FEED : unreadCount; // TODO inform user
-        String url = "/reader/feed/" + feedId + "?page=" + Integer.toString(page);
+        String url = "/reader/feed/" + UrlEscapers.urlPathSegmentEscaper().escape(feedId) + "?page=" + Integer.toString(page);
         Promise<WSResponse> res = getGetPromise(url);
         return res.flatMap(response -> {
             JsonNode jsonResponse = response.asJson();

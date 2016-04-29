@@ -300,7 +300,7 @@ public class NewsblurAdaptorTest {
     @Test
     public void given_IdNotUrl_when_getUnread_then_ReturnPermalinkAsUrl() throws Exception {
         String ACCESS_TOKEN = "my_token";
-        String FEED_ID = "feed_id";
+        String FEED_ID = "5149478";
 
         String URL1 = "http://feedproxy.google.com/~r/AmazonWebServicesBlog/~3/49pMIkRfTWY/";
 
