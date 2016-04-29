@@ -22,6 +22,6 @@ deployment:
     commands:
       - ./activator clean stage
       - docker build -t keendly .
-      - aws ecr get-login --region us-east-1 | sh
-      - docker tag keendly:latest 625416862388.dkr.ecr.us-east-1.amazonaws.com/keendly:latest
-      - docker push 625416862388.dkr.ecr.us-east-1.amazonaws.com/keendly:latest
+      - aws ecr get-login --region eu-west-1 | sh
+      - docker tag keendly:latest 625416862388.dkr.ecr.eu-west-1.amazonaws.com/keendly:latest
+      - docker push 625416862388.dkr.ecr.eu-west-1.amazonaws.com/keendly:latest
