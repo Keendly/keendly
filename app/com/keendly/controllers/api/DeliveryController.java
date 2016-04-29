@@ -114,9 +114,14 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
     }
 
     public Promise<Result> updateDelivery(Long id) {
+        // what the hack
         Delivery delivery = fromRequest();
+        boolean[] markAsRead = {false};
+        long[] created = new long[1];
+        List<String> feedsToMarkAsRead = new ArrayList<>();
+        boolean[] forbidden = {false};
         try {
-            return JPA.withTransaction(() -> {
+            JPA.withTransaction(() -> {
                 UserEntity user = getUserEntity();
                 DeliveryEntity currentEntity = deliveryDao.getDelivery(id);
                 boolean wasDeliveredBefore = currentEntity.date != null;
@@ -124,33 +129,40 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
                     deliveryMapper.toEntity(delivery, currentEntity);
                     DeliveryEntity updated = deliveryDao.updateDelivery(currentEntity);
                     boolean isDelivered = updated.date != null;
-                    List<String> feedsToMarkAsRead = new ArrayList<>();
-                    for (DeliveryItemEntity deliveryItem : updated.items){
-                        if (deliveryItem.markAsRead){
-                            feedsToMarkAsRead.add(deliveryItem.feedId);
-                        }
-                    }
                     if (!wasDeliveredBefore && isDelivered){
-                        return getAdaptor().markAsRead(feedsToMarkAsRead, updated.created.getTime()).map(success -> {
-                            if (success){
-                                return ok();
-                            } else {
-                                return internalServerError();
+                        markAsRead[0] = true;
+                        created[0] = updated.created.getTime();
+                        for (DeliveryItemEntity deliveryItem : updated.items){
+                            if (deliveryItem.markAsRead){
+                                feedsToMarkAsRead.add(deliveryItem.feedId);
                             }
-                        });
-                    } else {
-                        return Promise.pure(ok());
+                        }
                     }
 
                 } else {
                     LOG.error("Authenticated user id ({}) does not match delivery user id ({})",
                             getUserEntity().id, currentEntity.user.id);
-                    return Promise.pure(forbidden());
+                    forbidden[0] = true;
+
                 }
             });
         } catch (Throwable throwable) {
             LOG.error("Error updating delivery " + id, throwable);
             return Promise.pure(internalServerError());
+        }
+        if (forbidden[0]){
+            return Promise.pure(forbidden());
+        }
+        if (markAsRead[0]){
+            return getAdaptor().markAsRead(feedsToMarkAsRead, created[0]).map(success -> {
+                if (success){
+                    return ok();
+                } else {
+                    return internalServerError();
+                }
+            });
+        } else {
+            return Promise.pure(ok());
         }
     }
 
