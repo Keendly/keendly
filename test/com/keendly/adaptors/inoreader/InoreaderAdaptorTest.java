@@ -682,7 +682,7 @@ public class InoreaderAdaptorTest {
 
         verify(getRequestedFor(urlPathEqualTo("/mark-all-as-read"))
                 .withQueryParam("s", equalTo(FEED_ID))
-                .withQueryParam("ts", equalTo(Long.toString(timestamp)))
+                .withQueryParam("ts", equalTo(Long.toString(timestamp * 1000)))
                 .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
     }
 
