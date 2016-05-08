@@ -9,6 +9,7 @@ import com.keendly.adaptors.model.ExternalUser;
 import com.keendly.adaptors.model.FeedEntry;
 import com.keendly.adaptors.model.auth.Credentials;
 import com.keendly.adaptors.model.auth.Token;
+import org.apache.http.HttpStatus;
 import play.Logger;
 import play.libs.F;
 import play.libs.F.Promise;
@@ -217,13 +218,25 @@ public class NewsblurAdaptor extends Adaptor {
 
     @Override
     protected Promise<Boolean> doMarkAsRead(List<String> feedIds, long timestamp) {
-        LOG.warn("Mark s read not implemented for Newsblur, returning success");
+        List<Promise<WSResponse>> promises = new ArrayList<>();
 
-//        return client.url(config.get(URL) + "/reader/mark_feed_as_read")
-//                .setHeader("Authorization", "Bearer " + token.getAccessToken())
-//                .post("");
+        for (String feedId : feedIds){
+            Promise<WSResponse> promise = client.url(config.get(URL) + "/reader/mark_feed_as_read")
+                    .setHeader("Authorization", "Bearer " + token.getAccessToken())
+                    .setHeader("Content-Type", "application/x-www-form-urlencoded")
+                    .post("feed_id=" + feedId + "&cutoff_timestamp=" + String.valueOf(timestamp / 1000)); // to seconds
 
-        return Promise.pure(Boolean.TRUE);
+            promises.add(promise);
+        }
+
+        return Promise.sequence(promises).map(responses -> {
+            for (WSResponse response : responses){
+                if (response.getStatus() != HttpStatus.SC_OK){
+                    return Boolean.FALSE;
+                }
+            }
+            return Boolean.TRUE;
+        });
     }
 
     private Promise<WSResponse> getGetPromise(String url) {

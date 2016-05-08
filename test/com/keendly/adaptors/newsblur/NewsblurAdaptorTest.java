@@ -401,6 +401,40 @@ public class NewsblurAdaptorTest {
                 .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
     }
 
+    @Test
+    public void given_ResponseOK_when_markAsRead_then_ReturnSuccess() throws Exception {
+        String ACCESS_TOKEN = "my_token";
+        String FEED_ID1 = "6297529";
+        String FEED_ID2 = "6297523";
+        long timestamp = System.currentTimeMillis();
+
+        // given
+        givenThat(post(urlEqualTo("/reader/mark_feed_as_read"))
+                .willReturn(aResponse()
+                        .withStatus(200)));
+
+        // when
+        boolean success = newsblurAdaptor(ACCESS_TOKEN)
+                .markAsRead(asList(FEED_ID1, FEED_ID2), timestamp).get(1000);
+
+        // then
+        assertTrue(success);
+
+        verify(postRequestedFor(urlPathEqualTo("/reader/mark_feed_as_read"))
+                .withRequestBody(thatContainsParams(
+                        param("feed_id", FEED_ID1),
+                        param("cutoff_timestamp", Long.toString(timestamp / 1000))
+                ))
+                .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
+
+        verify(postRequestedFor(urlPathEqualTo("/reader/mark_feed_as_read"))
+                .withRequestBody(thatContainsParams(
+                        param("feed_id", FEED_ID2),
+                        param("cutoff_timestamp", Long.toString(timestamp / 1000))
+                ))
+                .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
+    }
+
     private String unreadCountResponse(String feedId, int count) throws JSONException {
         JSONObject unreadCountResponse = new JSONObject();
         JSONObject feedsUnreadCounts = new JSONObject();
