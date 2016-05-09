@@ -326,7 +326,7 @@ var SelectedFeed_Detailed = React.createClass({
          </p>
         <p>
           <input type="checkbox" id={feed.feedId + 'mark_as_read'} className="filled-in" defaultChecked/>
-          <label htmlFor={feed.feedId + 'full'}>Mark as read</label>
+          <label htmlFor={feed.feedId + 'mark_as_read'}>Mark as read</label>
         </p>
        </div>
       </li>
