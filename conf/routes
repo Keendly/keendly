@@ -9,6 +9,8 @@ GET     /assets/*file                   controllers.Assets.at(path="/public", fi
 POST    /api/subscriptions              com.keendly.controllers.api.SubscriptionController.createSubscription()
 GET     /api/subscriptions/:id          com.keendly.controllers.api.SubscriptionController.getSubscription(id: String)
 PATCH   /api/subscriptions/:id          com.keendly.controllers.api.SubscriptionController.updateSubscription(id: String)
+GET     /api/subscriptions              com.keendly.controllers.api.SubscriptionController.getSubscriptionsToDeliver()
+
 
 POST    /api/deliveries                 com.keendly.controllers.api.DeliveryController.createDelivery()
 PATCH   /api/deliveries/:id             com.keendly.controllers.api.DeliveryController.updateDelivery(id: Long)

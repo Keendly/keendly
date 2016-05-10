@@ -6,6 +6,7 @@ import com.keendly.entities.SubscriptionFrequency;
 import com.keendly.entities.SubscriptionItemEntity;
 import com.keendly.model.DeliveryItem;
 import com.keendly.model.Subscription;
+import com.keendly.model.User;
 import play.db.jpa.JPA;
 import play.libs.F;
 import play.libs.F.Promise;
@@ -16,6 +17,7 @@ import sun.util.calendar.ZoneInfo;
 
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.TimeZone;
 
 @With(SecuredAction.class)
@@ -56,11 +58,30 @@ public class SubscriptionController extends AbstractController<Subscription> {
             if (s == null){
                 return notFound();
             }
-            return ok(Json.toJson(map(s)));
+            return ok(Json.toJson(map(s, false)));
         });
     }
 
-    private Subscription map(SubscriptionEntity entity){
+    public Result getSubscriptionsToDeliver() throws Throwable{
+        return JPA.withTransaction(() -> {
+            List<SubscriptionEntity> s = subscriptionDao.getSubscriptionsToDeliver();
+            if (s == null){
+                return notFound();
+            }
+            System.out.println(s.size());
+            return ok(Json.toJson(map(s, true)));
+        });
+    }
+
+    private List<Subscription> map(List<SubscriptionEntity> entities, boolean withUser){
+        List<Subscription> result = new ArrayList<>();
+        for (SubscriptionEntity entity : entities){
+            result.add(map(entity, withUser));
+        }
+        return result;
+    }
+
+    private Subscription map(SubscriptionEntity entity, boolean withUser){
         Subscription subscription = new Subscription();
         subscription.id = entity.id;
         subscription.time = LocalTime.parse(entity.time).format(dateTimeFormatter());
@@ -74,14 +95,18 @@ public class SubscriptionController extends AbstractController<Subscription> {
             itemResponse.includeImages = item.withImages;
             subscription.feeds.add(itemResponse);
         }
+        if (withUser){
+            User user = new User();
+            user.id = entity.user.id;
+            user.email = entity.user.email;
+            user.deliveryEmail = entity.user.deliveryEmail;
+            user.provider = entity.user.provider;
+            subscription.user = user;
+        }
         return subscription;
     }
 
     public Result updateSubscription(String id){
-        return ok();
-    }
-
-    public Result deleteSubscription(String id){
         return ok();
     }
 }

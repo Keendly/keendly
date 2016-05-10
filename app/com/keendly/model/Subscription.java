@@ -11,4 +11,5 @@ public class Subscription {
     public String time;
     public String timezone;
     public List<DeliveryItem> feeds;
+    public User user;
 }
