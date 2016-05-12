@@ -180,7 +180,7 @@ var DeliverModal = React.createClass({
      $.ajax({
        url: this.props.url,
        type: "POST",
-       data: JSON.stringify({'items': this.state.feeds}, ["items", "title", "feedId", "includeImages", "fullArticle", "markAsRead"]),
+       data: JSON.stringify({'manual': true, 'items': this.state.feeds}, ["items", "title", "feedId", "includeImages", "fullArticle", "markAsRead", "manual"]),
        contentType: "application/json; charset=utf-8",
        success: function(data) {
          $('#delivery_modal').closeModal();

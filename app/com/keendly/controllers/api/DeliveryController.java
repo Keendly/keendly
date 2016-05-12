@@ -198,7 +198,7 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
             DeliveryEntity entity = new DeliveryEntity();
             entity.items = new ArrayList<>();
             entity.user = getDummyUserEntity();
-            entity.manual = true;
+            entity.manual = delivery.manual;
             toEntity(delivery, entity);
             return entity;
         }

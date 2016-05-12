@@ -12,4 +12,5 @@ public class Delivery {
     public List<DeliveryItem> items;
     public Date deliveryDate;
     public String error;
+    public Boolean manual;
 }
