@@ -5,14 +5,12 @@ import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.keendly.controllers.api.error.Error;
 import com.keendly.dao.DeliveryDao;
-import com.keendly.entities.DeliveryArticleEntity;
-import com.keendly.entities.DeliveryEntity;
-import com.keendly.entities.DeliveryItemEntity;
-import com.keendly.entities.UserEntity;
+import com.keendly.entities.*;
 import com.keendly.mappers.MappingMode;
 import com.keendly.model.Delivery;
 import com.keendly.model.DeliveryArticle;
 import com.keendly.model.DeliveryItem;
+import com.keendly.model.Subscription;
 import com.keendly.schema.DeliveryProtos;
 import com.keendly.schema.utils.Mapper;
 import com.keendly.utils.ConfigUtils;
@@ -210,6 +208,11 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
             if (delivery.error != null){
                 entity.errorDescription = delivery.error;
             }
+            if (delivery.subscription != null){
+                SubscriptionEntity se = new SubscriptionEntity();
+                se.id = delivery.subscription.id;
+                entity.subscription = se;
+            }
             for (DeliveryItem item : delivery.items){
                 DeliveryItemEntity itemEntity;
                 if (item.id != null){
@@ -287,6 +290,11 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
                     }
                 }
                 feeds.add(feed);
+            }
+            if (entity.subscription != null){
+                Subscription s = new Subscription();
+                s.id = entity.subscription.id;
+                delivery.subscription = s;
             }
 
             return delivery;

@@ -2,7 +2,9 @@ package com.keendly.controllers.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.keendly.auth.Authenticator;
+import com.keendly.dao.ClientDao;
 import com.keendly.dao.UserDao;
+import com.keendly.entities.ClientEntity;
 import com.keendly.entities.UserEntity;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -15,23 +17,21 @@ import play.mvc.Result;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.keendly.utils.ConfigUtils.parameter;
-
 public class AuthController extends Controller {
 
     private static final Logger.ALogger LOG = Logger.of(AuthController.class);
 
-    private static final String BEARER_KEY = parameter("auth.bearer_token.key");
-
     private UserDao userDao = new UserDao();
+    private ClientDao clientDao = new ClientDao();
     private Authenticator authenticator = new Authenticator();
 
     private static int ONE_HOUR = 60 * 60;
     private static int ONE_MONTH = ONE_HOUR * 24 * 30;
     private enum GrantType {
-        BEARER("bearer", ONE_HOUR), // to get token on behalf of user
+        BEARER("bearer", ONE_HOUR), // to get token on behalf of a user
         PASSWORD("password", ONE_MONTH), // authenticate with password
-        AUTHENTICATION_CODE("authentication_code", ONE_MONTH); // authenticate with code - OAuth
+        AUTHENTICATION_CODE("authentication_code", ONE_MONTH), // authenticate with code - OAuth
+        CLIENT_CREDENTIALS("client_credentials", ONE_HOUR); // for clients, to get token without user's scope
 
         String text;
         int expiresIn;
@@ -59,10 +59,15 @@ public class AuthController extends Controller {
             LOG.error("Wrong grant_type {}", grantTypeString);
             return badRequest();
         }
+        String clientId = json.get("client_id").asText();
+        ClientEntity client = clientDao.findByClientId(clientId);
+        if (client == null){
+            return unauthorized();
+        }
         switch (grantType){
             case BEARER:
                 String token = json.get("token").asText();
-                Integer userId = decode(token);
+                Integer userId = decode(token, client.clientSecret);
                 if (userId == null){
                     return badRequest();
                 }
@@ -72,16 +77,24 @@ public class AuthController extends Controller {
                     return badRequest();
                 }
                 String authToken = authenticator.generate(Long.valueOf(userId), grantType.expiresIn);
-                return ok(Json.toJson(asAuthToken(authToken, grantType.expiresIn)));
+                return ok(Json.toJson(asAuthToken(authToken, grantType.expiresIn, false)));
+            case CLIENT_CREDENTIALS:
+                String clientSecret = json.get("client_secret").asText();
+                if (client.clientSecret.equals(clientSecret)){
+                    String generated = authenticator.generate(-1, grantType.expiresIn);
+                    return ok(Json.toJson(asAuthToken(generated, grantType.expiresIn, true)));
+                } else {
+                    return unauthorized();
+                }
             default:
                 LOG.error("Grant type not supported {}", grantType.text);
                 return badRequest();
         }
     }
 
-    private Integer decode(String token){
+    private Integer decode(String token, String secret){
         try {
-            Claims claims = Jwts.parser().setSigningKey(BEARER_KEY.getBytes()).parseClaimsJws(token).getBody();
+            Claims claims = Jwts.parser().setSigningKey(secret.getBytes()).parseClaimsJws(token).getBody();
             return claims.get("userId", Integer.class);
         } catch (Exception e){
             LOG.error("Error decoding token", e);
@@ -89,12 +102,16 @@ public class AuthController extends Controller {
         }
     }
 
-    private Map<String, String> asAuthToken(String authToken, int expiresIn){
+    private Map<String, String> asAuthToken(String authToken, int expiresIn, boolean readOnly){
         Map<String, String> ret = new HashMap<>();
         ret.put("accessToken", authToken);
         ret.put("tokeType", "Bearer");
         ret.put("expiresIn", Integer.toString(expiresIn));
-        ret.put("scope", "write");
+        if (readOnly){
+            ret.put("scope", "read");
+        } else {
+            ret.put("scope", "write");
+        }
         return ret;
     }
 }
