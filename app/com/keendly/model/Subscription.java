@@ -10,6 +10,7 @@ public class Subscription {
     public Long id;
     public String time;
     public String timezone;
+    public String frequency;
     public List<DeliveryItem> feeds;
     public User user;
 }

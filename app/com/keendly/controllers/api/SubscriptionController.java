@@ -64,7 +64,7 @@ public class SubscriptionController extends AbstractController<Subscription> {
 
     public Result getSubscriptionsToDeliver() throws Throwable{
         return JPA.withTransaction(() -> {
-            List<SubscriptionEntity> s = subscriptionDao.getSubscriptionsToDeliver();
+            List<SubscriptionEntity> s = subscriptionDao.getDailySubscriptionsToDeliver();
             if (s == null){
                 return notFound();
             }
@@ -87,6 +87,7 @@ public class SubscriptionController extends AbstractController<Subscription> {
         subscription.time = LocalTime.parse(entity.time).format(dateTimeFormatter());
         subscription.timezone = entity.timeZone;
         subscription.feeds = new ArrayList<>();
+        subscription.frequency = entity.frequency.name();
         for (SubscriptionItemEntity item : entity.items){
             DeliveryItem itemResponse = new DeliveryItem();
             itemResponse.feedId = item.feedId;

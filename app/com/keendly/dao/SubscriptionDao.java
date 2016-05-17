@@ -27,11 +27,11 @@ public class SubscriptionDao {
         return query.getResultList();
     }
 
-    public List<SubscriptionEntity> getSubscriptionsToDeliver(){
+    public List<SubscriptionEntity> getDailySubscriptionsToDeliver(){
         // TODO should probably take into account ones that DO have deliveries but were not actually delivered
         Query query = JPA.em()
                 .createNativeQuery("select s.id from subscription s " +
-                        "where not exists (" +
+                        "where s.frequency = 'DAILY' and not exists (" +
                         "   select id from delivery d where d.subscription_id = s.id " +
                         "       and d.created > case " +
                         "               when cast(now() at time zone s.timezone as time) > cast(s.time as time) " + // if today the scheduled hour has passed
@@ -41,7 +41,7 @@ public class SubscriptionDao {
 
         List r = query.getResultList();
         List<Long> ids = new ArrayList<>();
-        for (Object o : r){
+        for (Object o : r) {
             ids.add(((BigInteger) o).longValue());
         }
         List res = JPA.em().createQuery("select s from SubscriptionEntity s where s.id in (:ids)")
