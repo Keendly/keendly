@@ -14,6 +14,9 @@ import java.util.TimeZone;
 
 public class SubscriptionDao {
 
+    private static final play.Logger.ALogger LOG = play.Logger.of(SubscriptionDao.class);
+
+
     public void createSubscription(SubscriptionEntity subscription){
         JPA.em().persist(subscription);
     }
@@ -40,6 +43,8 @@ public class SubscriptionDao {
                         "               then to_timestamp(to_char(now() at time zone s.timezone,'YYYY-MM-DD ')||s.time, 'YYYY-MM-DD HH24:MI') " + // then last scheduled delivery was today
                         "               else to_timestamp(to_char((now() at time zone s.timezone) - interval '1 day', 'YYYY-MM-DD ')||s.time, 'YYYY-MM-DD HH24:MI') " + // otherwise yesterday
                         "       end)").setParameter("system_timezone", TimeZone.getDefault().getID());
+
+        LOG.info("timezone {}", TimeZone.getDefault().getID());
         List r = query.getResultList();
         List<Long> ids = new ArrayList<>();
         for (Object o : r) {
