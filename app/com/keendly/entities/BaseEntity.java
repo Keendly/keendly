@@ -1,18 +1,16 @@
 package com.keendly.entities;
 
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
+import javax.persistence.*;
 import java.util.Date;
 
 @MappedSuperclass
 public abstract class BaseEntity {
 
-    @Column
+    @Column(columnDefinition= "timestamp with time zone")
+    @Temporal(TemporalType.TIMESTAMP)
     public Date created;
 
-    @Column(name = "last_modified")
+    @Column(name = "last_modified", columnDefinition= "timestamp with time zone")
     public Date lastModified;
 
     @PrePersist

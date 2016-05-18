@@ -4,7 +4,7 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "SubscriptionItem")
-public class SubscriptionItemEntity {
+public class SubscriptionItemEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy= GenerationType.AUTO)

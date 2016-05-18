@@ -12,7 +12,8 @@ public class DeliveryEntity extends BaseEntity {
     @GeneratedValue(strategy= GenerationType.AUTO)
     public long id;
 
-    @Column
+    @Column(columnDefinition= "timestamp with time zone")
+    @Temporal(TemporalType.TIMESTAMP)
     public Date date; // null until delivered actually
 
     @Column(nullable = false)
