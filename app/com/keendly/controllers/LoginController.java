@@ -97,7 +97,7 @@ public class LoginController extends Controller {
                         id.add(userEntity.id); // why so hacky
                     });
                     String t = authenticator.generate(id.get(0), ONE_MONTH);
-                    response().setCookie(KeendlyHeader.SESSION_COOKIE.value, t);
+                    response().setCookie(KeendlyHeader.SESSION_COOKIE.value, t, ONE_MONTH);
                     return redirect(routes.WebController.feeds());
                 })
         );
