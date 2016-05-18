@@ -10,7 +10,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.TimeZone;
 
 public class SubscriptionDao {
 
@@ -38,13 +37,12 @@ public class SubscriptionDao {
                 .createNativeQuery("select s.id from subscription s " +
                         "where s.active = TRUE and s.frequency = 'DAILY' and not exists (" +
                         "   select id from delivery d where d.subscription_id = s.id " +
-                        "       and d.created at time zone :system_timezone > case " +
+                        "       and d.created at time zone s.timezone > case " +
                         "               when cast(now() at time zone s.timezone as time) > cast(s.time as time) " + // if today the scheduled hour has passed
                         "               then to_timestamp(to_char(now() at time zone s.timezone,'YYYY-MM-DD ')||s.time, 'YYYY-MM-DD HH24:MI') " + // then last scheduled delivery was today
                         "               else to_timestamp(to_char((now() at time zone s.timezone) - interval '1 day', 'YYYY-MM-DD ')||s.time, 'YYYY-MM-DD HH24:MI') " + // otherwise yesterday
-                        "       end)").setParameter("system_timezone", TimeZone.getDefault().getID());
+                        "       end)");
 
-        LOG.info("timezone {}", TimeZone.getDefault().getID());
         List r = query.getResultList();
         List<Long> ids = new ArrayList<>();
         for (Object o : r) {
