@@ -26,11 +26,25 @@ var FeedBox = React.createClass({
     );
     $('#delivery_modal').openModal()
   },
+  subscribeButtonClick: function() {
+    var timestamp = Date.now()
+    ReactDOM.render(
+      <SubscribeModal url='api/subscriptions' key={timestamp} success={this.handleSubscriptionSuccess} error={this.handleSubscriptionError}/>,
+      document.getElementById('modal')
+    );
+    $('#subscription_modal').openModal()
+  },
   handleDeliverySuccess: function() {
-    this.setState({success: true, error: false})
+    this.setState({deliverySuccess: true, error: false})
   },
   handleDeliveryError: function(code, description) {
-     this.setState({success: false, error: true, errorCode: code, errorDescription: description})
+     this.setState({deliverySuccess: false, subscriptionSuccess: false, error: true, errorCode: code, errorDescription: description})
+  },
+  handleSubscriptionSuccess: function() {
+    this.setState({subscriptionSuccess: true, error: false})
+  },
+  handleSubscriptionError: function(code, description) {
+     this.setState({deliverySuccess: false, subscriptionSuccess: false, error: true, errorCode: code, errorDescription: description})
   },
   render: function() {
     return (
@@ -45,10 +59,11 @@ var FeedBox = React.createClass({
               {this.state.errorDescription}
             </div>)
               : ''}
-        {this.state.success == true ? <div className='success_div'>Delivery started :-) Give us few minutes to deliver articles to your Kindle.</div> : ''}
+        {this.state.deliverySuccess == true ? <div className='success_div'>Delivery started :-) Give us few minutes to deliver articles to your Kindle.</div> : ''}
         <div className="row" id="button_row">
           <div className="col s12 m6">
             <a onClick={this.deliverButtonClick} className="waves-effect waves-light btn modal-trigger" id="delivery_modal_btn" href="#delivery_modal">Deliver now</a>
+            <a onClick={this.subscribeButtonClick} className="waves-effect waves-light btn modal-trigger" id="subscription_modal_btn" href="#subscription_modal">Susbcribe</a>
           </div>
           <div className="input-field col offset-m3 s12 m3" id="search">
             <input id="search_box" type="search" required />
@@ -168,7 +183,7 @@ var DeliverModal = React.createClass({
          $.each( this.state.feeds, function( i, feed ) {
            feed['includeImages'] = $(document.getElementById(feed.feedId + 'img')).is(':checked');
            feed['fullArticle'] =  $(document.getElementById(feed.feedId + 'full')).is(':checked');
-           feed['markAsRead'] = $(document.getElementById(feed.feedId + 'mark')).is(':checked');
+           feed['markAsRead'] = $(document.getElementById(feed.feedId + 'mark_as_read')).is(':checked');
          });
      } else {
         $.each( this.state.feeds, function( i, feed ) {
@@ -275,6 +290,203 @@ var DeliverModal = React.createClass({
           </div>
       </div>
     );
+  }
+});
+
+var Feed = React.createClass({
+  render: function() {
+    return (
+      <tr>
+        <td>
+          <input type="checkbox" className="filled-in" id={this.props.feedId} />
+          <label htmlFor={this.props.feedId}></label>
+        </td>
+        <td className="feed_title">{this.props.title}</td>
+        <td>{this.props.lastDelivery != null ? moment(this.props.lastDelivery.deliveryDate).fromNow() : ''}</td>
+      </tr>
+    );
+  }
+});
+
+var SubscribeModal = React.createClass({
+  getInitialState: function() {
+    return {mode: 'simple', feeds: this.getSelectedFeeds()};
+  },
+  modeChangeClick: function(event) {
+    this.setState({
+      'mode': event.target.checked ? 'detailed' : 'simple'
+    });
+  },
+  handleSubmit: function() {
+     this.state.time = $('#time').val()
+     this.state.timezone = $('#timezone').val()
+     console.log(this.state.time)
+     if (this.state.mode == 'detailed'){
+         $.each( this.state.feeds, function( i, feed ) {
+           feed['includeImages'] = $(document.getElementById(feed.feedId + 'img')).is(':checked');
+           feed['fullArticle'] =  $(document.getElementById(feed.feedId + 'full')).is(':checked');
+           feed['markAsRead'] = $(document.getElementById(feed.feedId + 'mark_as_read')).is(':checked');
+         });
+     } else {
+        $.each( this.state.feeds, function( i, feed ) {
+          feed['includeImages'] = $('#include_images').is(':checked');
+          feed['fullArticle'] =  $('#full_article').is(':checked');
+          feed['markAsRead'] = $('#mark_as_read').is(':checked');
+        });
+     }
+     $.ajax({
+       url: this.props.url,
+       type: "POST",
+       data: JSON.stringify({
+          'time': this.state.time,
+          'timezone': this.state.timezone,
+          'feeds': this.state.feeds
+       }, ["feeds", "feedId", "includeImages", "fullArticle", "markAsRead", "time", "timezone"]),
+       contentType: "application/json; charset=utf-8",
+       success: function(data) {
+         $('#subscription_modal').closeModal();
+         this.props.success()
+       }.bind(this),
+       error: function(xhr, status, err) {
+         $('#subscription_modal').closeModal();
+         this.props.error(xhr.responseJSON.code, xhr.responseJSON.description)
+       }.bind(this)
+     });
+  },
+  getSelectedFeeds: function() {
+    var checkbox, columns, feed_id, i, j, ref, results, subscription, subscriptions, subscriptionsLength, title;
+    subscriptions = $('#subscriptions').find('tr');
+    subscriptionsLength = subscriptions.length;
+    results = [];
+    for (i = j = 0, ref = subscriptionsLength; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
+      subscription = subscriptions.eq(i);
+      columns = subscription.find('td');
+      if (columns.length > 0) {
+        checkbox = columns.eq(0).find('.filled-in');
+        if (checkbox.is(':checked')) {
+          feed_id = checkbox.attr('id');
+          results.push({'title': columns.eq(1).text(), 'feedId': feed_id});
+        }
+      }
+    }
+    return results;
+  },
+  render: function() {
+    var mode = this.state.mode;
+    var feeds = this.state.feeds;
+    if (feeds.length == 0){
+      return (
+          <div id="subscription_modal" className="modal">
+            <div className="error_modal">
+              Select feeds first
+              </div>
+          </div>
+        )
+    }
+
+    var list
+    if (mode == 'simple'){
+      var actualList = feeds.map(function(feed) {
+          return (
+            <SelectedFeed_Simple key={feed.feedId} feed={feed} />
+          );
+        });
+      list =
+      <div id="simple">
+       <p>
+         <input type="checkbox" className="filled-in" id="include_images" defaultChecked/>
+         <label htmlFor="include_images">Include images</label>
+       </p>
+       <p>
+         <input type="checkbox" className="filled-in" id="full_article" defaultChecked/>
+         <label htmlFor="full_article">Full article</label>
+       </p>
+        <p>
+          <input type="checkbox" className="filled-in" id="mark_as_read" defaultChecked/>
+          <label htmlFor="mark_as_read">Mark as read</label>
+        </p>
+          <Time />
+          <TimeZone />
+       <ul className="collection" id="feed_list">
+          {actualList}
+       </ul>
+      </div>
+     } else {
+       var actualList = feeds.map(function(feed) {
+           return (
+              <SelectedFeed_Detailed feed={feed} key={feed.feedId}/>
+           );
+         });
+       list =
+       <div id="detailed">
+           <Time />
+           <TimeZone />
+           <ul className="collection" id="detailed_feed_list">
+            {actualList}
+           </ul>
+       </div>
+     }
+    return (
+      <div id="subscription_modal" className="modal">
+          <div className="modal-content" id="delivery_form">
+              <h4>Subscribe to feeds</h4>
+              <ModeSwitch onChange={this.modeChangeClick} mode={mode} />
+              {list}
+          </div>
+          <div className="modal-footer">
+              <a href="#!" className="modal-action modal-close waves-effect waves-red btn-flat">Cancel</a>
+              <a href="#!" onClick={this.handleSubmit} className="modal-action waves-effect waves-green btn-flat submit save" id="subscription_save_btn">Subscribe</a>
+          </div>
+      </div>
+    );
+  }
+});
+
+var Time = React.createClass({
+  render: function(){
+    var options = [];
+    var current = moment().format('HH:mm');
+
+    for (var i=0; i < 24; i++) {
+        var hour = i
+        if (hour < 10){
+          hour = '0' + hour
+        }
+
+        options.push(<option key={i + ':00'} value={hour + ':00'}>{hour}:00</option>)
+        options.push(<option key={i + ':30'} value={hour + ':30'}>{hour}:30</option>)
+    }
+    return (
+      <p>
+      <label htmlFor="time">Delivery time</label>
+          <select id="time" className="browser-default times" defaultValue={moment().format('HH:00')}>
+           {options}
+          </select>
+      </p>
+    )
+  }
+});
+
+var TimeZone = React.createClass({
+  render: function(){
+    var options = [];
+    var timezones = moment.tz.names()
+    var arrayLength = timezones.length;
+
+    var guessed = moment.tz.guess();
+    for (var i = 0; i < arrayLength; i++) {
+      var tz = timezones[i]
+      options.push(<option value={tz} key={tz}>{tz}</option>)
+    }
+    return (
+      <p>
+      <label htmlFor="timezone">Time zone</label>
+          <select id="timezone" className="browser-default times" defaultValue={guessed}>
+           {options}
+          </select>
+
+      </p>
+    )
   }
 });
 

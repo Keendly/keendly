@@ -28,7 +28,7 @@ public class SubscriptionController extends AbstractController<Subscription> {
     public Promise<Result> createSubscription() {
         Subscription subscription = fromRequest();
         TimeZone timezone = ZoneInfo.getTimeZone(subscription.timezone);
-        LocalTime time = LocalTime.parse(subscription.time, dateTimeFormatter());
+        LocalTime time = LocalTime.parse(subscription.time);
 
         SubscriptionEntity entity = new SubscriptionEntity();
         entity.active = Boolean.TRUE;

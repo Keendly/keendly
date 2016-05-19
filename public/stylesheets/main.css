@@ -199,3 +199,7 @@ span.badge {
 .pink {
   background-color: #ec3f8c
 }
+
+#subscription_modal_btn {
+  margin-left: 10px
+}
