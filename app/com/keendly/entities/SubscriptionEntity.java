@@ -24,6 +24,9 @@ public class SubscriptionEntity extends BaseEntity {
     @Column(nullable = false)
     public Boolean active;
 
+    @Column(nullable = false)
+    public Boolean deleted;
+
     @OneToMany(mappedBy = "subscription", cascade = CascadeType.PERSIST)
     public List<SubscriptionItemEntity> items;
 

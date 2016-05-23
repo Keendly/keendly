@@ -24,11 +24,107 @@ var DeliveryBox = React.createClass({
     });
     this.loadSubscriptions(newPage);
   },
+  deleteButtonClick: function() {
+    var timestamp = Date.now()
+    ReactDOM.render(
+      <DeleteModal url='api/subscriptions' key={timestamp} success={this.handleSuccess} error={this.handleError}/>,
+      document.getElementById('modal')
+    );
+    $('#delete_modal').openModal()
+  },
+  handleSuccess: function() {
+    this.setState({success: true, error: false})
+    this.loadSubscriptions(this.state.page)
+  },
+  handleError: function(code, description) {
+     this.setState({success: false, error: true, errorDescription: description})
+  },
   render: function() {
     return (
       <div className="container">
+        {this.state.success == true ? <div className='success_div'>Subscription(s) deleted.</div> : ''}
+        {this.state.error == true ? <div className='error_div'>{this.state.errorDescription}</div> : ''}
+        <div className="row" id="button_row">
+          <div className="col s12 m6">
+            <a onClick={this.deleteButtonClick} className="waves-effect waves-light btn" id="delete_subscription_btn" href="#delete_modal">Delete</a>
+          </div>
+        </div>
         <SubscriptionList data={this.state.data} />
         <Pagination handleClick={this.handlePageClick} page={this.state.page} />
+      </div>
+    );
+  }
+});
+
+var DeleteModal = React.createClass({
+  getInitialState: function() {
+    return {subscriptions: this.getSelectedSubscriptions()};
+  },
+  handleSubmit: function() {
+     var subscriptionsLength = this.state.subscriptions.length;
+     var error = false;
+     var errorDescription;
+     for (var i = 0; i < subscriptionsLength; i++){
+           $.ajax({
+             url: this.props.url + "/" + this.state.subscriptions[i],
+             type: "DELETE",
+             success: function(data) {
+               this.props.success()
+             }.bind(this),
+             error: function(xhr, status, err) {
+               error = true;
+               errorDescription = xhr.responseJSON.description;
+             }.bind(this)
+           });
+     }
+     $('#delete_modal').closeModal();
+     if (error == false){
+        this.props.success()
+     } else {
+        this.props.error(errorDescription)
+     }
+  },
+  getSelectedSubscriptions: function() {
+    var checkbox, columns, id, i, j, ref, results, subscription, subscriptions, subscriptionsLength, title;
+    subscriptions = $('#subscriptions').find('tr');
+    subscriptionsLength = subscriptions.length;
+    results = [];
+    for (i = j = 0, ref = subscriptionsLength; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
+      subscription = subscriptions.eq(i);
+      columns = subscription.find('td');
+      if (columns.length > 0) {
+        checkbox = columns.eq(0).find('.filled-in');
+        if (checkbox.is(':checked')) {
+          id = checkbox.attr('id');
+          results.push(id);
+        }
+      }
+    }
+    return results;
+  },
+  render: function() {
+    var subscriptions = this.state.subscriptions;
+    if (subscriptions.length == 0){
+      return (
+          <div id="delete_modal" className="modal">
+            <div className="error_modal">
+              Select subscriptions first
+              </div>
+          </div>
+        )
+    }
+
+
+    return (
+      <div id="delete_modal" className="modal">
+          <div className="modal-content" id="delivery_form">
+              <h4>Are you sure?</h4>
+              Do you want to remove selected subscriptions?
+          </div>
+          <div className="modal-footer">
+              <a href="#!" onClick={this.handleSubmit} className="modal-action waves-effect waves-green btn-flat submit save" id="subscription_save_btn">Yes</a>
+              <a href="#!" className="modal-action modal-close waves-effect waves-red btn-flat">No</a>
+          </div>
       </div>
     );
   }
@@ -38,13 +134,14 @@ var SubscriptionList = React.createClass({
   render: function() {
     var subscriptions = this.props.data.map(function(subscription) {
       return (
-        <Subscription feeds={subscription.feeds} key={subscription.id} time={subscription.time} timezone={subscription.timezone} />
+        <Subscription feeds={subscription.feeds} id={subscription.id} key={subscription.id} time={subscription.time} timezone={subscription.timezone} />
       );
     });
     return (
       <table id="subscriptions">
         <thead>
         <tr>
+          <th></th>
           <th>Feeds</th>
           <th>Delivery time</th>
         </tr>
@@ -69,6 +166,10 @@ var Subscription = React.createClass({
     }
     return (
       <tr>
+        <td>
+          <input type="checkbox" className="filled-in" id={this.props.id} />
+          <label htmlFor={this.props.id}></label>
+        </td>
         <td>
             {feeds != null ? feeds.join(" \u2022 ") : ''}
         </td>

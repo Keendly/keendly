@@ -50,6 +50,7 @@ public class SubscriptionController extends AbstractController<Subscription> {
         entity.timeZone = timezone.toZoneId().getId();
         entity.items = new ArrayList<>();
         entity.user = getDummyUserEntity();
+        entity.deleted = false;
 
         for (DeliveryItem feed : subscription.feeds){
             SubscriptionItemEntity item = new SubscriptionItemEntity();
@@ -139,7 +140,13 @@ public class SubscriptionController extends AbstractController<Subscription> {
         return subscription;
     }
 
-    public Result updateSubscription(String id){
-        return ok();
+    public Result deleteSubscription(String id) throws Throwable {
+        return JPA.withTransaction(() -> {
+            boolean success = subscriptionDao.deleteSubscription(id);
+            if (!success){
+                return notFound();
+            }
+            return ok();
+        });
     }
 }

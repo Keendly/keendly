@@ -203,3 +203,11 @@ span.badge {
 #subscription_modal_btn {
   margin-left: 10px
 }
+
+#delete_subscription_btn {
+  background-color: #ec3f8c;
+}
+
+#delete_subscription_btn:hover {
+  background-color: #39b1c6;
+}

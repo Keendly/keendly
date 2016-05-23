@@ -24,15 +24,25 @@ public class SubscriptionDao {
         return JPA.em().find(SubscriptionEntity.class, Long.parseLong(id));
     }
 
+    public boolean deleteSubscription(String id){
+        SubscriptionEntity entity = JPA.em().find(SubscriptionEntity.class, Long.parseLong(id));
+        if (entity == null){
+            return false;
+        }
+        entity.deleted = true;
+        JPA.em().merge(entity);
+        return true;
+    }
+
     public List<SubscriptionItemEntity> getSubscriptionItems(UserEntity user){
         Query query = JPA.em()
-                .createQuery("select si from SubscriptionItemEntity si where si.subscription.active = TRUE and si.subscription.user = :user")
+                .createQuery("select si from SubscriptionItemEntity si where si.subscription.active = TRUE and si.subscription.deleted = FALSE and si.subscription.user = :user")
                 .setParameter("user", user);
         return query.getResultList();
     }
 
     public List<SubscriptionEntity> getSubscriptions(UserEntity user, int page, int pageSize){
-        Query query = JPA.em().createQuery("select s from SubscriptionEntity s where s.user = :user and s.active = TRUE order by id desc")
+        Query query = JPA.em().createQuery("select s from SubscriptionEntity s where s.user = :user and s.active = TRUE and s.deleted = FALSE order by id desc")
                 .setMaxResults(pageSize)
                 .setFirstResult(pageSize * (page - 1))
                 .setParameter("user", user);
@@ -43,7 +53,7 @@ public class SubscriptionDao {
         // TODO should probably take into account ones that DO have deliveries but were not actually delivered
         Query query = JPA.em()
                 .createNativeQuery("select s.id from subscription s " +
-                        "where s.active = TRUE and s.frequency = 'DAILY' and not exists (" +
+                        "where s.active = TRUE and s.deleted = FALSE and s.frequency = 'DAILY' and not exists (" +
                         "   select id from delivery d where d.subscription_id = s.id " +
                         "       and d.created at time zone s.timezone > case " +
                         "               when cast(now() at time zone s.timezone as time) > cast(s.time as time) " + // if today the scheduled hour has passed
