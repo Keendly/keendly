@@ -34,6 +34,10 @@ public class WebController extends Controller {
         return ok(index.render("History | Keendly", "deliveries.js"));
     }
 
+    public Result subscriptions(){
+        return ok(index.render("Subscriptions | Keendly", "subscriptions.js"));
+    }
+
     public Result user(){
         return ok(index.render("Settings | Keendly", "user.js"));
     }

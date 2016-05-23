@@ -9,8 +9,8 @@ GET     /assets/*file                   controllers.Assets.at(path="/public", fi
 POST    /api/subscriptions              com.keendly.controllers.api.SubscriptionController.createSubscription()
 GET     /api/subscriptions/:id          com.keendly.controllers.api.SubscriptionController.getSubscription(id: String)
 PATCH   /api/subscriptions/:id          com.keendly.controllers.api.SubscriptionController.updateSubscription(id: String)
-GET     /api/subscriptions              com.keendly.controllers.api.SubscriptionController.getSubscriptionsToDeliver()
-
+GET     /api/subscriptionsToDeliver     com.keendly.controllers.api.SubscriptionController.getSubscriptionsToDeliver()
+GET     /api/subscriptions              com.keendly.controllers.api.SubscriptionController.getSubscriptions(page: Integer, pageSize: Integer)
 
 POST    /api/deliveries                 com.keendly.controllers.api.DeliveryController.createDelivery()
 PATCH   /api/deliveries/:id             com.keendly.controllers.api.DeliveryController.updateDelivery(id: Long)
@@ -38,3 +38,4 @@ GET     /feeds                          com.keendly.controllers.WebController.fe
 GET     /deliveries                     com.keendly.controllers.WebController.deliveries()
 GET     /user                           com.keendly.controllers.WebController.user()
 GET     /logout                         com.keendly.controllers.WebController.logout()
+GET     /subscriptions                  com.keendly.controllers.WebController.subscriptions()

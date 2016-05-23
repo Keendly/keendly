@@ -1,9 +1,12 @@
 package com.keendly.controllers.api;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.keendly.controllers.api.error.Error;
 import com.keendly.dao.SubscriptionDao;
 import com.keendly.entities.SubscriptionEntity;
 import com.keendly.entities.SubscriptionFrequency;
 import com.keendly.entities.SubscriptionItemEntity;
+import com.keendly.entities.UserEntity;
 import com.keendly.model.DeliveryItem;
 import com.keendly.model.Subscription;
 import com.keendly.model.User;
@@ -15,9 +18,7 @@ import play.mvc.Result;
 import play.mvc.With;
 import sun.util.calendar.ZoneInfo;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.TimeZone;
+import java.util.*;
 
 @With(SecuredAction.class)
 public class SubscriptionController extends AbstractController<Subscription> {
@@ -25,6 +26,20 @@ public class SubscriptionController extends AbstractController<Subscription> {
     private SubscriptionDao subscriptionDao = new SubscriptionDao();
 
     public Promise<Result> createSubscription() {
+        // HACK WARNING
+        StringBuilder deliveryEmail = new StringBuilder();
+        StringBuilder userId = new StringBuilder();
+        JPA.withTransaction(() -> {
+            UserEntity userEntity = new UserController().lookupUser("self");
+            if (userEntity.deliveryEmail != null){
+                deliveryEmail.append(userEntity.deliveryEmail);
+                userId.append(userEntity.id);
+            }
+        });
+        if (deliveryEmail.toString().isEmpty()){
+            return Promise.pure(badRequest(toJson(Error.DELIVERY_EMAIL_NOT_CONFIGURED)));
+        }
+
         Subscription subscription = fromRequest();
         TimeZone timezone = ZoneInfo.getTimeZone(subscription.timezone);
 
@@ -43,11 +58,19 @@ public class SubscriptionController extends AbstractController<Subscription> {
             item.markAsRead = feed.markAsRead;
             item.withImages = feed.includeImages;
             item.subscription = entity;
+            item.title = feed.title;
             entity.items.add(item);
         }
 
         JPA.withTransaction(() -> subscriptionDao.createSubscription(entity));
         return F.Promise.pure(created());
+    }
+
+    private JsonNode toJson(Error error, Object... msgParams){
+        Map<String, String> map = new HashMap<>();
+        map.put("code", error.name());
+        map.put("description", String.format(error.getMessage(), msgParams));
+        return Json.toJson(map);
     }
 
     public Result getSubscription(String id) throws Throwable {
@@ -71,6 +94,16 @@ public class SubscriptionController extends AbstractController<Subscription> {
         });
     }
 
+    public Promise<Result> getSubscriptions(int page, int pageSize) {
+        List<Subscription> deliveries = new ArrayList<>();
+        JPA.withTransaction(() -> {
+            List<SubscriptionEntity> entities = subscriptionDao.getSubscriptions(getUserEntity(), page, pageSize);
+            deliveries.addAll(map(entities, false));
+        });
+
+        return Promise.pure(ok(Json.toJson(deliveries)));
+    }
+
     private List<Subscription> map(List<SubscriptionEntity> entities, boolean withUser){
         List<Subscription> result = new ArrayList<>();
         for (SubscriptionEntity entity : entities){
@@ -92,6 +125,7 @@ public class SubscriptionController extends AbstractController<Subscription> {
             itemResponse.fullArticle = item.fullArticle;
             itemResponse.markAsRead = item.markAsRead;
             itemResponse.includeImages = item.withImages;
+            itemResponse.title = item.title;
             subscription.feeds.add(itemResponse);
         }
         if (withUser){

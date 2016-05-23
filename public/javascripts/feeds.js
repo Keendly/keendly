@@ -42,6 +42,7 @@ var FeedBox = React.createClass({
   },
   handleSubscriptionSuccess: function() {
     this.setState({subscriptionSuccess: true, error: false})
+    this.loadFeeds()
   },
   handleSubscriptionError: function(code, description) {
      this.setState({deliverySuccess: false, subscriptionSuccess: false, error: true, errorCode: code, errorDescription: description})
@@ -60,6 +61,7 @@ var FeedBox = React.createClass({
             </div>)
               : ''}
         {this.state.deliverySuccess == true ? <div className='success_div'>Delivery started :-) Give us few minutes to deliver articles to your Kindle.</div> : ''}
+        {this.state.subscriptionSuccess == true ? <div className='success_div'>Subscription saved :-> your articles will be now delivered automatically.</div> : ''}
         <div className="row" id="button_row">
           <div className="col s12 m6">
             <a onClick={this.deliverButtonClick} className="waves-effect waves-light btn modal-trigger" id="delivery_modal_btn" href="#delivery_modal">Deliver now</a>
@@ -330,7 +332,6 @@ var SubscribeModal = React.createClass({
   handleSubmit: function() {
      this.state.time = $('#time').val()
      this.state.timezone = $('#timezone').val()
-     console.log(this.state.time)
      if (this.state.mode == 'detailed'){
          $.each( this.state.feeds, function( i, feed ) {
            feed['includeImages'] = $(document.getElementById(feed.feedId + 'img')).is(':checked');
@@ -351,7 +352,7 @@ var SubscribeModal = React.createClass({
           'time': this.state.time,
           'timezone': this.state.timezone,
           'feeds': this.state.feeds
-       }, ["feeds", "feedId", "includeImages", "fullArticle", "markAsRead", "time", "timezone"]),
+       }, ["feeds", "feedId", "includeImages", "fullArticle", "markAsRead", "time", "timezone", "title"]),
        contentType: "application/json; charset=utf-8",
        success: function(data) {
          $('#subscription_modal').closeModal();

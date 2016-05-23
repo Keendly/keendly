@@ -13,6 +13,9 @@ public class SubscriptionItemEntity extends BaseEntity {
     @Column(name = "feed_id", nullable = false)
     public String feedId;
 
+    @Column(nullable = false)
+    public String title;
+
     @Column(name = "with_images", nullable = false)
     public Boolean withImages;
 

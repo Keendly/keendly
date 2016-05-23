@@ -31,6 +31,14 @@ public class SubscriptionDao {
         return query.getResultList();
     }
 
+    public List<SubscriptionEntity> getSubscriptions(UserEntity user, int page, int pageSize){
+        Query query = JPA.em().createQuery("select s from SubscriptionEntity s where s.user = :user and s.active = TRUE order by id desc")
+                .setMaxResults(pageSize)
+                .setFirstResult(pageSize * (page - 1))
+                .setParameter("user", user);
+        return query.getResultList();
+    }
+
     public List<SubscriptionEntity> getDailySubscriptionsToDeliver(){
         // TODO should probably take into account ones that DO have deliveries but were not actually delivered
         Query query = JPA.em()
