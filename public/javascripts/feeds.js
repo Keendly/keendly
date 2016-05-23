@@ -63,7 +63,7 @@ var FeedBox = React.createClass({
         <div className="row" id="button_row">
           <div className="col s12 m6">
             <a onClick={this.deliverButtonClick} className="waves-effect waves-light btn modal-trigger" id="delivery_modal_btn" href="#delivery_modal">Deliver now</a>
-            <a onClick={this.subscribeButtonClick} className="waves-effect waves-light btn modal-trigger" id="subscription_modal_btn" href="#subscription_modal">Susbcribe</a>
+            <a onClick={this.subscribeButtonClick} className="waves-effect waves-light btn modal-trigger" id="subscription_modal_btn" href="#subscription_modal">Subscribe</a>
           </div>
           <div className="input-field col offset-m3 s12 m3" id="search">
             <input id="search_box" type="search" required />
@@ -80,7 +80,7 @@ var FeedList = React.createClass({
   render: function() {
   var feedNodes = this.props.data.map(function(feed) {
     return (
-      <Feed title={feed.title} key={feed.feedId} feedId={feed.feedId} lastDelivery={feed.lastDelivery} />
+      <Feed title={feed.title} key={feed.feedId} feedId={feed.feedId} lastDelivery={feed.lastDelivery} subscriptions={feed.subscriptions} />
     );
     });
     return (
@@ -91,6 +91,7 @@ var FeedList = React.createClass({
           <th></th>
           <th>Title</th>
           <th>Last delivery</th>
+          <th>Next delivery</th>
         </tr>
         </thead>
 
@@ -99,21 +100,6 @@ var FeedList = React.createClass({
         </tbody>
       </table>
       </form>
-    );
-  }
-});
-
-var Feed = React.createClass({
-  render: function() {
-    return (
-      <tr>
-        <td>
-          <input type="checkbox" className="filled-in" id={this.props.feedId} />
-          <label htmlFor={this.props.feedId}></label>
-        </td>
-        <td className="feed_title">{this.props.title}</td>
-        <td>{this.props.lastDelivery != null ? moment(this.props.lastDelivery.deliveryDate).fromNow() : ''}</td>
-      </tr>
     );
   }
 });
@@ -295,6 +281,29 @@ var DeliverModal = React.createClass({
 
 var Feed = React.createClass({
   render: function() {
+    if (this.props.subscriptions){
+      var scheduled = [];
+      var subscriptionsLength = this.props.subscriptions.length;
+      var now = moment().toDate().getTime();
+      for (var i = 0; i < subscriptionsLength; i++){
+        var s = this.props.subscriptions[i]
+        var tz = s['timezone']
+
+        var nowInTz = moment(now).tz(tz);
+        if (nowInTz.format('HH:mm') > s['time']){
+          var nextScheduledDelivery = nowInTz.add(1, 'd').format('YYYY-MM-DD') + ' ' + s.time
+          // next tomorrow
+        } else {
+          var nextScheduledDelivery = nowInTz.format('YYYY-MM-DD') + ' ' + s.time
+          // today
+        }
+        var nextDelivery = moment.tz(nextScheduledDelivery, tz).toDate().getTime()
+        scheduled.push(nextDelivery)
+      }
+      var soonestNextScheduledDelivery = Math.min.apply(Math, scheduled)
+      var nextDeliveryRelative = moment(now).to(moment(soonestNextScheduledDelivery))
+    }
+
     return (
       <tr>
         <td>
@@ -303,6 +312,7 @@ var Feed = React.createClass({
         </td>
         <td className="feed_title">{this.props.title}</td>
         <td>{this.props.lastDelivery != null ? moment(this.props.lastDelivery.deliveryDate).fromNow() : ''}</td>
+        <td>{nextDeliveryRelative}</td>
       </tr>
     );
   }

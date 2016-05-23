@@ -26,7 +26,7 @@ public class SubscriptionDao {
 
     public List<SubscriptionItemEntity> getSubscriptionItems(UserEntity user){
         Query query = JPA.em()
-                .createQuery("select si from SubscriptionItemEntity si where si.subscription.user = :user")
+                .createQuery("select si from SubscriptionItemEntity si where si.subscription.active = TRUE and si.subscription.user = :user")
                 .setParameter("user", user);
         return query.getResultList();
     }
@@ -41,7 +41,12 @@ public class SubscriptionDao {
                         "               when cast(now() at time zone s.timezone as time) > cast(s.time as time) " + // if today the scheduled hour has passed
                         "               then to_timestamp(to_char(now() at time zone s.timezone,'YYYY-MM-DD ')||s.time, 'YYYY-MM-DD HH24:MI') " + // then last scheduled delivery was today
                         "               else to_timestamp(to_char((now() at time zone s.timezone) - interval '1 day', 'YYYY-MM-DD ')||s.time, 'YYYY-MM-DD HH24:MI') " + // otherwise yesterday
-                        "       end)");
+                        "       end) " +
+                        "       and s.created at time zone s.timezone < case " + // and was created before last scheduled delivery
+                        "               when cast(now() at time zone s.timezone as time) > cast(s.time as time) " +
+                        "               then to_timestamp(to_char(now() at time zone s.timezone,'YYYY-MM-DD ')||s.time, 'YYYY-MM-DD HH24:MI') " +
+                        "               else to_timestamp(to_char((now() at time zone s.timezone) - interval '1 day' ,'YYYY-MM-DD ')||s.time, 'YYYY-MM-DD HH24:MI') " +
+                        "       end");
 
         List r = query.getResultList();
         List<Long> ids = new ArrayList<>();

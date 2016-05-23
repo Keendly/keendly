@@ -19,7 +19,6 @@ import play.libs.Json;
 import play.mvc.Result;
 import play.mvc.With;
 
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -58,8 +57,8 @@ public class FeedController extends AbstractController<Feed> {
                                 // TODO move to proper mapper, duplication with SubscriptionController:map
                                 Subscription subscription = new Subscription();
                                 subscription.id = feedSubItemEntity.subscription.id;
-                                subscription.time = LocalTime.parse(feedSubItemEntity.subscription.time)
-                                        .format(dateTimeFormatter());
+                                subscription.time = feedSubItemEntity.subscription.time;
+                                subscription.timezone = feedSubItemEntity.subscription.timeZone;
                                 feed.subscriptions.add(subscription);
                             }
                         }

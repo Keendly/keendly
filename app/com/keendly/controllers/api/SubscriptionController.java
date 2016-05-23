@@ -15,7 +15,6 @@ import play.mvc.Result;
 import play.mvc.With;
 import sun.util.calendar.ZoneInfo;
 
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
@@ -28,12 +27,11 @@ public class SubscriptionController extends AbstractController<Subscription> {
     public Promise<Result> createSubscription() {
         Subscription subscription = fromRequest();
         TimeZone timezone = ZoneInfo.getTimeZone(subscription.timezone);
-        LocalTime time = LocalTime.parse(subscription.time);
 
         SubscriptionEntity entity = new SubscriptionEntity();
         entity.active = Boolean.TRUE;
         entity.frequency = SubscriptionFrequency.DAILY;
-        entity.time = time.toString();
+        entity.time = subscription.time;
         entity.timeZone = timezone.toZoneId().getId();
         entity.items = new ArrayList<>();
         entity.user = getDummyUserEntity();
@@ -84,7 +82,7 @@ public class SubscriptionController extends AbstractController<Subscription> {
     private Subscription map(SubscriptionEntity entity, boolean withUser){
         Subscription subscription = new Subscription();
         subscription.id = entity.id;
-        subscription.time = LocalTime.parse(entity.time).format(dateTimeFormatter());
+        subscription.time = entity.time;
         subscription.timezone = entity.timeZone;
         subscription.feeds = new ArrayList<>();
         subscription.frequency = entity.frequency.name();
