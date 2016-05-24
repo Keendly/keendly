@@ -410,7 +410,7 @@ var SubscribeModal = React.createClass({
        </p>
        <p>
          <input type="checkbox" className="filled-in" id="full_article" defaultChecked/>
-         <label htmlFor="full_article">Full article</label>
+         <label htmlFor="full_article">Extract article</label>
        </p>
         <p>
           <input type="checkbox" className="filled-in" id="mark_as_read" defaultChecked/>
