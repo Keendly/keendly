@@ -64,8 +64,8 @@ var FeedBox = React.createClass({
         {this.state.subscriptionSuccess == true ? <div className='success_div'>Subscription saved :-> your articles will be now delivered automatically.</div> : ''}
         <div className="row" id="button_row">
           <div className="col s12 m6">
-            <a onClick={this.deliverButtonClick} className="waves-effect waves-light btn modal-trigger" id="delivery_modal_btn" href="#delivery_modal">Deliver now</a>
-            <a onClick={this.subscribeButtonClick} className="waves-effect waves-light btn modal-trigger" id="subscription_modal_btn" href="#subscription_modal">Subscribe</a>
+            <a onClick={this.deliverButtonClick} className="waves-effect waves-light btn modal-trigger" id="delivery_modal_btn">Deliver now</a>
+            <a onClick={this.subscribeButtonClick} className="waves-effect waves-light btn modal-trigger" id="subscription_modal_btn">Subscribe</a>
           </div>
           <div className="input-field col offset-m3 s12 m3" id="search">
             <input id="search_box" type="search" required />
