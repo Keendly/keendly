@@ -93,7 +93,7 @@ var FeedList = React.createClass({
           <th></th>
           <th>Title</th>
           <th>Last delivery</th>
-          <th>Next delivery</th>
+          <th className="hide-on-small-only">Next delivery</th>
         </tr>
         </thead>
 
@@ -314,7 +314,7 @@ var Feed = React.createClass({
         </td>
         <td className="feed_title">{this.props.title}</td>
         <td>{this.props.lastDelivery != null ? moment(this.props.lastDelivery.deliveryDate).fromNow() : ''}</td>
-        <td>{nextDeliveryRelative}</td>
+        <td className="hide-on-small-only">{nextDeliveryRelative}</td>
       </tr>
     );
   }

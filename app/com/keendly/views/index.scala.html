@@ -89,6 +89,9 @@
                     $('#contact_modal_btn').click(function() {
                       $('#contact_modal').openModal()
                     });
+                    $('#contact_modal_btn_small').click(function() {
+                      $('#contact_modal').openModal()
+                    });
                   },
                   handleSubmit: function() {
                      $.ajax({
@@ -153,21 +156,25 @@
             <footer class="page-footer">
                 <div class="container">
                     <div class="row">
-                        <div class="col l9 s9" id="footer-links">
+                        <div class="left hide-on-small-only" id="footer-links">
                             <a class="modal-trigger" id="contact_modal_btn" href="#contact_modal">Leave feedback</a>
+                            <a href="http://keendly.com" target="_blank">Website</a>
                             <a href="http://blog.keendly.com" target="_blank">Blog</a>
+                            <a href="https://keendly.myjetbrains.com/youtrack/rest/agile/Kanban%20board-0/sprint/Unscheduled" target="_blank">Issue tracker</a>
                         </div>
-                        <div class="col l3 s3">
+                        <div class="left hide-on-med-and-up" id="footer-links-small">
+                            <a class="modal-trigger" id="contact_modal_btn_small" href="#contact_modal">Leave feedback</a>
+                            <a href="http://keendly.com" target="_blank">Website</a>
+                            <a href="http://blog.keendly.com" target="_blank">Blog</a>
+                            <a href="https://keendly.myjetbrains.com/youtrack/rest/agile/Kanban%20board-0/sprint/Unscheduled" target="_blank">Issue tracker</a>
+                        </div>
+                        <div class="right">
                             <div class="share-buttons">
                                 <a href="https://www.facebook.com/KeendlyApp/" target="_blank"><img src="assets/images/facebook.png"></a>
                                 <a href="https://twitter.com/KeendlyApp" target="_blank"><img src="assets/images/twitter.png"></a>
                                 <a href="mailto:contact@@keendly.com"><img src="assets/images/gmail.png"></a>
                             </div>
-                            <div class="footer-copyright">
-                                <div class="container">
-                                    © 2016 Keendly
-                                </div>
-                            </div>
+                            <div class="footer-copyright">© 2016 Keendly</div>
                         </div>
                     </div>
                 </div>
