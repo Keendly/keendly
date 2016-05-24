@@ -242,7 +242,7 @@ var DeliverModal = React.createClass({
        </p>
        <p>
          <input type="checkbox" className="filled-in" id="full_article" defaultChecked/>
-         <label htmlFor="full_article">Full article</label>
+         <label htmlFor="full_article">Extract article</label>
        </p>
         <p>
           <input type="checkbox" className="filled-in" id="mark_as_read" defaultChecked/>
@@ -545,7 +545,7 @@ var SelectedFeed_Detailed = React.createClass({
          </p>
          <p>
            <input type="checkbox" id={feed.feedId + 'full'} className="filled-in" defaultChecked/>
-           <label htmlFor={feed.feedId + 'full'}>Full article</label>
+           <label htmlFor={feed.feedId + 'full'}>Extract article</label>
          </p>
         <p>
           <input type="checkbox" id={feed.feedId + 'mark_as_read'} className="filled-in" defaultChecked/>
