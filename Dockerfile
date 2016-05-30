@@ -16,4 +16,5 @@ CMD $PROJECT_DIR/app/bin/keendly -Dhttp.port=9000 -Dlogger.file=$PROJECT_DIR/con
   -Ddb.default.password=$DB_PASSWORD -Dinoreader.client_id=$INOREADER_CLIENT_ID \
   -Dinoreader.client_secret=$INOREADER_CLIENT_SECRET -Dinoreader.redirect_uri=$INOREADER_REDIRECT_URI \
   -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.port=1616 \
-  -Dcom.sun.management.jmxremote.authenticate=false
+  -Dcom.sun.management.jmxremote.rmi.port=9998 -Dcom.sun.management.jmxremote.authenticate=false \
+  -Dcom.sun.management.jmxremote.ssl=false
