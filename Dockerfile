@@ -17,4 +17,4 @@ CMD $PROJECT_DIR/app/bin/keendly -Dhttp.port=9000 -Dlogger.file=$PROJECT_DIR/con
   -Dinoreader.client_secret=$INOREADER_CLIENT_SECRET -Dinoreader.redirect_uri=$INOREADER_REDIRECT_URI \
   -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.port=1616 \
   -Dcom.sun.management.jmxremote.rmi.port=9998 -Dcom.sun.management.jmxremote.authenticate=false \
-  -Dcom.sun.management.jmxremote.ssl=false
+  -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=localhost
