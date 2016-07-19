@@ -2,6 +2,7 @@ package com.keendly.schema.utils;
 
 import com.keendly.adaptors.model.FeedEntry;
 import com.keendly.model.Delivery;
+import com.keendly.model.DeliveryArticle;
 import com.keendly.model.DeliveryItem;
 import com.keendly.schema.DeliveryProtos;
 import com.keendly.schema.DeliveryProtos.DeliveryRequest;
@@ -58,12 +59,23 @@ public class Mapper {
         request.userId = userId;
         request.timestamp = System.currentTimeMillis();
 
-        List<DeliveryItem> items = new ArrayList<>();
-        request.items = items;
+        request.items = new ArrayList<>();
         for (Map.Entry<String, List<FeedEntry>> unreadFeed : unread.entrySet()){
             DeliveryItem deliveryItem
                     = delivery.items.stream().filter(item -> item.feedId.equals(unreadFeed.getKey())).findFirst().get();
-            items.add(deliveryItem);
+
+            deliveryItem.articles = new ArrayList<>();
+            for (FeedEntry article : unreadFeed.getValue()){
+                DeliveryArticle deliveryArticle = new DeliveryArticle();
+                deliveryArticle.url = article.getUrl();
+                deliveryArticle.title = article.getTitle();
+                deliveryArticle.author = article.getAuthor();
+                deliveryArticle.timestamp = article.getPublished().getTime();
+                deliveryArticle.content = article.getContent();
+
+                deliveryItem.articles.add(deliveryArticle);
+            }
+            request.items.add(deliveryItem);
         }
 
         return request;
