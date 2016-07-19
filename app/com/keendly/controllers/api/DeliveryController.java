@@ -103,7 +103,7 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
 
             } catch (Exception e){
                 // catching everything for now, to avoid breaking due this
-                LOG.error("Error running starting SWF workflow", e);
+                LOG.error("Error starting SWF workflow", e);
             }
 
            return ok(Json.toJson(deliveryMapper.toModel(deliveryEntity, MappingMode.SIMPLE)));

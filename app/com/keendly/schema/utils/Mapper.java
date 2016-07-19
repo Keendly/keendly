@@ -59,6 +59,7 @@ public class Mapper {
         request.timestamp = System.currentTimeMillis();
 
         List<DeliveryItem> items = new ArrayList<>();
+        request.items = items;
         for (Map.Entry<String, List<FeedEntry>> unreadFeed : unread.entrySet()){
             DeliveryItem deliveryItem
                     = delivery.items.stream().filter(item -> item.feedId.equals(unreadFeed.getKey())).findFirst().get();
