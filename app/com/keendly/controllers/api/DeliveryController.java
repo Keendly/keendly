@@ -98,7 +98,8 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
                 DeliveryRequest request = Mapper.toDeliveryRequest(delivery, unread, deliveryEntity.id, deliveryEmail.toString(),
                         Long.parseLong(userId.toString()));
 
-                runWorkflow(workflowType, Jackson.toJsonString(request));
+                Run run = runWorkflow(workflowType, Jackson.toJsonString(request));
+                LOG.debug("Workflow type {} started, runId: {}", workflowType.getName(), run.getRunId());
 
             } catch (Exception e){
                 // catching everything for now, to avoid breaking due this
