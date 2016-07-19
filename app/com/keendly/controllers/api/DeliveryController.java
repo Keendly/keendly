@@ -1,16 +1,19 @@
 package com.keendly.controllers.api;
 
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
+import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflowClient;
+import com.amazonaws.services.simpleworkflow.model.*;
+import com.amazonaws.util.json.Jackson;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.keendly.controllers.api.error.Error;
 import com.keendly.dao.DeliveryDao;
 import com.keendly.entities.*;
 import com.keendly.mappers.MappingMode;
-import com.keendly.model.Delivery;
-import com.keendly.model.DeliveryArticle;
-import com.keendly.model.DeliveryItem;
-import com.keendly.model.Subscription;
+import com.keendly.model.*;
 import com.keendly.schema.DeliveryProtos;
 import com.keendly.schema.utils.Mapper;
 import com.keendly.utils.ConfigUtils;
@@ -86,8 +89,63 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
                 return internalServerError();
             }
 
+            // start SWF delivery workflow
+            try {
+                WorkflowType workflowType = getWorkflowType("DeliveryWorkflow.deliver");
+                if (workflowType == null){
+                    LOG.error("workflow type not found");
+                }
+                DeliveryRequest request = Mapper.toDeliveryRequest(delivery, unread, deliveryEntity.id, deliveryEmail.toString(),
+                        Long.parseLong(userId.toString()));
+
+                runWorkflow(workflowType, Jackson.toJsonString(request));
+
+            } catch (Exception e){
+                // catching everything for now, to avoid breaking due this
+                LOG.error("Error running starting SWF workflow", e);
+            }
+
            return ok(Json.toJson(deliveryMapper.toModel(deliveryEntity, MappingMode.SIMPLE)));
         });
+    }
+
+    private static final AmazonSimpleWorkflow swfClient = getSWFClient();
+
+    private static WorkflowType getWorkflowType(String name){
+        ListWorkflowTypesRequest req = new ListWorkflowTypesRequest();
+        req.setDomain("keendly");
+        req.setRegistrationStatus(RegistrationStatus.REGISTERED);
+        for (WorkflowTypeInfo info : swfClient.listWorkflowTypes(req).getTypeInfos()){
+            if (info.getWorkflowType().getName().equals(name)){
+                return info.getWorkflowType();
+            }
+        }
+
+        return null;
+    }
+
+    private static Run runWorkflow(WorkflowType type, String input){
+        StartWorkflowExecutionRequest startRequest = new StartWorkflowExecutionRequest();
+
+        // HACKY way to imitate the way Flow Framework starts workflows
+        List<String> objects = new ArrayList<>();
+        List<Object> parameters = new ArrayList<>();
+        objects.add(input);
+        parameters.add("[Ljava.lang.Object;");
+        parameters.add(objects);
+
+        startRequest.setDomain("keendly");
+        startRequest.setWorkflowId(UUID.randomUUID().toString());
+        startRequest.setWorkflowType(type);
+        startRequest.setInput(Jackson.toJsonString(parameters));
+        startRequest.setLambdaRole("arn:aws:iam::625416862388:role/swf_lambda_role");
+        return swfClient.startWorkflowExecution(startRequest);
+    }
+
+    private static AmazonSimpleWorkflow getSWFClient() {
+        AmazonSimpleWorkflow client = new AmazonSimpleWorkflowClient();
+        client.setRegion(Region.getRegion(Regions.EU_WEST_1));
+        return client;
     }
 
     private JsonNode toJson(Error error, Object... msgParams){

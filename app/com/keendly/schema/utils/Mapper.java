@@ -6,6 +6,7 @@ import com.keendly.model.DeliveryItem;
 import com.keendly.schema.DeliveryProtos;
 import com.keendly.schema.DeliveryProtos.DeliveryRequest;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -47,5 +48,23 @@ public class Mapper {
         }
 
         return builder.build();
+    }
+
+    public static com.keendly.model.DeliveryRequest toDeliveryRequest(Delivery delivery, Map<String, List<FeedEntry>> unread,
+                                                                      long entityId, String deliveryEmail, long userId){
+        com.keendly.model.DeliveryRequest request = new com.keendly.model.DeliveryRequest();
+        request.email = deliveryEmail;
+        request.id = entityId;
+        request.userId = userId;
+        request.timestamp = System.currentTimeMillis();
+
+        List<DeliveryItem> items = new ArrayList<>();
+        for (Map.Entry<String, List<FeedEntry>> unreadFeed : unread.entrySet()){
+            DeliveryItem deliveryItem
+                    = delivery.items.stream().filter(item -> item.feedId.equals(unreadFeed.getKey())).findFirst().get();
+            items.add(deliveryItem);
+        }
+
+        return request;
     }
 }
