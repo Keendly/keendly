@@ -6,7 +6,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.keendly.controllers.api.error.Error;
 import com.keendly.dao.UserDao;
 import com.keendly.entities.UserEntity;
+import com.keendly.entities.UserNotificationEntity;
 import com.keendly.model.User;
+import com.keendly.model.UserNotification;
 import play.db.jpa.JPA;
 import play.libs.Json;
 import play.mvc.Result;
@@ -101,5 +103,47 @@ public class UserController extends AbstractController<User> {
             userId = Long.parseLong(id);
         }
         return userDao.findById(userId);
+    }
+
+    @With(SecuredAction.class)
+    public Result getUserNotifications(String id){
+        long userId = SELF.equals(id) ? getAuthenticatedUserId() : Long.parseLong(id);
+        List<UserNotification> notifications = new ArrayList<>();
+        if (SELF.equals(id)){
+            id = getAuthenticatedUserId() + "";
+        }
+        JPA.withTransaction(() -> {
+            List<UserNotificationEntity> notificationEntities = userDao.getUserNotificaitons(userId);
+
+            for (UserNotificationEntity entity : notificationEntities){
+                UserNotification notification = new UserNotification();
+                notification.sendDate = entity.sendDate;
+                notification.type = entity.type;
+                notifications.add(notification);
+            }
+        });
+        return ok(Json.toJson(notifications));
+    }
+
+    @With(SecuredAction.class)
+    public Result createUserNotification(String id){
+        JsonNode json = request().body().asJson();
+        UserNotification notification = Json.fromJson(json, UserNotification.class);
+
+        JPA.withTransaction(() -> {
+            UserEntity userEntity = getDummyUserEntity();
+            if (!id.equals(SELF)){
+                userEntity = new UserEntity();
+                userEntity.id = Long.parseLong(id);
+            }
+
+            UserNotificationEntity entity = new UserNotificationEntity();
+            entity.user = userEntity;
+            entity.sendDate = notification.sendDate;
+            entity.type = notification.type;
+            userDao.createUserNotification(entity);
+        });
+
+        return ok();
     }
 }

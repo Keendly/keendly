@@ -2,10 +2,12 @@ package com.keendly.dao;
 
 import com.keendly.entities.Provider;
 import com.keendly.entities.UserEntity;
+import com.keendly.entities.UserNotificationEntity;
 import play.db.jpa.JPA;
 
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
+import java.util.List;
 
 public class UserDao {
 
@@ -36,5 +38,17 @@ public class UserDao {
 
     public UserEntity findById(long id){
         return JPA.em().find(UserEntity.class, id);
+    }
+
+    public List<UserNotificationEntity> getUserNotificaitons(long id){
+        Query query = JPA.em().createQuery("select n from UserNotificationEntity n where n.user.id = :userId")
+                .setParameter("userId", id);
+
+        return query.getResultList();
+    }
+
+    public UserNotificationEntity createUserNotification(UserNotificationEntity notification){
+        JPA.em().persist(notification);
+        return notification;
     }
 }

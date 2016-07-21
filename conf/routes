@@ -23,6 +23,8 @@ POST    /api/feeds/unreadCount          com.keendly.controllers.api.FeedControll
 
 GET     /api/users/:id                  com.keendly.controllers.api.UserController.getUser(id: String)
 PATCH   /api/users/:id                  com.keendly.controllers.api.UserController.updateUser(id: String)
+GET     /api/users/:id/notifications    com.keendly.controllers.api.UserController.getUserNotifications(id: String)
+POST    /api/users/:id/notifications    com.keendly.controllers.api.UserController.createUserNotification(id: String)
 
 #AUTH
 POST    /auth                           com.keendly.controllers.api.AuthController.authenticate()
