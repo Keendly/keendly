@@ -2,7 +2,7 @@ package com.keendly.adaptors.exception;
 
 import org.apache.commons.lang3.StringUtils;
 
-public class ApiException extends Exception {
+public class ApiException extends RuntimeException {
 
     private int status;
     private String response;

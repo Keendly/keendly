@@ -22,6 +22,7 @@ import play.mvc.With;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -35,13 +36,17 @@ public class FeedController extends AbstractController<Feed> {
     private UserDao userDao = new UserDao();
     private FeedMapper feedMapper = new FeedMapper();
 
-    public Promise<? extends Result> getFeeds(){
+
+    public Result getFeeds(){
         Adaptor adaptor = getAdaptor();
 
-        return adaptor.getFeeds().map(subscribedFeeds ->
+        Promise<List<ExternalFeed>> feedsPromise = adaptor.getFeeds();
+        try {
+            // SYNC CODE!!!
+            List<ExternalFeed> subscribedFeeds = feedsPromise.get(1, TimeUnit.MINUTES);
+            try {
+                List<Feed> feeds = new ArrayList<>();
                 JPA.withTransaction(() -> {
-                    List<Feed> feeds = new ArrayList<>();
-
                     List<SubscriptionItemEntity> subscriptionItemEntities =
                             subscriptionDao.getSubscriptionItems(getUserEntity());
 
@@ -75,15 +80,15 @@ public class FeedController extends AbstractController<Feed> {
                         feeds.add(feed);
                     }
                     refreshTokenIfNeeded(adaptor.getToken());
-                    return ok(Json.toJson(feeds));
-                })
-        ).recover(error -> {
-            if (error instanceof ApiException){
-                ApiException exception = (ApiException) error;
-                return status(exception.getStatus(), exception.getResponse());
+                });
+                return ok(Json.toJson(feeds));
+            } catch (Throwable throwable) {
+                throw throwable;
             }
-            throw error;
-        });
+
+        } catch (ApiException e){
+            return status(e.getStatus(), e.getResponse());
+        }
     }
 
 
