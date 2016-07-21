@@ -12,6 +12,7 @@ import com.keendly.adaptors.model.auth.Token;
 import com.ning.http.client.AsyncHttpClientConfig;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.apache.http.HttpStatus;
 import org.json.JSONObject;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -738,6 +739,36 @@ public class InoreaderAdaptorTest {
     @Ignore("same refresh token logic as un getUser")
     public void given_Unauthorized_when_getFeeds_then_RefreshTokenAndRetry() throws Exception {
         fail();
+    }
+
+    @Test
+    public void given_InvalidRefreshToken_when_getFeeds_then_ThrowUnauthorizedException() throws Exception {
+        // given
+        givenThat(get(urlEqualTo("/subscription/list"))
+                .willReturn(aResponse()
+                        .withStatus(403)));
+
+        JSONObject refreshTokenResponse = new JSONObject();
+        refreshTokenResponse.put("error", "invalid_grant");
+        refreshTokenResponse.put("error_description", "Invalid refresh token");
+
+        givenThat(post(urlEqualTo("/auth"))
+                .willReturn(aResponse()
+                        .withStatus(400)
+                        .withBody(refreshTokenResponse.toString())));
+
+        // when
+        Exception thrown = null;
+
+        try {
+            inoreaderAdaptor(null).getFeeds().get(1000);
+        } catch (Exception e){
+            thrown = e;
+        }
+
+        // then
+        assertNotNull(thrown);
+        assertEquals(HttpStatus.SC_UNAUTHORIZED, ((ApiException) thrown).getStatus());
     }
 
     @Test

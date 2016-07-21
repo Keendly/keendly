@@ -218,9 +218,18 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
                     if (isOk(response.getStatus())) {
                         JsonNode node = response.asJson();
                         return node.get("access_token").asText();
+                    } else if (isInvalidRefreshToken(response.getStatus(), response.getBody())){
+                        throw new ApiException(HttpStatus.SC_UNAUTHORIZED, response.getBody());
                     } else {
                         throw new ApiException(response.getStatus(), response.getBody());
                     }
                 });
+    }
+
+    protected static boolean isInvalidRefreshToken(int status, String body){
+        if (status == HttpStatus.SC_BAD_REQUEST && body.contains("Invalid refresh token")){
+            return true;
+        }
+        return false;
     }
 }

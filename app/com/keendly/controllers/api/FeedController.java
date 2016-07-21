@@ -2,6 +2,7 @@ package com.keendly.controllers.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.keendly.adaptors.Adaptor;
+import com.keendly.adaptors.exception.ApiException;
 import com.keendly.adaptors.model.ExternalFeed;
 import com.keendly.adaptors.model.auth.Token;
 import com.keendly.dao.DeliveryDao;
@@ -34,8 +35,9 @@ public class FeedController extends AbstractController<Feed> {
     private UserDao userDao = new UserDao();
     private FeedMapper feedMapper = new FeedMapper();
 
-    public Promise<Result> getFeeds(){
+    public Promise<? extends Result> getFeeds(){
         Adaptor adaptor = getAdaptor();
+
         return adaptor.getFeeds().map(subscribedFeeds ->
                 JPA.withTransaction(() -> {
                     List<Feed> feeds = new ArrayList<>();
@@ -75,7 +77,13 @@ public class FeedController extends AbstractController<Feed> {
                     refreshTokenIfNeeded(adaptor.getToken());
                     return ok(Json.toJson(feeds));
                 })
-        );
+        ).recover(error -> {
+            if (error instanceof ApiException){
+                ApiException exception = (ApiException) error;
+                return status(exception.getStatus(), exception.getResponse());
+            }
+            throw error;
+        });
     }
 
 
