@@ -3,6 +3,7 @@ package com.keendly.controllers.api;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
 import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflowClient;
@@ -24,6 +25,7 @@ import play.libs.Json;
 import play.mvc.Result;
 import play.mvc.With;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -98,6 +100,17 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
                 DeliveryRequest request = Mapper.toDeliveryRequest(delivery, unread, deliveryEntity.id, deliveryEmail.toString(),
                         Long.parseLong(userId.toString()));
 
+
+                if (Jackson.toJsonString(request).length() > 32000){
+                    String key = "requests/" + UUID.randomUUID().toString();
+                    amazonS3Client.putObject("keendly", key,
+                          new ByteArrayInputStream(Jackson.toJsonString(request.items).getBytes()), new ObjectMetadata());
+                    request.items = null;
+                    S3Object items = new S3Object();
+                    items.bucket = "keendly";
+                    items.key = key;
+                    request.s3Items = items;
+                }
                 Run run = runWorkflow(workflowType, Jackson.toJsonString(request));
                 LOG.debug("Workflow type {} started, runId: {}", workflowType.getName(), run.getRunId());
 
