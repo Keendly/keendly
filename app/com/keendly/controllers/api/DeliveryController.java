@@ -158,7 +158,7 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
 
     private static AmazonSimpleWorkflow getSWFClient() {
         AmazonSimpleWorkflow client = new AmazonSimpleWorkflowClient();
-        client.setRegion(Region.getRegion(Regions.US_EAST_1));
+        client.setRegion(Region.getRegion(Regions.EU_WEST_1));
         return client;
     }
 
