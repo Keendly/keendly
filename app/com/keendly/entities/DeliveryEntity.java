@@ -35,4 +35,10 @@ public class DeliveryEntity extends BaseEntity {
 
     @Column
     public String s3Dir;
+
+    @Column(name = "workflow_id")
+    public String workflowId;
+
+    @Column(name = "run_id")
+    public String runId;
 }

@@ -100,9 +100,8 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
                 DeliveryRequest request = Mapper.toDeliveryRequest(delivery, unread, deliveryEntity.id, deliveryEmail.toString(),
                         Long.parseLong(userId.toString()));
 
-
                 if (Jackson.toJsonString(request).length() > 32000){
-                    String key = "requests/" + UUID.randomUUID().toString();
+                    String key = "messages/" + UUID.randomUUID().toString().replace("-", "") + ".json";
                     amazonS3Client.putObject("keendly", key,
                           new ByteArrayInputStream(Jackson.toJsonString(request.items).getBytes()), new ObjectMetadata());
                     request.items = null;
@@ -111,7 +110,12 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
                     items.key = key;
                     request.s3Items = items;
                 }
-                Run run = runWorkflow(workflowType, Jackson.toJsonString(request));
+                String workflowId = "Delivery_" + UUID.randomUUID().toString();
+                Run run = runWorkflow(workflowType, workflowId, Jackson.toJsonString(request));
+
+                deliveryEntity.workflowId = workflowId;
+                deliveryEntity.runId = run.getRunId();
+                JPA.withTransaction(() -> deliveryDao.updateDelivery(deliveryEntity));
                 LOG.debug("Workflow type {} started, runId: {}", workflowType.getName(), run.getRunId());
 
             } catch (Exception e){
@@ -138,7 +142,7 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
         return null;
     }
 
-    private static Run runWorkflow(WorkflowType type, String input){
+    private static Run runWorkflow(WorkflowType type, String workflowId, String input){
         StartWorkflowExecutionRequest startRequest = new StartWorkflowExecutionRequest();
 
         // HACKY way to imitate the way Flow Framework starts workflows
@@ -149,7 +153,7 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
         parameters.add(objects);
 
         startRequest.setDomain("keendly");
-        startRequest.setWorkflowId(UUID.randomUUID().toString());
+        startRequest.setWorkflowId(workflowId);
         startRequest.setWorkflowType(type);
         startRequest.setInput(Jackson.toJsonString(parameters));
         startRequest.setLambdaRole("arn:aws:iam::625416862388:role/swf_lambda_role");
