@@ -45,7 +45,9 @@ public class Mapper {
                 itemBuilder.addArticles(article1);
             }
 
-            builder.addItems(itemBuilder.build());
+            if (itemBuilder.getArticlesCount() > 0){
+                builder.addItems(itemBuilder.build());
+            }
         }
 
         return builder.build();
@@ -75,7 +77,10 @@ public class Mapper {
 
                 deliveryItem.articles.add(deliveryArticle);
             }
-            request.items.add(deliveryItem);
+
+            if (!deliveryItem.articles.isEmpty()){
+                request.items.add(deliveryItem);
+            }
         }
 
         return request;
