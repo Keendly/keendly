@@ -10,6 +10,7 @@ import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflowClient;
 import com.amazonaws.services.simpleworkflow.model.*;
 import com.amazonaws.util.json.Jackson;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.keendly.adaptors.model.FeedEntry;
 import com.keendly.controllers.api.error.Error;
 import com.keendly.dao.DeliveryDao;
 import com.keendly.entities.*;
@@ -71,10 +72,28 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
         }
 
         DeliveryEntity deliveryEntity = deliveryMapper.toEntity(delivery);
-        JPA.withTransaction(() ->  deliveryDao.createDelivery(deliveryEntity));
 
         List<String> feedIds = delivery.items.stream().map(item -> item.feedId).collect(Collectors.toList());
         return getAdaptor().getUnread(feedIds).map(unread -> {
+
+            boolean found = false;
+            for (Map.Entry<String, List<FeedEntry>> unreadFeed : unread.entrySet()){
+                if (!unreadFeed.getValue().isEmpty()){
+                    found = true;
+                    break;
+                }
+            }
+
+            if (delivery.manual && !found){
+                return badRequest(toJson(Error.NO_ARTICLES));
+            } else if (!found){
+                deliveryEntity.errorDescription = "NO ARTICLES";
+                JPA.withTransaction(() ->  deliveryDao.createDelivery(deliveryEntity));
+                LOG.warn("No items for delivery {}", deliveryEntity.id);
+                return ok(Json.toJson(deliveryMapper.toModel(deliveryEntity, MappingMode.SIMPLE)));
+            }
+
+            JPA.withTransaction(() ->  deliveryDao.createDelivery(deliveryEntity));
 
             DeliveryProtos.DeliveryRequest deliveryRequest
                     = Mapper.mapToDeliveryRequest(delivery, unread, deliveryEntity.id, deliveryEmail.toString(),

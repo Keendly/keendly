@@ -61,7 +61,10 @@ var DeliveryList = React.createClass({
 var Delivery = React.createClass({
   transformError: function(error) {
     if (error === 'TOO BIG'){
-      return 'Couldn\'t deliver articles, file too big. Excluding images may help decreasing file size.'
+      return 'Couldn\'t deliver articles, file too big. Excluding images may help with decreasing file size.'
+    }
+    if (error === 'NO ARTICLES'){
+      return 'Couldn\'t find any articles to deliver.'
     }
     return 'Error occured during delivery'
   },
