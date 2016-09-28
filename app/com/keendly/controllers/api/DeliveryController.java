@@ -119,6 +119,9 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
                 DeliveryRequest request = Mapper.toDeliveryRequest(delivery, unread, deliveryEntity.id, deliveryEmail.toString(),
                         Long.parseLong(userId.toString()));
 
+                // make the flow not sending the emails
+                request.dryRun = true;
+
                 if (Jackson.toJsonString(request).length() > 32000){
                     String key = "messages/" + UUID.randomUUID().toString().replace("-", "") + ".json";
                     amazonS3Client.putObject("keendly", key,
