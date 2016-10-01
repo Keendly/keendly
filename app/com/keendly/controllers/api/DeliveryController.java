@@ -95,55 +95,64 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
 
             JPA.withTransaction(() ->  deliveryDao.createDelivery(deliveryEntity));
 
-            DeliveryProtos.DeliveryRequest deliveryRequest
-                    = Mapper.mapToDeliveryRequest(delivery, unread, deliveryEntity.id, deliveryEmail.toString(),
-                    Long.parseLong(userId.toString()));
-
-            try {
-                String uid = generateDirName();
-                storeInS3(deliveryRequest, uid);
-                deliveryEntity.s3Dir = uid;
-                JPA.withTransaction(() -> deliveryDao.updateDelivery(deliveryEntity));
-                LOG.debug("Delivery request for id {} stored in s3 dir {}", deliveryEntity.id, uid);
-            } catch (Exception e){
-                LOG.error("Error storing delivery to S3", e);
-                return internalServerError();
-            }
-
-            // start SWF delivery workflow
-            try {
-                WorkflowType workflowType = getWorkflowType("DeliveryWorkflow.deliver");
-                if (workflowType == null){
-                    LOG.error("workflow type not found");
-                }
-                DeliveryRequest request = Mapper.toDeliveryRequest(delivery, unread, deliveryEntity.id, deliveryEmail.toString(),
+            // use old workflow manager or swf
+            Random generator = new Random();
+            double d = generator.nextDouble();
+            if (d <= 0.9){
+                // 90% goes the old way
+                DeliveryProtos.DeliveryRequest deliveryRequest
+                        = Mapper.mapToDeliveryRequest(delivery, unread, deliveryEntity.id, deliveryEmail.toString(),
                         Long.parseLong(userId.toString()));
 
-                // make the flow not sending the emails
-                request.dryRun = true;
-
-                if (Jackson.toJsonString(request).length() > 32000){
-                    String key = "messages/" + UUID.randomUUID().toString().replace("-", "") + ".json";
-                    amazonS3Client.putObject("keendly", key,
-                          new ByteArrayInputStream(Jackson.toJsonString(request.items).getBytes()), new ObjectMetadata());
-                    request.items = null;
-                    S3Object items = new S3Object();
-                    items.bucket = "keendly";
-                    items.key = key;
-                    request.s3Items = items;
+                try {
+                    String uid = generateDirName();
+                    storeInS3(deliveryRequest, uid);
+                    deliveryEntity.s3Dir = uid;
+                    JPA.withTransaction(() -> deliveryDao.updateDelivery(deliveryEntity));
+                    LOG.debug("Delivery request for id {} stored in s3 dir {}", deliveryEntity.id, uid);
+                } catch (Exception e){
+                    LOG.error("Error storing delivery to S3", e);
+                    return internalServerError();
                 }
-                String workflowId = "Delivery_" + UUID.randomUUID().toString();
-                Run run = runWorkflow(workflowType, workflowId, Jackson.toJsonString(request));
+            } else {
+                // 10% SWF
+                try {
+                    WorkflowType workflowType = getWorkflowType("DeliveryWorkflow.deliver");
+                    if (workflowType == null){
+                        LOG.error("workflow type not found");
+                    }
+                    DeliveryRequest request = Mapper.toDeliveryRequest(delivery, unread, deliveryEntity.id, deliveryEmail.toString(),
+                            Long.parseLong(userId.toString()));
 
-                deliveryEntity.workflowId = workflowId;
-                deliveryEntity.runId = run.getRunId();
-                JPA.withTransaction(() -> deliveryDao.updateDelivery(deliveryEntity));
-                LOG.debug("Workflow type {} started, runId: {}", workflowType.getName(), run.getRunId());
+                    request.dryRun = false;
 
-            } catch (Exception e){
-                // catching everything for now, to avoid breaking due this
-                LOG.error("Error starting SWF workflow", e);
+                    if (Jackson.toJsonString(request).length() > 32000){
+                        String key = "messages/" + UUID.randomUUID().toString().replace("-", "") + ".json";
+                        amazonS3Client.putObject("keendly", key,
+                                new ByteArrayInputStream(Jackson.toJsonString(request.items).getBytes()), new ObjectMetadata());
+                        request.items = null;
+                        S3Object items = new S3Object();
+                        items.bucket = "keendly";
+                        items.key = key;
+                        request.s3Items = items;
+                    }
+                    String workflowId = "Delivery_" + UUID.randomUUID().toString();
+                    Run run = runWorkflow(workflowType, workflowId, Jackson.toJsonString(request));
+
+                    deliveryEntity.workflowId = workflowId;
+                    deliveryEntity.runId = run.getRunId();
+                    JPA.withTransaction(() -> deliveryDao.updateDelivery(deliveryEntity));
+                    LOG.debug("Workflow type {} started, runId: {}", workflowType.getName(), run.getRunId());
+
+                } catch (Exception e){
+                    // catching everything for now, to avoid breaking due this
+                    LOG.error("Error starting SWF workflow", e);
+                }
             }
+
+
+
+
 
            return ok(Json.toJson(deliveryMapper.toModel(deliveryEntity, MappingMode.SIMPLE)));
         });
