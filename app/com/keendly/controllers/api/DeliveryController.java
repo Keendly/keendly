@@ -98,7 +98,7 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
             // use old workflow manager or swf
             Random generator = new Random();
             double d = generator.nextDouble();
-            if (d <= 0.7){
+            if (d <= 0.5){
                 // 70% goes the old way
                 DeliveryProtos.DeliveryRequest deliveryRequest
                         = Mapper.mapToDeliveryRequest(delivery, unread, deliveryEntity.id, deliveryEmail.toString(),
