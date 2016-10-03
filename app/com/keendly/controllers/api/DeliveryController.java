@@ -98,8 +98,8 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
             // use old workflow manager or swf
             Random generator = new Random();
             double d = generator.nextDouble();
-            if (d <= 0.9){
-                // 90% goes the old way
+            if (d <= 0.7){
+                // 70% goes the old way
                 DeliveryProtos.DeliveryRequest deliveryRequest
                         = Mapper.mapToDeliveryRequest(delivery, unread, deliveryEntity.id, deliveryEmail.toString(),
                         Long.parseLong(userId.toString()));
@@ -115,7 +115,7 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
                     return internalServerError();
                 }
             } else {
-                // 10% SWF
+                // 30% SWF
                 try {
                     WorkflowType workflowType = getWorkflowType("DeliveryWorkflow.deliver");
                     if (workflowType == null){
