@@ -95,26 +95,26 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
 
             JPA.withTransaction(() ->  deliveryDao.createDelivery(deliveryEntity));
 
-            // use old workflow manager or swf
-            Random generator = new Random();
-            double d = generator.nextDouble();
-            if (d <= 0.5){
-                // 70% goes the old way
-                DeliveryProtos.DeliveryRequest deliveryRequest
-                        = Mapper.mapToDeliveryRequest(delivery, unread, deliveryEntity.id, deliveryEmail.toString(),
-                        Long.parseLong(userId.toString()));
-
-                try {
-                    String uid = generateDirName();
-                    storeInS3(deliveryRequest, uid);
-                    deliveryEntity.s3Dir = uid;
-                    JPA.withTransaction(() -> deliveryDao.updateDelivery(deliveryEntity));
-                    LOG.debug("Delivery request for id {} stored in s3 dir {}", deliveryEntity.id, uid);
-                } catch (Exception e){
-                    LOG.error("Error storing delivery to S3", e);
-                    return internalServerError();
-                }
-            } else {
+//            // use old workflow manager or swf
+//            Random generator = new Random();
+//            double d = generator.nextDouble();
+//            if (d <= 0.5){
+//                // 70% goes the old way
+//                DeliveryProtos.DeliveryRequest deliveryRequest
+//                        = Mapper.mapToDeliveryRequest(delivery, unread, deliveryEntity.id, deliveryEmail.toString(),
+//                        Long.parseLong(userId.toString()));
+//
+//                try {
+//                    String uid = generateDirName();
+//                    storeInS3(deliveryRequest, uid);
+//                    deliveryEntity.s3Dir = uid;
+//                    JPA.withTransaction(() -> deliveryDao.updateDelivery(deliveryEntity));
+//                    LOG.debug("Delivery request for id {} stored in s3 dir {}", deliveryEntity.id, uid);
+//                } catch (Exception e){
+//                    LOG.error("Error storing delivery to S3", e);
+//                    return internalServerError();
+//                }
+//            } else {
                 // 30% SWF
                 try {
                     WorkflowType workflowType = getWorkflowType("DeliveryWorkflow.deliver");
@@ -148,7 +148,7 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
                     // catching everything for now, to avoid breaking due this
                     LOG.error("Error starting SWF workflow", e);
                 }
-            }
+//            }
 
 
 
