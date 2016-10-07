@@ -61,11 +61,12 @@ var FeedBox = React.createClass({
             </div>)
               : ''}
         {this.state.deliverySuccess == true ? <div className='success_div'>Delivery started :-) Give us few minutes to deliver articles to your Kindle.</div> : ''}
-        {this.state.subscriptionSuccess == true ? <div className='success_div'>Subscription saved :-> your articles will be now delivered automatically.</div> : ''}
+        {this.state.subscriptionSuccess == true ? <div className='success_div'>Done :-) your articles will be now delivered automatically.</div> : ''}
         <div className="row" id="button_row">
           <div className="col s12 m6">
             <a onClick={this.deliverButtonClick} className="waves-effect waves-light btn modal-trigger" id="delivery_modal_btn">Deliver now</a>
-            <a onClick={this.subscribeButtonClick} className="waves-effect waves-light btn modal-trigger" id="subscription_modal_btn">Subscribe</a>
+            <a onClick={this.subscribeButtonClick} className="waves-effect waves-light btn modal-trigger hide-on-med-and-down" id="subscription_modal_btn">Schedule delivery</a>
+            <a onClick={this.subscribeButtonClick} className="waves-effect waves-light btn modal-trigger hide-on-large-only" id="subscription_modal_btn">Schedule</a>
           </div>
           <div className="input-field col offset-m3 s12 m3" id="search">
             <input id="search_box" type="search" required />
@@ -440,7 +441,7 @@ var SubscribeModal = React.createClass({
     return (
       <div id="subscription_modal" className="modal">
           <div className="modal-content" id="delivery_form">
-              <h4>Subscribe to feeds</h4>
+              <h4>Schedule delivery</h4>
               <ModeSwitch onChange={this.modeChangeClick} mode={mode} />
               {list}
           </div>
