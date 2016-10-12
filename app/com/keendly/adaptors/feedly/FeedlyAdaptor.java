@@ -8,6 +8,7 @@ import com.keendly.adaptors.model.ExternalUser;
 import com.keendly.adaptors.model.FeedEntry;
 import com.keendly.adaptors.model.auth.Credentials;
 import com.keendly.adaptors.model.auth.Token;
+import org.apache.commons.lang3.NotImplementedException;
 import play.libs.F.Promise;
 import play.libs.Json;
 import play.libs.ws.WS;
@@ -231,6 +232,16 @@ public class FeedlyAdaptor extends Adaptor {
 
         JsonNode content = Json.toJson(data);
         return doPost(config.get(URL) + "/markers", token, content, response -> "OK");
+    }
+
+    @Override
+    protected Promise<Boolean> doMarkArticleRead(List<String> articleIds) {
+        throw new NotImplementedException("not implemented!");
+    }
+
+    @Override
+    protected Promise<Boolean> doMarkArticleUnread(List<String> articleIds) {
+        throw new NotImplementedException("not implemented!");
     }
 
     private static String urlEncode(String s){

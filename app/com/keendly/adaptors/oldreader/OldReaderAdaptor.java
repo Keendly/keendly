@@ -8,6 +8,7 @@ import com.keendly.adaptors.model.ExternalFeed;
 import com.keendly.adaptors.model.ExternalUser;
 import com.keendly.adaptors.model.auth.Credentials;
 import com.keendly.adaptors.model.auth.Token;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import play.libs.F.Promise;
 import play.libs.ws.WS;
@@ -166,6 +167,21 @@ public class OldReaderAdaptor extends GoogleReaderTypeAdaptor {
                 .flatMap(response -> {
                     if (isOk(response.getStatus())){
                         return callback.apply(response);
+                    } else {
+                        throw new ApiException(response.getStatus(), response.getBody());
+                    }
+                });
+    }
+
+    @Override
+    protected <T> Promise<T> post(String url, Map<String, String> params, Function<WSResponse, T> callback) {
+        Promise<WSResponse> res =  client.url(config.get(URL) + normalizeURL(url))
+                .setHeader("Authorization", "GoogleLogin auth=" + token.getAccessToken())
+                .post(StringUtils.EMPTY);
+        return res
+                .flatMap(response -> {
+                    if (isOk(response.getStatus())){
+                        return Promise.pure(callback.apply(response));
                     } else {
                         throw new ApiException(response.getStatus(), response.getBody());
                     }

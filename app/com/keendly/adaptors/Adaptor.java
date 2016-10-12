@@ -24,7 +24,9 @@ public abstract class Adaptor {
     protected abstract Promise<List<ExternalFeed>> doGetFeeds();
     protected abstract Promise<Map<String, List<FeedEntry>>> doGetUnread(List<String> feedIds);
     protected abstract Promise<Map<String, Integer>> doGetUnreadCount(List<String> feedIds);
-    protected abstract Promise doMarkAsRead(List<String> feedIds, long timestamp);
+    protected abstract Promise<Boolean> doMarkAsRead(List<String> feedIds, long timestamp);
+    protected abstract Promise<Boolean> doMarkArticleRead(List<String> articleIds);
+    protected abstract Promise<Boolean> doMarkArticleUnread(List<String> articleIds);
 
     protected Token token;
     protected WSClient client;
@@ -59,6 +61,16 @@ public abstract class Adaptor {
     public Promise<Boolean> markAsRead(List<String> feedIds, long timestamp){
         validateLoggedIn();
         return doMarkAsRead(feedIds, timestamp);
+    }
+
+    public Promise<Boolean> markArticleRead(List<String> articleIds){
+        validateLoggedIn();
+        return doMarkArticleRead(articleIds);
+    }
+
+    public Promise<Boolean> markArticleUnread(List<String> articleIds){
+        validateLoggedIn();
+        return doMarkArticleUnread(articleIds);
     }
 
     private void validateLoggedIn(){

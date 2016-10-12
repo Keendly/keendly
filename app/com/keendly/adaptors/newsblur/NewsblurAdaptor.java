@@ -240,6 +240,38 @@ public class NewsblurAdaptor extends Adaptor {
         });
     }
 
+    @Override
+    protected Promise<Boolean> doMarkArticleRead(List<String> articleHashes) {
+        return markArticle(articleHashes, true);
+    }
+
+    @Override
+    protected Promise<Boolean> doMarkArticleUnread(List<String> articleHashes) {
+        return markArticle(articleHashes, false);
+    }
+
+    private Promise<Boolean> markArticle(List<String> articleHashes, boolean asRead){
+        String url = asRead ? "/reader/mark_story_hashes_as_read" : "/reader/mark_story_hash_as_unread";
+
+        StringBuilder params = new StringBuilder();
+        for (int i=0; i < articleHashes.size(); i++){
+            String hash = articleHashes.get(i);
+            params.append("story_hash=");
+            params.append(hash);
+            if (i < articleHashes.size() - 1){
+                params.append("&");
+            }
+        }
+
+        return client.url(config.get(URL) + url)
+                .setHeader("Authorization", "Bearer " + token.getAccessToken())
+                .setHeader("Content-Type", "application/x-www-form-urlencoded")
+                .post(params.toString())
+                .map(response ->
+                        response.getStatus() == HttpStatus.SC_OK
+                );
+    }
+
     private Promise<WSResponse> getGetPromise(String url) {
         return client.url(config.get(URL) + url)
                 .setHeader("Authorization", "Bearer " + token.getAccessToken())

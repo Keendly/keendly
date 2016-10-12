@@ -2,6 +2,7 @@ package com.keendly.adaptors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.keendly.adaptors.model.FeedEntry;
+import org.apache.http.HttpStatus;
 import play.libs.F;
 import play.libs.ws.WSResponse;
 
@@ -15,6 +16,9 @@ public abstract class GoogleReaderTypeAdaptor extends Adaptor {
     protected abstract <T> F.Promise<T> getFlat(String url, Map<String, String> params,
                                                 Function<WSResponse, F.Promise<T>> callback);
 
+    protected abstract <T> F.Promise<T> post(String url, Map<String, String> params,
+                                            Function<WSResponse, T> callback);
+
     protected <T> F.Promise<T> get(String url, Function<WSResponse, T> callback){
         return get(url, Collections.emptyMap(), callback);
     }
@@ -22,7 +26,6 @@ public abstract class GoogleReaderTypeAdaptor extends Adaptor {
     protected <T> F.Promise<T> getFlat(String url, Function<WSResponse, F.Promise<T>> callback){
         return getFlat(url, Collections.emptyMap(), callback);
     }
-
 
     protected String normalizeFeedId(String feedId){
         return feedId;
@@ -87,5 +90,32 @@ public abstract class GoogleReaderTypeAdaptor extends Adaptor {
 
             return F.Promise.pure(ret);
         });
+    }
+
+    @Override
+    protected F.Promise<Boolean> doMarkArticleRead(List<String> articleIds){
+        return editTag(true, "user/-/state/com.google/read", articleIds);
+    }
+
+    @Override
+    protected F.Promise<Boolean> doMarkArticleUnread(List<String> articleIds){
+        return editTag(false, "user/-/state/com.google/read", articleIds);
+    }
+
+    private F.Promise<Boolean> editTag(boolean add, String tag, List<String> ids){
+        Map<String, String> params = new HashMap<>();
+        String action = add ? "a" : "r";
+        params.put(action, tag);
+        for (String id : ids){
+            params.put("id", id);
+        }
+
+        return post("/edit-tag", params, response -> {
+            if (response.getStatus() != HttpStatus.SC_OK){
+                return Boolean.FALSE;
+            }
+            return Boolean.TRUE;
+        });
+
     }
 }

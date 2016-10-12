@@ -9,6 +9,7 @@ import com.keendly.adaptors.model.ExternalFeed;
 import com.keendly.adaptors.model.ExternalUser;
 import com.keendly.adaptors.model.auth.Credentials;
 import com.keendly.adaptors.model.auth.Token;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import play.libs.F.Promise;
 import play.libs.ws.WS;
@@ -123,6 +124,26 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
     }
 
     @Override
+    protected  <T> Promise<T> post(String url, Map<String, String> params, Function<WSResponse, T> callback){
+        Promise<WSResponse> res = getPostPromise(url, params);
+        return res
+                .flatMap(response -> {
+                    if (isOk(response.getStatus())){
+                        return Promise.pure(callback.apply(response));
+                    } else if (isUnauthorized(response.getStatus())){
+                        Promise refreshedToken = refreshAccessToken(token.getRefreshToken());
+                        return refreshedToken.flatMap(newToken -> {
+                            token.setAccessToken((String) newToken);
+                            token.setRefreshed();
+                            return doPostNoRefresh(url, params, callback);
+                        });
+                    } else {
+                        throw new ApiException(response.getStatus(), response.getBody());
+                    }
+                });
+    }
+
+    @Override
     protected <T> Promise<T> getFlat(String url, Map<String, String> params,
                                      Function<WSResponse, Promise<T>> callback){
         Promise<WSResponse> res = getGetPromise(url, params);
@@ -152,9 +173,31 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
         return req.get();
     }
 
+    private Promise<WSResponse> getPostPromise(String url, Map<String, String> params) {
+        WSRequest req = client.url(config.get(URL) + url)
+                .setHeader("Authorization", "Bearer " + token.getAccessToken());
+        for (Map.Entry<String, String> param : params.entrySet()){
+            req.setQueryParameter(param.getKey(), param.getValue());
+        }
+        return req.post(StringUtils.EMPTY);
+    }
+
     private <T> Promise<T> doGetNoRefresh(String url, Map<String, String> params,
                                           Function<WSResponse, T> callback){
         Promise<WSResponse> res = getGetPromise(url, params);
+        return res
+                .flatMap(response -> {
+                    if (isOk(response.getStatus())){
+                        return Promise.pure(callback.apply(response));
+                    } else {
+                        throw new ApiException(response.getStatus(), response.getBody());
+                    }
+                });
+    }
+
+    private <T> Promise<T> doPostNoRefresh(String url, Map<String, String> params,
+                                          Function<WSResponse, T> callback){
+        Promise<WSResponse> res = getPostPromise(url, params);
         return res
                 .flatMap(response -> {
                     if (isOk(response.getStatus())){
