@@ -26,8 +26,9 @@ public class AssertHelpers {
         return new BasicNameValuePair(key, value);
     }
 
-    public static void assertEntryCorrect(FeedEntry entry, String title, String author, int published,
+    public static void assertEntryCorrect(FeedEntry entry, String id, String title, String author, int published,
                                     String url, String content){
+        assertEquals(id , entry.getId());
         assertEquals(title, entry.getTitle());
         assertEquals(author, entry.getAuthor());
         assertEquals(url, entry.getUrl());

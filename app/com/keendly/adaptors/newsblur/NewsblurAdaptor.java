@@ -165,6 +165,7 @@ public class NewsblurAdaptor extends Adaptor {
                     } else {
                         entry.setUrl(asText(item, "story_permalink"));
                     }
+                    entry.setId(asText(item, "story_hash"));
                     entry.setTitle(asText(item, "story_title"));
                     entry.setAuthor(asText(item, "story_authors"));
                     entry.setPublished(asDate(item, "story_timestamp"));

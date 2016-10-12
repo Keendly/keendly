@@ -4,11 +4,20 @@ import java.util.Date;
 
 public class FeedEntry {
 
+    private String id;
     private String url;
     private String title;
     private String author;
     private Date published;
     private String content;
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public String getUrl() {
         return url;

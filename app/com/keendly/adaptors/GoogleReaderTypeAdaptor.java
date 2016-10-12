@@ -63,6 +63,7 @@ public abstract class GoogleReaderTypeAdaptor extends Adaptor {
             for (JsonNode item : items){
                 FeedEntry entry = new FeedEntry();
                 entry.setUrl(GoogleReaderMapper.extractArticleUrl(item));
+                entry.setId(asText(item, "id"));
                 entry.setTitle(asText(item, "title"));
                 entry.setAuthor(asText(item, "author"));
                 entry.setPublished(asDate(item, "published"));

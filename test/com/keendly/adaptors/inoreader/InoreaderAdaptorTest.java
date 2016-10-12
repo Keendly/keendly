@@ -342,12 +342,14 @@ public class InoreaderAdaptorTest {
         String FEED_ID = "feed/https://feeds.feedburner.com/niebezpiecznik/";
         String ESCAPED_FEED_ID =  UrlEscapers.urlPathSegmentEscaper().escape(FEED_ID);
 
+        String ID1 = "tag:google.com,2005:reader/item/00000000f8b9270e";
         String TITLE1 = "Through the Google lens: Search trends January 16-22";
         String AUTHOR1 = "Emily Wood";
         int PUBLISHED1 = 1422046320;
         String URL1 = "http://feedproxy.google.com/~r/blogspot/MKuf/~3/_Hkdwh7yKMo/blabla.html";
         String CONTENT1 = "test_content";
 
+        String ID2 = "tag:google.com,2005:reader/item/00000000f9ccc3f9";
         String TITLE2 = "Google Maps Engine deprecated";
         String AUTHOR2 = "Timothy Whitehead";
         int PUBLISHED2 = 1422262271;
@@ -356,6 +358,7 @@ public class InoreaderAdaptorTest {
 
         // given
         JSONObject item1 =new FeedItem()
+                .id(ID1)
                 .title(TITLE1)
                 .author(AUTHOR1)
                 .published(PUBLISHED1)
@@ -364,6 +367,7 @@ public class InoreaderAdaptorTest {
                 .build();
 
         JSONObject item2 =new FeedItem()
+                .id(ID2)
                 .title(TITLE2)
                 .author(AUTHOR2)
                 .published(PUBLISHED2)
@@ -398,8 +402,8 @@ public class InoreaderAdaptorTest {
         // then
         assertTrue(unread.containsKey(FEED_ID));
         assertEquals(2, unread.get(FEED_ID).size());
-        assertEntryCorrect(unread.get(FEED_ID).get(0), TITLE1, AUTHOR1, PUBLISHED1, URL1, CONTENT1);
-        assertEntryCorrect(unread.get(FEED_ID).get(1), TITLE2, AUTHOR2, PUBLISHED2, URL2, CONTENT2);
+        assertEntryCorrect(unread.get(FEED_ID).get(0), ID1, TITLE1, AUTHOR1, PUBLISHED1, URL1, CONTENT1);
+        assertEntryCorrect(unread.get(FEED_ID).get(1), ID2, TITLE2, AUTHOR2, PUBLISHED2, URL2, CONTENT2);
 
         verify(getRequestedFor(urlPathEqualTo("/stream/contents/" +  ESCAPED_FEED_ID))
                 .withQueryParam("xt", equalTo("user/-/state/com.google/read"))
@@ -415,12 +419,14 @@ public class InoreaderAdaptorTest {
         String FEED_ID = "feed/http://feeds.lifehack.org/Lifehack";
         String ESCAPED_FEED_ID = UrlEscapers.urlPathSegmentEscaper().escape(FEED_ID);
 
+        String ID1 = "tag:google.com,2005:reader/item/00000000f8b9270e";
         String TITLE1 = "Through the Google lens: Search trends January 16-22";
         String AUTHOR1 = "Emily Wood";
         int PUBLISHED1 = 1422046320;
         String URL1 = "http://feedproxy.google.com/~r/blogspot/MKuf/~3/_Hkdwh7yKMo/blabla.html";
         String CONTENT1 = "test_content";
 
+        String ID2 = "tag:google.com,2005:reader/item/00000000f9ccc3f9";
         String TITLE2 = "Google Maps Engine deprecated";
         String AUTHOR2 = "Timothy Whitehead";
         int PUBLISHED2 = 1422262271;
@@ -431,6 +437,7 @@ public class InoreaderAdaptorTest {
 
         // given
         JSONObject item1 =new FeedItem()
+                .id(ID1)
                 .title(TITLE1)
                 .author(AUTHOR1)
                 .published(PUBLISHED1)
@@ -450,6 +457,7 @@ public class InoreaderAdaptorTest {
                 .willSetStateTo("First page fetched"));
 
         JSONObject item2 =new FeedItem()
+                .id(ID2)
                 .title(TITLE2)
                 .author(AUTHOR2)
                 .published(PUBLISHED2)
@@ -485,8 +493,8 @@ public class InoreaderAdaptorTest {
         // then
         assertTrue(unread.containsKey(FEED_ID));
         assertEquals(2, unread.get(FEED_ID).size());
-        assertEntryCorrect(unread.get(FEED_ID).get(0), TITLE1, AUTHOR1, PUBLISHED1, URL1, CONTENT1);
-        assertEntryCorrect(unread.get(FEED_ID).get(1), TITLE2, AUTHOR2, PUBLISHED2, URL2, CONTENT2);
+        assertEntryCorrect(unread.get(FEED_ID).get(0), ID1, TITLE1, AUTHOR1, PUBLISHED1, URL1, CONTENT1);
+        assertEntryCorrect(unread.get(FEED_ID).get(1), ID2, TITLE2, AUTHOR2, PUBLISHED2, URL2, CONTENT2);
 
         verify(getRequestedFor(urlPathEqualTo("/stream/contents/" + ESCAPED_FEED_ID))
                 .withQueryParam("xt", equalTo("user/-/state/com.google/read"))
@@ -574,11 +582,12 @@ public class InoreaderAdaptorTest {
     @Accessors(fluent = true)
     @Setter
     private class FeedItem {
-        String title, author, url, content;
+        String id, title, author, url, content;
         int published;
 
         JSONObject build() throws Exception {
             JSONObject item = new JSONObject();
+            item.put("id", id);
             item.put("title", title);
             item.put("author", author);
             item.put("published", published);

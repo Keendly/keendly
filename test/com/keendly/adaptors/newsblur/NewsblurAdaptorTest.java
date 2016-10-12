@@ -260,10 +260,11 @@ public class NewsblurAdaptorTest {
     }
 
     @Test
-    public void given_ResponseOK_when_getUnread_then_ReturnUnreadFeeds() throws Exception {
+    public void given_ResponseOK_when_getUnread_then_ReturnUnreadItems() throws Exception {
         String ACCESS_TOKEN = "my_token";
         String FEED_ID = "feed_id";
 
+        String HASH1 = "1573179:6ac145";
         String TITLE1 = "La MSN batirá su propio récord de goles";
         String AUTHOR1 = "test author";
         int PUBLISHED1 = 1461603529;
@@ -274,7 +275,7 @@ public class NewsblurAdaptorTest {
         givenThat(get(urlMatching("/reader/feed/.*"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withBodyFile("newsblur/given_ResponseOK_when_getUnread_then_ReturnUnreadFeeds.json")));
+                        .withBodyFile("newsblur/given_ResponseOK_when_getUnread_then_ReturnUnreadItems.json")));
 
         givenThat(get(urlEqualTo("/reader/refresh_feeds"))
                 .willReturn(aResponse()
@@ -288,7 +289,7 @@ public class NewsblurAdaptorTest {
         // then
         assertTrue(unread.containsKey(FEED_ID));
         assertEquals(6, unread.get(FEED_ID).size());
-        assertEntryCorrect(unread.get(FEED_ID).get(0), TITLE1, AUTHOR1, PUBLISHED1, URL1, CONTENT1);
+        assertEntryCorrect(unread.get(FEED_ID).get(0), HASH1, TITLE1, AUTHOR1, PUBLISHED1, URL1, CONTENT1);
 
         verify(getRequestedFor(urlPathEqualTo("/reader/feed/" + FEED_ID))
                 .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
@@ -329,6 +330,7 @@ public class NewsblurAdaptorTest {
         String ACCESS_TOKEN = "my_token";
         String FEED_ID = "feed_id";
 
+        String HASH7 = "1573179:b5e660";
         String TITLE7 = "Cristiano Ronaldo solo gana a Luis Suárez en penaltis";
         String AUTHOR7 = "";
         int PUBLISHED7 = 1461594683;
@@ -340,14 +342,14 @@ public class NewsblurAdaptorTest {
                 .whenScenarioStateIs(Scenario.STARTED)
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withBodyFile("newsblur/given_ResponseOK_when_getUnread_then_ReturnUnreadFeeds.json"))
+                        .withBodyFile("newsblur/given_ResponseOK_when_getUnread_then_ReturnUnreadItems.json"))
                 .willSetStateTo("First page fetched"));
 
         givenThat(get(urlMatching("/reader/feed/.*")).inScenario("Many pages")
                 .whenScenarioStateIs("First page fetched")
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withBodyFile("newsblur/given_ResponseOK_when_getUnread_then_ReturnUnreadFeeds_page2.json")));
+                        .withBodyFile("newsblur/given_ResponseOK_when_getUnread_then_ReturnUnreadItems_page2.json")));
 
         givenThat(get(urlEqualTo("/reader/refresh_feeds"))
                 .willReturn(aResponse()
@@ -361,7 +363,7 @@ public class NewsblurAdaptorTest {
         // then
         assertTrue(unread.containsKey(FEED_ID));
         assertEquals(12, unread.get(FEED_ID).size());
-        assertEntryCorrect(unread.get(FEED_ID).get(6), TITLE7, AUTHOR7, PUBLISHED7, URL7, CONTENT7);
+        assertEntryCorrect(unread.get(FEED_ID).get(6), HASH7, TITLE7, AUTHOR7, PUBLISHED7, URL7, CONTENT7);
 
         verify(getRequestedFor(urlPathEqualTo("/reader/feed/" + FEED_ID))
                 .withQueryParam("page", equalTo("1"))
