@@ -218,7 +218,7 @@ public class NewsblurAdaptor extends Adaptor {
     }
 
     @Override
-    protected Promise<Boolean> doMarkAsRead(List<String> feedIds, long timestamp) {
+    protected Promise<Boolean> doMarkFeedRead(List<String> feedIds, long timestamp) {
         List<Promise<WSResponse>> promises = new ArrayList<>();
 
         for (String feedId : feedIds){

@@ -20,6 +20,8 @@ GET     /api/deliveries                 com.keendly.controllers.api.DeliveryCont
 GET     /api/feeds                      com.keendly.controllers.api.FeedController.getFeeds()
 POST    /api/feeds/unread               com.keendly.controllers.api.FeedController.getUnread()
 POST    /api/feeds/unreadCount          com.keendly.controllers.api.FeedController.getUnreadCount()
+POST    /api/feeds/markArticleRead      com.keendly.controllers.api.FeedController.markArticleRead()
+POST    /api/feeds/markArticleUnread    com.keendly.controllers.api.FeedController.markArticleUnread()
 
 GET     /api/users/:id                  com.keendly.controllers.api.UserController.getUser(id: String)
 PATCH   /api/users/:id                  com.keendly.controllers.api.UserController.updateUser(id: String)

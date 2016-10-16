@@ -223,7 +223,7 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
     }
 
     @Override
-    protected Promise doMarkAsRead(List<String> feedIds, long timestamp) {
+    protected Promise doMarkFeedRead(List<String> feedIds, long timestamp) {
         List<Promise<WSResponse>> promises = new ArrayList<>();
 
         for (String feedId : feedIds){

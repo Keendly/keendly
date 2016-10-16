@@ -122,6 +122,30 @@ public class FeedController extends AbstractController<Feed> {
         });
     }
 
+    public Promise<Result> markArticleRead(){
+        JsonNode node = request().body().asJson();
+        List<String> articleIds = new ArrayList<>();
+        for (JsonNode id : node){
+            articleIds.add(id.asText());
+        }
+
+        return getAdaptor().markArticleRead(articleIds).map(response -> {
+            return ok(Json.toJson(response));
+        });
+    }
+
+    public Promise<Result> markArticleUnread(){
+        JsonNode node = request().body().asJson();
+        List<String> articleIds = new ArrayList<>();
+        for (JsonNode id : node){
+            articleIds.add(id.asText());
+        }
+
+        return getAdaptor().markArticleUnread(articleIds).map(response -> {
+            return ok(Json.toJson(response));
+        });
+    }
+
     static class FeedMapper {
 
         Feed toModel(ExternalFeed external){

@@ -103,14 +103,13 @@ public abstract class GoogleReaderTypeAdaptor extends Adaptor {
     }
 
     private F.Promise<Boolean> editTag(boolean add, String tag, List<String> ids){
-        Map<String, String> params = new HashMap<>();
         String action = add ? "a" : "r";
-        params.put(action, tag);
+        String url = "/edit-tag?" + action + "=" + tag;
         for (String id : ids){
-            params.put("id", id);
+            url = url + "&i=" + id;
         }
 
-        return post("/edit-tag", params, response -> {
+        return post(url, Collections.emptyMap(), response -> {
             if (response.getStatus() != HttpStatus.SC_OK){
                 return Boolean.FALSE;
             }

@@ -222,7 +222,7 @@ public class FeedlyAdaptor extends Adaptor {
     }
 
     @Override
-    public Promise doMarkAsRead(List<String> feedIds, long timestamp){
+    public Promise doMarkFeedRead(List<String> feedIds, long timestamp){
         // TODO
         Map<String, Object> data = new HashMap<>();
         data.put("action", "markAsRead");

@@ -13,6 +13,7 @@ import org.apache.http.HttpStatus;
 import play.libs.F.Promise;
 import play.libs.ws.WS;
 import play.libs.ws.WSClient;
+import play.libs.ws.WSRequest;
 import play.libs.ws.WSResponse;
 
 import java.util.ArrayList;
@@ -120,7 +121,7 @@ public class OldReaderAdaptor extends GoogleReaderTypeAdaptor {
     }
 
     @Override
-    protected Promise<Boolean> doMarkAsRead(List<String> feedIds, long timestamp) {
+    protected Promise<Boolean> doMarkFeedRead(List<String> feedIds, long timestamp) {
         List<Promise<WSResponse>> promises = new ArrayList<>();
 
         for (String feedId : feedIds){
@@ -175,9 +176,14 @@ public class OldReaderAdaptor extends GoogleReaderTypeAdaptor {
 
     @Override
     protected <T> Promise<T> post(String url, Map<String, String> params, Function<WSResponse, T> callback) {
-        Promise<WSResponse> res =  client.url(config.get(URL) + normalizeURL(url))
-                .setHeader("Authorization", "GoogleLogin auth=" + token.getAccessToken())
-                .post(StringUtils.EMPTY);
+        WSRequest req =  client.url(config.get(URL) + normalizeURL(url))
+                .setHeader("Authorization", "GoogleLogin auth=" + token.getAccessToken());
+        for (Map.Entry<String, String> param : params.entrySet()){
+            req.setQueryParameter(param.getKey(), param.getValue());
+        }
+
+        Promise<WSResponse> res = req.post(StringUtils.EMPTY);
+
         return res
                 .flatMap(response -> {
                     if (isOk(response.getStatus())){
