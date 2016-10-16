@@ -437,6 +437,58 @@ public class NewsblurAdaptorTest {
                 .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
     }
 
+    @Test
+    public void given_ResponseOK_when_markArticleRead_then_ReturnSuccess() throws Exception {
+        String ACCESS_TOKEN = "my_token";
+        String ARTICLE_ID1 = "1573179:62ec2d";
+        String ARTICLE_ID2 = "1573179:0f6e60";
+
+        // given
+        givenThat(post(urlMatching("/reader/mark_story_hashes_as_read.*"))
+                .willReturn(aResponse()
+                        .withStatus(200)));
+
+        // when
+        boolean success = newsblurAdaptor(ACCESS_TOKEN)
+                .markArticleRead(asList(ARTICLE_ID1, ARTICLE_ID2)).get(1000);
+
+        // then
+        assertTrue(success);
+
+        verify(postRequestedFor(urlPathEqualTo("/reader/mark_story_hashes_as_read"))
+                .withRequestBody(thatContainsParams(
+                        param("story_hash", ARTICLE_ID1),
+                        param("story_hash", ARTICLE_ID2)
+                ))
+                .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
+    }
+
+    @Test
+    public void given_ResponseOK_when_markArticleUnread_then_ReturnSuccess() throws Exception {
+        String ACCESS_TOKEN = "my_token";
+        String ARTICLE_ID1 = "1573179:62ec2d";
+        String ARTICLE_ID2 = "1573179:0f6e60";
+
+        // given
+        givenThat(post(urlMatching("/reader/mark_story_hash_as_unread.*"))
+                .willReturn(aResponse()
+                        .withStatus(200)));
+
+        // when
+        boolean success = newsblurAdaptor(ACCESS_TOKEN)
+                .markArticleUnread(asList(ARTICLE_ID1, ARTICLE_ID2)).get(1000);
+
+        // then
+        assertTrue(success);
+
+        verify(postRequestedFor(urlPathEqualTo("/reader/mark_story_hash_as_unread"))
+                .withRequestBody(thatContainsParams(
+                        param("story_hash", ARTICLE_ID1),
+                        param("story_hash", ARTICLE_ID2)
+                ))
+                .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
+    }
+
     private String unreadCountResponse(String feedId, int count) throws JSONException {
         JSONObject unreadCountResponse = new JSONObject();
         JSONObject feedsUnreadCounts = new JSONObject();

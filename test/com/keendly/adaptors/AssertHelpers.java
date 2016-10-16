@@ -1,6 +1,7 @@
 package com.keendly.adaptors;
 
 import com.github.tomakehurst.wiremock.client.ValueMatchingStrategy;
+import com.google.common.net.UrlEscapers;
 import com.keendly.adaptors.model.ExternalFeed;
 import com.keendly.adaptors.model.FeedEntry;
 import org.apache.http.message.BasicNameValuePair;
@@ -14,9 +15,9 @@ public class AssertHelpers {
         StringBuilder sb = new StringBuilder();
         for (BasicNameValuePair param : params){
             sb.append(".*");
-            sb.append(param.getName());
+            sb.append(UrlEscapers.urlFormParameterEscaper().escape(param.getName()));
             sb.append("=");
-            sb.append(param.getValue());
+            sb.append(UrlEscapers.urlFormParameterEscaper().escape(param.getValue()));
             sb.append(".*");
         }
         return matching(sb.toString());
