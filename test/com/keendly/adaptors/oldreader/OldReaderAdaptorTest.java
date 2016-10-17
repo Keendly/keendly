@@ -2,7 +2,6 @@ package com.keendly.adaptors.oldreader;
 
 import com.github.tomakehurst.wiremock.common.SingleRootFileSource;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
-import com.google.common.net.UrlEscapers;
 import com.keendly.adaptors.model.auth.Credentials;
 import com.keendly.adaptors.model.auth.Token;
 import com.ning.http.client.AsyncHttpClientConfig;
@@ -15,7 +14,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static com.keendly.adaptors.AssertHelpers.param;
 import static com.keendly.adaptors.AssertHelpers.thatContainsParams;
@@ -94,16 +92,18 @@ public class OldReaderAdaptorTest {
 
         verify(postRequestedFor(urlPathEqualTo("/mark-all-as-read"))
                 .withRequestBody(thatContainsParams(
-                        param("s", UrlEscapers.urlFormParameterEscaper().escape(FEED_ID1)),
+                        param("s", FEED_ID1),
                         param("ts", Long.toString(timestamp * 1000000))
                 ))
+                .withHeader("Content-Type", containing("application/x-www-form-urlencoded"))
                 .withHeader("Authorization", equalTo("GoogleLogin auth=" + ACCESS_TOKEN)));
 
         verify(postRequestedFor(urlPathEqualTo("/mark-all-as-read"))
                 .withRequestBody(thatContainsParams(
-                        param("s", UrlEscapers.urlFormParameterEscaper().escape(FEED_ID2)),
+                        param("s", FEED_ID2),
                         param("ts", Long.toString(timestamp * 1000000))
                 ))
+                .withHeader("Content-Type", containing("application/x-www-form-urlencoded"))
                 .withHeader("Authorization", equalTo("GoogleLogin auth=" + ACCESS_TOKEN)));
     }
 
