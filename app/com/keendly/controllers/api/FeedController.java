@@ -21,6 +21,7 @@ import play.mvc.Result;
 import play.mvc.With;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
@@ -142,6 +143,12 @@ public class FeedController extends AbstractController<Feed> {
         }
 
         return getAdaptor().markArticleUnread(articleIds).map(response -> {
+            return ok(Json.toJson(response));
+        });
+    }
+
+    public Promise<Result> getArticle(String id){
+        return getAdaptor().getArticles(Collections.singletonList(id)).map(response -> {
             return ok(Json.toJson(response));
         });
     }

@@ -15,6 +15,7 @@ import play.libs.F;
 import play.libs.F.Promise;
 import play.libs.ws.WS;
 import play.libs.ws.WSClient;
+import play.libs.ws.WSRequest;
 import play.libs.ws.WSResponse;
 
 import java.net.URI;
@@ -158,18 +159,7 @@ public class NewsblurAdaptor extends Adaptor {
             List<FeedEntry> entries = new ArrayList<>();
             for (JsonNode item : items){
                 if (item.get("read_status").asInt() == 0){
-                    FeedEntry entry = new FeedEntry();
-                    String id = asText(item, "id");
-                    if (isURL(id)){
-                        entry.setUrl(id);
-                    } else {
-                        entry.setUrl(asText(item, "story_permalink"));
-                    }
-                    entry.setId(asText(item, "story_hash"));
-                    entry.setTitle(asText(item, "story_title"));
-                    entry.setAuthor(asText(item, "story_authors"));
-                    entry.setPublished(asDate(item, "story_timestamp"));
-                    entry.setContent(asText(item, "story_content"));
+                    FeedEntry entry = mapToFeedEntry(item);
                     entries.add(entry);
                 }
             }
@@ -190,7 +180,7 @@ public class NewsblurAdaptor extends Adaptor {
         });
     }
 
-    private boolean isURL(String s){
+    private static boolean isURL(String s){
         try {
             URI uri = new URI(s);
             if (uri.getScheme() == null || uri.getHost() == null){
@@ -250,6 +240,22 @@ public class NewsblurAdaptor extends Adaptor {
         return markArticle(articleHashes, false);
     }
 
+    @Override
+    protected Promise<List<FeedEntry>> doGetArticles(List<String> articleIds) {
+        Map<String, List<String>> params = new HashMap<>();
+        params.put("h", articleIds);
+
+        return get("/reader/river_stories", params, response ->  {
+            List<FeedEntry> feedEntries = new ArrayList<>();
+            JsonNode stories = response.get("stories");
+            for (JsonNode story : stories){
+                FeedEntry feedEntry = mapToFeedEntry(story);
+                feedEntries.add(feedEntry);
+            }
+            return feedEntries;
+        });
+    }
+
     private Promise<Boolean> markArticle(List<String> articleHashes, boolean asRead){
         String url = asRead ? "/reader/mark_story_hashes_as_read" : "/reader/mark_story_hash_as_unread";
 
@@ -273,30 +279,27 @@ public class NewsblurAdaptor extends Adaptor {
     }
 
     private Promise<WSResponse> getGetPromise(String url) {
-        return client.url(config.get(URL) + url)
-                .setHeader("Authorization", "Bearer " + token.getAccessToken())
-                .get();
+        return getGetPromise(url, Collections.EMPTY_MAP);
+    }
+
+    private Promise<WSResponse> getGetPromise(String url, Map<String, List<String>> params) {
+        WSRequest request = client.url(config.get(URL) + url)
+                .setHeader("Authorization", "Bearer " + token.getAccessToken());
+
+        for (Map.Entry<String, List<String>> param : params.entrySet()){
+            for (String val : param.getValue()){
+                request.setQueryParameter(param.getKey(), val);
+            }
+        }
+        return request.get();
     }
 
     protected <T> Promise<T> get(String url, Function<JsonNode, T> callback){
-        Promise<WSResponse> res = getGetPromise(url);
-        return res
-                .flatMap(response -> {
-                    if (isOk(response.getStatus())){
-                        JsonNode json = response.asJson();
-                        if (json.has("authenticated") && !json.get("authenticated").asBoolean()){
-                            throw new ApiException(401, "not authenticated");
-                        } else {
-                            return Promise.pure(callback.apply(json));
-                        }
-                    } else {
-                        throw new ApiException(response.getStatus(), response.getBody());
-                    }
-                });
+        return get(url, Collections.EMPTY_MAP, callback);
     }
 
-    protected <T> Promise<T> post(String url, Function<JsonNode, T> callback){
-        Promise<WSResponse> res = getGetPromise(url);
+    protected <T> Promise<T> get(String url, Map<String, List<String>> params, Function<JsonNode, T> callback){
+        Promise<WSResponse> res = getGetPromise(url, params);
         return res
                 .flatMap(response -> {
                     if (isOk(response.getStatus())){
@@ -327,5 +330,21 @@ public class NewsblurAdaptor extends Adaptor {
                         throw new ApiException(response.getStatus(), response.getBody());
                     }
                 });
+    }
+
+    private static FeedEntry mapToFeedEntry(JsonNode story){
+        FeedEntry entry = new FeedEntry();
+        String id = asText(story, "id");
+        if (isURL(id)){
+            entry.setUrl(id);
+        } else {
+            entry.setUrl(asText(story, "story_permalink"));
+        }
+        entry.setId(asText(story, "story_hash"));
+        entry.setTitle(asText(story, "story_title"));
+        entry.setAuthor(asText(story, "story_authors"));
+        entry.setPublished(asDate(story, "story_timestamp"));
+        entry.setContent(asText(story, "story_content"));
+        return entry;
     }
 }

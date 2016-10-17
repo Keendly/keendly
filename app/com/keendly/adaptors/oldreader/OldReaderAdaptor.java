@@ -6,8 +6,10 @@ import com.keendly.adaptors.GoogleReaderTypeAdaptor;
 import com.keendly.adaptors.exception.ApiException;
 import com.keendly.adaptors.model.ExternalFeed;
 import com.keendly.adaptors.model.ExternalUser;
+import com.keendly.adaptors.model.FeedEntry;
 import com.keendly.adaptors.model.auth.Credentials;
 import com.keendly.adaptors.model.auth.Token;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.http.HttpStatus;
 import play.libs.F;
 import play.libs.F.Promise;
@@ -219,6 +221,11 @@ public class OldReaderAdaptor extends GoogleReaderTypeAdaptor {
     @Override
     protected F.Promise<Boolean> doMarkArticleUnread(List<String> articleIds){
         return editTag(false, "user/-/state/com.google/read", articleIds);
+    }
+
+    @Override
+    protected Promise<List<FeedEntry>> doGetArticles(List<String> articleIds) {
+        throw new NotImplementedException("a");
     }
 
     private F.Promise<Boolean> editTag(boolean add, String tag, List<String> ids){

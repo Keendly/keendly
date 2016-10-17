@@ -244,6 +244,11 @@ public class FeedlyAdaptor extends Adaptor {
         throw new NotImplementedException("not implemented!");
     }
 
+    @Override
+    protected Promise<List<FeedEntry>> doGetArticles(List<String> articleIds) {
+        throw new NotImplementedException("not implemented!");
+    }
+
     private static String urlEncode(String s){
         try {
             return URLEncoder.encode(s, "UTF-8");

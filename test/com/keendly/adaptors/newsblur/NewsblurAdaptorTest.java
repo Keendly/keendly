@@ -18,6 +18,7 @@ import org.junit.Test;
 import play.libs.ws.WSClient;
 import play.libs.ws.ning.NingWSClient;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -488,6 +489,38 @@ public class NewsblurAdaptorTest {
                         param("story_hash", ARTICLE_ID2)
                 ))
                 .withHeader("Content-Type", containing("application/x-www-form-urlencoded"))
+                .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
+    }
+
+    @Test
+    public void given_ResponseOK_when_getArticles_then_ReturnArticles() throws Exception {
+        String ACCESS_TOKEN = "my_token";
+        String ARTICLE_ID1 = "1573179:f94f7b";
+        String ARTICLE_TITLE1 = "La noche en la que Guardiola alucinó con Messi";
+        String ARTICLE_ID2 = "834:433999";
+        String ARTICLE_TITLE2 = "Acceptance Tests with Subdomains";
+
+        // given
+        givenThat(get(urlMatching("/reader/river_stories.*"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBodyFile("newsblur/given_ResponseOK_when_getArticles_then_ReturnArticles.json")));
+
+        // when
+        List<FeedEntry> articles = newsblurAdaptor(ACCESS_TOKEN)
+                .getArticles(Arrays.asList(ARTICLE_ID1, ARTICLE_ID2))
+                .get(1000);
+
+        // then
+        assertEquals(2, articles.size());
+        assertEquals(ARTICLE_ID1, articles.get(0).getId());
+        assertEquals(ARTICLE_TITLE1, articles.get(0).getTitle());
+        assertEquals(ARTICLE_ID2, articles.get(1).getId());
+        assertEquals(ARTICLE_TITLE2, articles.get(1).getTitle());
+
+        verify(getRequestedFor(urlPathEqualTo("/reader/river_stories"))
+                .withQueryParam("h", equalTo(ARTICLE_ID1))
+                .withQueryParam("h", equalTo(ARTICLE_ID2))
                 .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
     }
 
