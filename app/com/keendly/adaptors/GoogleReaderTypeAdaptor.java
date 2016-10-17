@@ -60,13 +60,7 @@ public abstract class GoogleReaderTypeAdaptor extends Adaptor {
             }
             List<FeedEntry> entries = new ArrayList<>();
             for (JsonNode item : items){
-                FeedEntry entry = new FeedEntry();
-                entry.setUrl(GoogleReaderMapper.extractArticleUrl(item));
-                entry.setId(asText(item, "id"));
-                entry.setTitle(asText(item, "title"));
-                entry.setAuthor(asText(item, "author"));
-                entry.setPublished(asDate(item, "published"));
-                entry.setContent(GoogleReaderMapper.extractContent(item));
+                FeedEntry entry = toFeedEntry(item);
                 entries.add(entry);
             }
             Map<String, List<FeedEntry>> ret = new HashMap<>();
@@ -86,5 +80,16 @@ public abstract class GoogleReaderTypeAdaptor extends Adaptor {
 
             return F.Promise.pure(ret);
         });
+    }
+
+    protected static FeedEntry toFeedEntry(JsonNode item){
+        FeedEntry entry = new FeedEntry();
+        entry.setUrl(GoogleReaderMapper.extractArticleUrl(item));
+        entry.setId(asText(item, "id"));
+        entry.setTitle(asText(item, "title"));
+        entry.setAuthor(asText(item, "author"));
+        entry.setPublished(asDate(item, "published"));
+        entry.setContent(GoogleReaderMapper.extractContent(item));
+        return entry;
     }
 }

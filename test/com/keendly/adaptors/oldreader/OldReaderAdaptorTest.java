@@ -2,6 +2,7 @@ package com.keendly.adaptors.oldreader;
 
 import com.github.tomakehurst.wiremock.common.SingleRootFileSource;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.keendly.adaptors.model.FeedEntry;
 import com.keendly.adaptors.model.auth.Credentials;
 import com.keendly.adaptors.model.auth.Token;
 import com.ning.http.client.AsyncHttpClientConfig;
@@ -10,7 +11,9 @@ import org.junit.Test;
 import play.libs.ws.WSClient;
 import play.libs.ws.ning.NingWSClient;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -162,6 +165,42 @@ public class OldReaderAdaptorTest {
                 .withHeader("Content-Type", containing("application/x-www-form-urlencoded"))
                 .withHeader("Authorization", equalTo("GoogleLogin auth=" + ACCESS_TOKEN)));
     }
+
+    @Test
+    public void given_ResponseOK_when_getArticles_then_ReturnArticles() throws Exception {
+        String ACCESS_TOKEN = "my_token";
+        String ARTICLE_ID1 = "tag:google.com,2005:reader/item/5804dcd8175ad6ee4f01495f";
+        String ARTICLE_TITLE1 = "EDC";
+        String ARTICLE_ID2 = "tag:google.com,2005:reader/item/58041076175ad6ca9f000ff1";
+        String ARTICLE_TITLE2 = "The Usual Suspects";
+
+        // given
+        givenThat(post(urlMatching("/stream/items/contents.*"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBodyFile("oldreader/given_ResponseOK_when_getArticles_then_ReturnArticles.json")));
+
+        // when
+        List<FeedEntry> articles = oldReaderAdaptor(ACCESS_TOKEN)
+                .getArticles(Arrays.asList(ARTICLE_ID1, ARTICLE_ID2))
+                .get(1000);
+
+        // then
+        assertEquals(2, articles.size());
+        assertEquals(ARTICLE_ID1, articles.get(0).getId());
+        assertEquals(ARTICLE_TITLE1, articles.get(0).getTitle());
+        assertEquals(ARTICLE_ID2, articles.get(1).getId());
+        assertEquals(ARTICLE_TITLE2, articles.get(1).getTitle());
+
+        verify(postRequestedFor(urlPathEqualTo("/stream/items/contents"))
+                .withRequestBody(thatContainsParams(
+                        param("i", ARTICLE_ID1),
+                        param("i", ARTICLE_ID2)
+                ))
+                .withHeader("Content-Type", containing("application/x-www-form-urlencoded"))
+                .withHeader("Authorization", equalTo("GoogleLogin auth=" + ACCESS_TOKEN)));
+    }
+
 
     private static Map<OldReaderAdaptor.OldReaderParam, String> config(){
         Map<OldReaderAdaptor.OldReaderParam, String> config = new HashMap<>();

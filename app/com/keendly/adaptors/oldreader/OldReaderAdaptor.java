@@ -9,7 +9,6 @@ import com.keendly.adaptors.model.ExternalUser;
 import com.keendly.adaptors.model.FeedEntry;
 import com.keendly.adaptors.model.auth.Credentials;
 import com.keendly.adaptors.model.auth.Token;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.http.HttpStatus;
 import play.libs.F;
 import play.libs.F.Promise;
@@ -225,7 +224,22 @@ public class OldReaderAdaptor extends GoogleReaderTypeAdaptor {
 
     @Override
     protected Promise<List<FeedEntry>> doGetArticles(List<String> articleIds) {
-        throw new NotImplementedException("a");
+        Map<String, List<String>> formData = new HashMap<>();
+        formData.put("i", articleIds);
+
+        return post(normalizeURL("/stream/items/contents"), formData, response -> {
+            JsonNode jsonResponse = response.asJson();
+            JsonNode items = jsonResponse.get("items");
+            if (items == null){
+                return Collections.emptyList();
+            }
+            List<FeedEntry> entries = new ArrayList<>();
+            for (JsonNode item : items){
+                FeedEntry entry = toFeedEntry(item);
+                entries.add(entry);
+            }
+            return entries;
+        });
     }
 
     private F.Promise<Boolean> editTag(boolean add, String tag, List<String> ids){

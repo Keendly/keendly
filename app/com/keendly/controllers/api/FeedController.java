@@ -149,7 +149,10 @@ public class FeedController extends AbstractController<Feed> {
 
     public Promise<Result> getArticle(String id){
         return getAdaptor().getArticles(Collections.singletonList(id)).map(response -> {
-            return ok(Json.toJson(response));
+            if (response.isEmpty()){
+                return notFound();
+            }
+            return ok(Json.toJson(response.get(0)));
         });
     }
 
