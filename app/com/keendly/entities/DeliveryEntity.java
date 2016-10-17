@@ -33,9 +33,6 @@ public class DeliveryEntity extends BaseEntity {
     @JoinColumn(name = "subscription_id", referencedColumnName = "id")
     public SubscriptionEntity subscription;
 
-    @Column
-    public String s3Dir;
-
     @Column(name = "workflow_id")
     public String workflowId;
 
