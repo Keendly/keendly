@@ -2,7 +2,6 @@ package com.keendly.adaptors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.keendly.adaptors.model.FeedEntry;
-import org.apache.http.HttpStatus;
 import play.libs.F;
 import play.libs.ws.WSResponse;
 
@@ -15,9 +14,6 @@ public abstract class GoogleReaderTypeAdaptor extends Adaptor {
                                             Function<WSResponse, T> callback);
     protected abstract <T> F.Promise<T> getFlat(String url, Map<String, String> params,
                                                 Function<WSResponse, F.Promise<T>> callback);
-
-    protected abstract <T> F.Promise<T> post(String url, Map<String, String> params,
-                                            Function<WSResponse, T> callback);
 
     protected <T> F.Promise<T> get(String url, Function<WSResponse, T> callback){
         return get(url, Collections.emptyMap(), callback);
@@ -90,31 +86,5 @@ public abstract class GoogleReaderTypeAdaptor extends Adaptor {
 
             return F.Promise.pure(ret);
         });
-    }
-
-    @Override
-    protected F.Promise<Boolean> doMarkArticleRead(List<String> articleIds){
-        return editTag(true, "user/-/state/com.google/read", articleIds);
-    }
-
-    @Override
-    protected F.Promise<Boolean> doMarkArticleUnread(List<String> articleIds){
-        return editTag(false, "user/-/state/com.google/read", articleIds);
-    }
-
-    private F.Promise<Boolean> editTag(boolean add, String tag, List<String> ids){
-        String action = add ? "a" : "r";
-        String url = "/edit-tag?" + action + "=" + tag;
-        for (String id : ids){
-            url = url + "&i=" + id;
-        }
-
-        return post(url, Collections.emptyMap(), response -> {
-            if (response.getStatus() != HttpStatus.SC_OK){
-                return Boolean.FALSE;
-            }
-            return Boolean.TRUE;
-        });
-
     }
 }

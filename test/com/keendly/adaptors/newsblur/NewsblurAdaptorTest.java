@@ -460,6 +460,7 @@ public class NewsblurAdaptorTest {
                         param("story_hash", ARTICLE_ID1),
                         param("story_hash", ARTICLE_ID2)
                 ))
+                .withHeader("Content-Type", containing("application/x-www-form-urlencoded"))
                 .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
     }
 
@@ -486,6 +487,7 @@ public class NewsblurAdaptorTest {
                         param("story_hash", ARTICLE_ID1),
                         param("story_hash", ARTICLE_ID2)
                 ))
+                .withHeader("Content-Type", containing("application/x-www-form-urlencoded"))
                 .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
     }
 

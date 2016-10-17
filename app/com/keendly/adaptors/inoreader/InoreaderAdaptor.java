@@ -11,16 +11,14 @@ import com.keendly.adaptors.model.auth.Credentials;
 import com.keendly.adaptors.model.auth.Token;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
+import play.libs.F;
 import play.libs.F.Promise;
 import play.libs.ws.WS;
 import play.libs.ws.WSClient;
 import play.libs.ws.WSRequest;
 import play.libs.ws.WSResponse;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 import static com.keendly.adaptors.inoreader.InoreaderAdaptor.InoreaderParam.*;
@@ -123,9 +121,8 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
                 });
     }
 
-    @Override
-    protected  <T> Promise<T> post(String url, Map<String, String> params, Function<WSResponse, T> callback){
-        Promise<WSResponse> res = getPostPromise(url, params);
+    protected  <T> Promise<T> post(String url, Function<WSResponse, T> callback){
+        Promise<WSResponse> res = getPostPromise(url);
         return res
                 .flatMap(response -> {
                     if (isOk(response.getStatus())){
@@ -135,7 +132,7 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
                         return refreshedToken.flatMap(newToken -> {
                             token.setAccessToken((String) newToken);
                             token.setRefreshed();
-                            return doPostNoRefresh(url, params, callback);
+                            return doPostNoRefresh(url, callback);
                         });
                     } else {
                         throw new ApiException(response.getStatus(), response.getBody());
@@ -173,12 +170,10 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
         return req.get();
     }
 
-    private Promise<WSResponse> getPostPromise(String url, Map<String, String> params) {
+    private Promise<WSResponse> getPostPromise(String url) {
         WSRequest req = client.url(config.get(URL) + url)
                 .setHeader("Authorization", "Bearer " + token.getAccessToken());
-        for (Map.Entry<String, String> param : params.entrySet()){
-            req.setQueryParameter(param.getKey(), param.getValue());
-        }
+
         return req.post(StringUtils.EMPTY);
     }
 
@@ -195,9 +190,8 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
                 });
     }
 
-    private <T> Promise<T> doPostNoRefresh(String url, Map<String, String> params,
-                                          Function<WSResponse, T> callback){
-        Promise<WSResponse> res = getPostPromise(url, params);
+    private <T> Promise<T> doPostNoRefresh(String url, Function<WSResponse, T> callback){
+        Promise<WSResponse> res = getPostPromise(url);
         return res
                 .flatMap(response -> {
                     if (isOk(response.getStatus())){
@@ -274,5 +268,30 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
             return true;
         }
         return false;
+    }
+
+    @Override
+    protected F.Promise<Boolean> doMarkArticleRead(List<String> articleIds){
+        return editTag(true, "user/-/state/com.google/read", articleIds);
+    }
+
+    @Override
+    protected F.Promise<Boolean> doMarkArticleUnread(List<String> articleIds){
+        return editTag(false, "user/-/state/com.google/read", articleIds);
+    }
+
+    private F.Promise<Boolean> editTag(boolean add, String tag, List<String> ids){
+        String action = add ? "a" : "r";
+        String url = "/edit-tag?" + action + "=" + tag;
+        for (String id : ids){
+            url = url + "&i=" + id;
+        }
+
+        return post(url, response -> {
+            if (response.getStatus() != HttpStatus.SC_OK){
+                return Boolean.FALSE;
+            }
+            return Boolean.TRUE;
+        });
     }
 }
