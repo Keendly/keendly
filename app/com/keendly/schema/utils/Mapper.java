@@ -69,6 +69,7 @@ public class Mapper {
             deliveryItem.articles = new ArrayList<>();
             for (FeedEntry article : unreadFeed.getValue()){
                 DeliveryArticle deliveryArticle = new DeliveryArticle();
+                deliveryArticle.id = article.getId();
                 deliveryArticle.url = article.getUrl();
                 deliveryArticle.title = article.getTitle();
                 deliveryArticle.author = article.getAuthor();
