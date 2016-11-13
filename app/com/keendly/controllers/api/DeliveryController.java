@@ -117,7 +117,7 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
 //            } else {
                 // 30% SWF
                 try {
-                    WorkflowType workflowType = getWorkflowType("DeliveryWorkflow.deliver");
+                    WorkflowType workflowType = getWorkflowType("DeliveryWorkflow.deliver", "1.0");
                     if (workflowType == null){
                         LOG.error("workflow type not found");
                     }
@@ -160,12 +160,13 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
 
     private static final AmazonSimpleWorkflow swfClient = getSWFClient();
 
-    private static WorkflowType getWorkflowType(String name){
+    private static WorkflowType getWorkflowType(String name, String version){
         ListWorkflowTypesRequest req = new ListWorkflowTypesRequest();
         req.setDomain("keendly");
         req.setRegistrationStatus(RegistrationStatus.REGISTERED);
         for (WorkflowTypeInfo info : swfClient.listWorkflowTypes(req).getTypeInfos()){
-            if (info.getWorkflowType().getName().equals(name)){
+            if (info.getWorkflowType().getName().equals(name) &&
+                    info.getWorkflowType().getVersion().equals(version)){
                 return info.getWorkflowType();
             }
         }
