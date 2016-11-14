@@ -20,7 +20,10 @@ import play.libs.ws.WSClient;
 import play.libs.ws.WSRequest;
 import play.libs.ws.WSResponse;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 import static com.keendly.adaptors.inoreader.InoreaderAdaptor.InoreaderParam.*;
@@ -220,24 +223,15 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
 
     @Override
     protected Promise doMarkFeedRead(List<String> feedIds, long timestamp) {
-        List<Promise<WSResponse>> promises = new ArrayList<>();
-
+        List<Promise<String>> promises = new ArrayList<>();
         for (String feedId : feedIds){
             Map<String, String> params = new HashMap<>();
             params.put("s", feedId);
             params.put("ts", Long.toString(timestamp * 1000));
-            Promise<WSResponse> promise = getGetPromise("/mark-all-as-read", params);
+            Promise<String> promise = get("/mark-all-as-read", params, response -> "OK");
             promises.add(promise);
         }
-
-        return Promise.sequence(promises).map(responses -> {
-            for (WSResponse response : responses){
-                if (response.getStatus() != HttpStatus.SC_OK){
-                    return Boolean.FALSE;
-                }
-            }
-            return Boolean.TRUE;
-        });
+        return Promise.sequence(promises).map(responses -> Boolean.TRUE);
     }
 
     @Override
