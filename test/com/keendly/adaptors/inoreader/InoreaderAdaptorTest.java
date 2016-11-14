@@ -671,27 +671,84 @@ public class InoreaderAdaptorTest {
     }
 
     @Test
-    @Ignore("same refresh token logic as un getUser")
     public void given_Unauthorized_when_markAsRead_then_RefreshTokenAndRetry() throws Exception {
-        fail();
+        String EXPIRED_ACCESS_TOKEN = "my_token";
+        String NEW_ACCESS_TOKEN = "my_token1";
+        String REFRESH_TOKEN = "refresh_token";
+        String FEED_ID1 = "feed/http://www.sprengsatz.de/?feed=rss2";
+        String FEED_ID2 = "feed/http://warszawskibiegacz.pl/?feed=rss2";
+        long timestamp = System.currentTimeMillis();
+
+        // given
+        givenThat(get(urlMatching("/mark-all-as-read.*")).inScenario("Mark as read with refresh")
+                .whenScenarioStateIs(Scenario.STARTED)
+                .willReturn(aResponse()
+                        .withStatus(403))
+                .willSetStateTo("Forbidden"));
+
+        JSONObject refreshTokenResponse = new JSONObject();
+        refreshTokenResponse.put("access_token", NEW_ACCESS_TOKEN);
+
+        givenThat(post(urlEqualTo("/auth"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withBody(refreshTokenResponse.toString())));
+
+        givenThat(get(urlMatching("/mark-all-as-read.*")).inScenario("Mark as read with refresh")
+                .whenScenarioStateIs("Forbidden")
+                .willReturn(aResponse()
+                        .withStatus(200)));
+
+        // when
+        boolean success = inoreaderAdaptor(EXPIRED_ACCESS_TOKEN, REFRESH_TOKEN)
+                .markAsRead(asList(FEED_ID1, FEED_ID2), timestamp).get(1000);
+
+        // then
+        assertTrue(success);
+
+        verify(getRequestedFor(urlPathEqualTo("/mark-all-as-read"))
+                .withQueryParam("s", equalTo(FEED_ID1))
+                .withQueryParam("ts", equalTo(Long.toString(timestamp * 1000)))
+                .withHeader("Authorization", equalTo("Bearer " + EXPIRED_ACCESS_TOKEN)));
+
+        verify(postRequestedFor(urlMatching("/auth"))
+                .withRequestBody(thatContainsParams(
+                        param("client_id", CLIENT_ID),
+                        param("client_secret", CLIENT_SECRET),
+                        param("grant_type", "refresh_token"),
+                        param("refresh_token", REFRESH_TOKEN)))
+                .withHeader("Content-Type", equalTo("application/x-www-form-urlencoded; charset=utf-8")));
+
+        verify(getRequestedFor(urlPathEqualTo("/mark-all-as-read"))
+                .withQueryParam("s", equalTo(FEED_ID1))
+                .withQueryParam("ts", equalTo(Long.toString(timestamp * 1000)))
+                .withHeader("Authorization", equalTo("Bearer " + NEW_ACCESS_TOKEN)));
     }
 
     @Test
-    public void given_Error_when_markAsRead_then_ReturnError() throws Exception {
+    public void given_Error_when_markAsRead_then_ThrowException() throws Exception {
         String ACCESS_TOKEN = "my_token";
         String FEED_ID = "test_feed_123";
+        int ERROR_STATUS_CODE = 500;
+
         long timestamp = System.currentTimeMillis();
 
         // given
         givenThat(get(urlMatching("/mark-all-as-read.*"))
                 .willReturn(aResponse()
-                        .withStatus(500)));
+                        .withStatus(ERROR_STATUS_CODE)));
 
         // when
-        boolean success = inoreaderAdaptor(ACCESS_TOKEN).markAsRead(asList(FEED_ID), timestamp).get(1000);
+        Exception thrown = null;
+        try {
+            inoreaderAdaptor(ACCESS_TOKEN).markAsRead(asList(FEED_ID), timestamp).get(1000);
+        } catch (Exception e){
+            thrown = e;
+        }
 
         // then
-        assertFalse(success);
+        assertNotNull(thrown);
+        assertEquals(ERROR_STATUS_CODE, ((ApiException) thrown).getStatus());
 
         verify(getRequestedFor(urlPathEqualTo("/mark-all-as-read"))
                 .withQueryParam("s", equalTo(FEED_ID))
