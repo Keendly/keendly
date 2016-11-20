@@ -493,6 +493,33 @@ public class NewsblurAdaptorTest {
     }
 
     @Test
+    public void given_ResponseOK_when_saveArticle_then_ReturnSuccess() throws Exception {
+        String ACCESS_TOKEN = "my_token";
+        String ARTICLE_ID1 = "1573179:62ec2d";
+        String ARTICLE_ID2 = "1573179:0f6e60";
+
+        // given
+        givenThat(post(urlMatching("/reader/mark_story_hash_as_starred.*"))
+                .willReturn(aResponse()
+                        .withStatus(200)));
+
+        // when
+        boolean success = newsblurAdaptor(ACCESS_TOKEN)
+                .saveArticle(asList(ARTICLE_ID1, ARTICLE_ID2)).get(1000);
+
+        // then
+        assertTrue(success);
+
+        verify(postRequestedFor(urlPathEqualTo("/reader/mark_story_hash_as_starred"))
+                .withRequestBody(thatContainsParams(
+                        param("story_hash", ARTICLE_ID1),
+                        param("story_hash", ARTICLE_ID2)
+                ))
+                .withHeader("Content-Type", containing("application/x-www-form-urlencoded"))
+                .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
+    }
+
+    @Test
     public void given_ResponseOK_when_getArticles_then_ReturnArticles() throws Exception {
         String ACCESS_TOKEN = "my_token";
         String ARTICLE_ID1 = "1573179:f94f7b";

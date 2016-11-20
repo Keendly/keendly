@@ -22,6 +22,7 @@ POST    /api/feeds/unread               com.keendly.controllers.api.FeedControll
 POST    /api/feeds/unreadCount          com.keendly.controllers.api.FeedController.getUnreadCount()
 POST    /api/feeds/markArticleRead      com.keendly.controllers.api.FeedController.markArticleRead()
 POST    /api/feeds/markArticleUnread    com.keendly.controllers.api.FeedController.markArticleUnread()
+POST    /api/feeds/saveArticle          com.keendly.controllers.api.FeedController.saveArticle()
 
 GET     /api/users/:id                  com.keendly.controllers.api.UserController.getUser(id: String)
 PATCH   /api/users/:id                  com.keendly.controllers.api.UserController.updateUser(id: String)

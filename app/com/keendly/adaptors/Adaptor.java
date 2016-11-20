@@ -27,6 +27,7 @@ public abstract class Adaptor {
     protected abstract Promise<Boolean> doMarkFeedRead(List<String> feedIds, long timestamp);
     protected abstract Promise<Boolean> doMarkArticleRead(List<String> articleIds);
     protected abstract Promise<Boolean> doMarkArticleUnread(List<String> articleIds);
+    protected abstract Promise<Boolean> doSaveArticle(List<String> articleIds);
     protected abstract Promise<List<FeedEntry>> doGetArticles(List<String> articleIds);
 
     protected Token token;
@@ -72,6 +73,11 @@ public abstract class Adaptor {
     public Promise<Boolean> markArticleUnread(List<String> articleIds){
         validateLoggedIn();
         return doMarkArticleUnread(articleIds);
+    }
+
+    public Promise<Boolean> saveArticle(List<String> articleIds){
+        validateLoggedIn();
+        return doSaveArticle(articleIds);
     }
 
     public Promise<List<FeedEntry>> getArticles(List<String> articleIds){

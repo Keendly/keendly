@@ -277,6 +277,11 @@ public class InoreaderAdaptor extends GoogleReaderTypeAdaptor {
     }
 
     @Override
+    protected Promise<Boolean> doSaveArticle(List<String> articleIds) {
+        return editTag(true, "user/-/state/com.google/starred", articleIds);
+    }
+
+    @Override
     protected Promise<List<FeedEntry>> doGetArticles(List<String> articleIds) {
         throw new NotImplementedException("a");
     }

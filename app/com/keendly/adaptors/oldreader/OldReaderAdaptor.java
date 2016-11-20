@@ -242,6 +242,11 @@ public class OldReaderAdaptor extends GoogleReaderTypeAdaptor {
         });
     }
 
+    @Override
+    protected Promise<Boolean> doSaveArticle(List<String> articleIds) {
+        return editTag(true, "user/-/state/com.google/starred", articleIds);
+    }
+
     private F.Promise<Boolean> editTag(boolean add, String tag, List<String> ids){
         Map<String, List<String>> formData = new HashMap<>();
         String action = add ? "a" : "r";

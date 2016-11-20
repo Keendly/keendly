@@ -167,6 +167,34 @@ public class OldReaderAdaptorTest {
     }
 
     @Test
+    public void given_ResponseOK_when_saveArticle_then_ReturnSuccess() throws Exception {
+        String ACCESS_TOKEN = "my_token";
+        String ARTICLE_ID1 = "tag:google.com,2005:reader/item/5804dcd8175ad6ee4f01495f";
+        String ARTICLE_ID2 = "tag:google.com,2005:reader/item/58041076175ad6ca9f000ff1";
+
+        // given
+        givenThat(post(urlMatching("/edit-tag.*"))
+                .willReturn(aResponse()
+                        .withStatus(200)));
+
+        // when
+        boolean success = oldReaderAdaptor(ACCESS_TOKEN)
+                .saveArticle(asList(ARTICLE_ID1, ARTICLE_ID2)).get(1000);
+
+        // then
+        assertTrue(success);
+
+        verify(postRequestedFor(urlPathEqualTo("/edit-tag"))
+                .withRequestBody(thatContainsParams(
+                        param("a", "user/-/state/com.google/starred"),
+                        param("i", ARTICLE_ID1),
+                        param("i", ARTICLE_ID2)
+                ))
+                .withHeader("Content-Type", containing("application/x-www-form-urlencoded"))
+                .withHeader("Authorization", equalTo("GoogleLogin auth=" + ACCESS_TOKEN)));
+    }
+
+    @Test
     public void given_ResponseOK_when_getArticles_then_ReturnArticles() throws Exception {
         String ACCESS_TOKEN = "my_token";
         String ARTICLE_ID1 = "tag:google.com,2005:reader/item/5804dcd8175ad6ee4f01495f";

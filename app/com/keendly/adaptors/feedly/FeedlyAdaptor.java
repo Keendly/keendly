@@ -245,6 +245,11 @@ public class FeedlyAdaptor extends Adaptor {
     }
 
     @Override
+    protected Promise<Boolean> doSaveArticle(List<String> articleIds) {
+        throw new NotImplementedException("not implemented!");
+    }
+
+    @Override
     protected Promise<List<FeedEntry>> doGetArticles(List<String> articleIds) {
         throw new NotImplementedException("not implemented!");
     }

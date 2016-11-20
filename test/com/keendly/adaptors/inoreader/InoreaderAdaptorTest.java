@@ -913,6 +913,31 @@ public class InoreaderAdaptorTest {
                 .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
     }
 
+    @Test
+    public void given_ResponseOK_when_saveArticle_then_ReturnSuccess() throws Exception {
+        String ACCESS_TOKEN = "my_token";
+        String ARTICLE_ID1 = "tag:google.com,2005:reader/item/00000002440bbbfd";
+        String ARTICLE_ID2 = "tag:google.com,2005:reader/item/00000002437d0c74";
+
+        // given
+        givenThat(post(urlMatching("/edit-tag.*"))
+                .willReturn(aResponse()
+                        .withStatus(200)));
+
+        // when
+        boolean success = inoreaderAdaptor(ACCESS_TOKEN)
+                .saveArticle(asList(ARTICLE_ID1, ARTICLE_ID2)).get(1000);
+
+        // then
+        assertTrue(success);
+
+        verify(postRequestedFor(urlPathEqualTo("/edit-tag"))
+                .withQueryParam("a", equalTo("user/-/state/com.google/starred"))
+                .withQueryParam("i", equalTo(ARTICLE_ID1))
+                .withQueryParam("i", equalTo(ARTICLE_ID2))
+                .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
+    }
+
     private static Map<InoreaderAdaptor.InoreaderParam, String> config(){
         Map<InoreaderAdaptor.InoreaderParam, String> config = new HashMap<>();
         config.put(InoreaderAdaptor.InoreaderParam.URL, "http://localhost:" + PORT);

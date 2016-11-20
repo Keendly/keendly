@@ -232,12 +232,17 @@ public class NewsblurAdaptor extends Adaptor {
 
     @Override
     protected Promise<Boolean> doMarkArticleRead(List<String> articleHashes) {
-        return markArticle(articleHashes, true);
+        return markArticle(articleHashes, "mark_story_hashes_as_read");
     }
 
     @Override
     protected Promise<Boolean> doMarkArticleUnread(List<String> articleHashes) {
-        return markArticle(articleHashes, false);
+        return markArticle(articleHashes, "mark_story_hash_as_unread");
+    }
+
+    @Override
+    protected Promise<Boolean> doSaveArticle(List<String> articleHashes) {
+        return markArticle(articleHashes, "mark_story_hash_as_starred");
     }
 
     @Override
@@ -256,8 +261,8 @@ public class NewsblurAdaptor extends Adaptor {
         });
     }
 
-    private Promise<Boolean> markArticle(List<String> articleHashes, boolean asRead){
-        String url = asRead ? "/reader/mark_story_hashes_as_read" : "/reader/mark_story_hash_as_unread";
+    private Promise<Boolean> markArticle(List<String> articleHashes, String path){
+        String url = "/reader/" + path;
 
         StringBuilder params = new StringBuilder();
         for (int i=0; i < articleHashes.size(); i++){

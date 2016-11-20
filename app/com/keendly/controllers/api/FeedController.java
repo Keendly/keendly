@@ -147,6 +147,18 @@ public class FeedController extends AbstractController<Feed> {
         });
     }
 
+    public Promise<Result> saveArticle(){
+        JsonNode node = request().body().asJson();
+        List<String> articleIds = new ArrayList<>();
+        for (JsonNode id : node){
+            articleIds.add(id.asText());
+        }
+
+        return getAdaptor().saveArticle(articleIds).map(response -> {
+            return ok(Json.toJson(response));
+        });
+    }
+
     public Promise<Result> getArticle(String id){
         return getAdaptor().getArticles(Collections.singletonList(id)).map(response -> {
             if (response.isEmpty()){
