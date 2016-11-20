@@ -1,11 +1,14 @@
 package com.keendly.model;
 
+import com.keendly.entities.Provider;
+
 import java.util.List;
 
 public class DeliveryRequest {
 
     public Long id;
     public Long userId;
+    public Provider provider;
     public String email;
     public Long timestamp;
 
