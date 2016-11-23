@@ -119,7 +119,7 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
 //            } else {
                 // 30% SWF
                 try {
-                    WorkflowType workflowType = getWorkflowType("DeliveryWorkflow.deliver", "1.2");
+                    WorkflowType workflowType = getWorkflowType("DeliveryWorkflow.deliver", "1.3");
                     if (workflowType == null){
                         LOG.error("workflow type not found");
                     }
@@ -148,11 +148,11 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
                     JPA.withTransaction(() -> deliveryDao.updateDelivery(deliveryEntity));
 
                     // test delivery with dryRun = true
-                    WorkflowType workflowTypeTest = getWorkflowType("DeliveryWorkflow.deliver", "1.3");
-                    request.dryRun = true;
-                    Run testRun = runWorkflow(workflowTypeTest, workflowId + "_test", Jackson.toJsonString(request));
-                    LOG.debug("TEST workflow type {} version {}, started, runId: {}", workflowTypeTest.getName(),
-                            workflowTypeTest.getVersion(), testRun.getRunId());
+//                    WorkflowType workflowTypeTest = getWorkflowType("DeliveryWorkflow.deliver", "1.3");
+//                    request.dryRun = true;
+//                    Run testRun = runWorkflow(workflowTypeTest, workflowId + "_test", Jackson.toJsonString(request));
+//                    LOG.debug("TEST workflow type {} version {}, started, runId: {}", workflowTypeTest.getName(),
+//                            workflowTypeTest.getVersion(), testRun.getRunId());
 
 
                 } catch (Exception e){
