@@ -15,7 +15,7 @@ DELETE  /api/subscriptions/:id          com.keendly.controllers.api.Subscription
 POST    /api/deliveries                 com.keendly.controllers.api.DeliveryController.createDelivery()
 PATCH   /api/deliveries/:id             com.keendly.controllers.api.DeliveryController.updateDelivery(id: Long)
 GET     /api/deliveries/:id             com.keendly.controllers.api.DeliveryController.getDelivery(id: Long)
-GET     /api/deliveries                 com.keendly.controllers.api.DeliveryController.getDeliveries(page: Integer, pageSize: Integer)
+GET     /api/deliveries                 com.keendly.controllers.api.DeliveryController.getDeliveries()
 
 GET     /api/feeds                      com.keendly.controllers.api.FeedController.getFeeds()
 POST    /api/feeds/unread               com.keendly.controllers.api.FeedController.getUnread()

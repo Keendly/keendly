@@ -14,4 +14,5 @@ public class Delivery {
     public String error;
     public Boolean manual;
     public Subscription subscription;
+    public Date created;
 }

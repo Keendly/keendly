@@ -299,12 +299,23 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
         }
     }
 
-    public Promise<Result> getDeliveries(int page, int pageSize) {
+    public Promise<Result> getDeliveries() {
+        String subscriptionId = request().getQueryString("subscriptionId");
+
         List<Delivery> deliveries = new ArrayList<>();
-        JPA.withTransaction(() -> {
-            List<DeliveryEntity> entities = deliveryDao.getDeliveries(getUserEntity(), page, pageSize);
-            deliveries.addAll(deliveryMapper.toModel(entities, MappingMode.SIMPLE));
-        });
+        if (subscriptionId != null){
+            JPA.withTransaction(() -> {
+                List<DeliveryEntity> entities = deliveryDao.getSubscriptionDeliveries(Long.valueOf(subscriptionId));
+                deliveries.addAll(deliveryMapper.toModel(entities, MappingMode.SIMPLE));
+            });
+        } else {
+            String page = request().getQueryString("page");
+            String pageSize = request().getQueryString("pageSize");
+            JPA.withTransaction(() -> {
+                List<DeliveryEntity> entities = deliveryDao.getDeliveries(getUserEntity(), Integer.valueOf(page), Integer.valueOf(pageSize));
+                deliveries.addAll(deliveryMapper.toModel(entities, MappingMode.SIMPLE));
+            });
+        }
 
         return Promise.pure(ok(Json.toJson(deliveries)));
     }
@@ -384,6 +395,7 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
         Delivery toModel(DeliveryEntity entity, MappingMode mode){
             Delivery delivery = new Delivery();
             delivery.id = entity.id;
+            delivery.created = entity.created;
             delivery.deliveryDate = entity.date;
             List<DeliveryItem> feeds = new ArrayList<>();
             delivery.items = feeds;

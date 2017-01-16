@@ -19,6 +19,13 @@ public class DeliveryDao {
         return query.getResultList();
     }
 
+    public List<DeliveryEntity> getSubscriptionDeliveries(Long subscriptionId){
+        Query query = JPA.em().createQuery("select d from DeliveryEntity d where d.subscription.id = :subscriptionId order by id desc")
+                .setMaxResults(100)
+                .setParameter("subscriptionId", subscriptionId);
+        return query.getResultList();
+    }
+
     public DeliveryEntity getDelivery(Long id){
         return JPA.em().find(DeliveryEntity.class, id);
     }
