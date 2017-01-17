@@ -34,6 +34,10 @@ public class SubscriptionDao {
         return true;
     }
 
+    public SubscriptionEntity updateSubscription(SubscriptionEntity subscriptionEntity){
+        return JPA.em().merge(subscriptionEntity);
+    }
+
     public List<SubscriptionItemEntity> getSubscriptionItems(UserEntity user){
         Query query = JPA.em()
                 .createQuery("select si from SubscriptionItemEntity si where si.subscription.active = TRUE and si.subscription.deleted = FALSE and si.subscription.user = :user")

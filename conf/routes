@@ -8,6 +8,7 @@ GET     /assets/*file                   controllers.Assets.at(path="/public", fi
 #API
 POST    /api/subscriptions              com.keendly.controllers.api.SubscriptionController.createSubscription()
 GET     /api/subscriptions/:id          com.keendly.controllers.api.SubscriptionController.getSubscription(id: String)
+PATCH   /api/subscriptions/:id          com.keendly.controllers.api.SubscriptionController.updateSubscription(id: String)
 GET     /api/subscriptionsToDeliver     com.keendly.controllers.api.SubscriptionController.getSubscriptionsToDeliver()
 GET     /api/subscriptions              com.keendly.controllers.api.SubscriptionController.getSubscriptions(page: Integer, pageSize: Integer)
 DELETE  /api/subscriptions/:id          com.keendly.controllers.api.SubscriptionController.deleteSubscription(id: String)

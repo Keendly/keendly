@@ -23,6 +23,9 @@ import java.util.*;
 @With(SecuredAction.class)
 public class SubscriptionController extends AbstractController<Subscription> {
 
+    private static final play.Logger.ALogger LOG = play.Logger.of(SubscriptionController.class);
+
+
     private SubscriptionDao subscriptionDao = new SubscriptionDao();
 
     public Promise<Result> createSubscription() {
@@ -120,6 +123,8 @@ public class SubscriptionController extends AbstractController<Subscription> {
         subscription.timezone = entity.timeZone;
         subscription.feeds = new ArrayList<>();
         subscription.frequency = entity.frequency.name();
+        subscription.created = entity.created;
+        subscription.active = entity.active;
         for (SubscriptionItemEntity item : entity.items){
             DeliveryItem itemResponse = new DeliveryItem();
             itemResponse.feedId = item.feedId;
@@ -148,5 +153,21 @@ public class SubscriptionController extends AbstractController<Subscription> {
             }
             return ok();
         });
+    }
+
+    public Result updateSubscription(String id) {
+        // only updating acive field supported!!!
+        Subscription subscription = fromRequest();
+        try {
+            return JPA.withTransaction(() -> {
+                SubscriptionEntity subscriptionEntity = subscriptionDao.getSubscription(id);
+                subscriptionEntity.active = subscription.active;
+                subscriptionDao.updateSubscription(subscriptionEntity);
+                return ok();
+            });
+        } catch (Throwable throwable) {
+            LOG.error("Error updating subscription " + id, throwable);
+            return internalServerError();
+        }
     }
 }

@@ -305,7 +305,7 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
         List<Delivery> deliveries = new ArrayList<>();
         if (subscriptionId != null){
             JPA.withTransaction(() -> {
-                List<DeliveryEntity> entities = deliveryDao.getSubscriptionDeliveries(Long.valueOf(subscriptionId));
+                List<DeliveryEntity> entities = deliveryDao.getSubscriptionDeliveries(getUserEntity(), Long.valueOf(subscriptionId));
                 deliveries.addAll(deliveryMapper.toModel(entities, MappingMode.SIMPLE));
             });
         } else {
