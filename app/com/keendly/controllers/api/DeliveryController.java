@@ -43,7 +43,7 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
     private static String S3_BUCKET = ConfigUtils.parameter("s3.bucket_name");
     private static String S3_PATH = ConfigUtils.parameter("s3.delivery_path");
 
-    public static int MAX_FEEDS_IN_DELIVERY = 20;
+    public static int MAX_FEEDS_IN_DELIVERY = 25;
 
     private AmazonS3Client amazonS3Client = new AmazonS3Client();
 
