@@ -44,6 +44,10 @@ public class SubscriptionController extends AbstractController<Subscription> {
         }
 
         Subscription subscription = fromRequest();
+
+        if (subscription.feeds.size() > DeliveryController.MAX_FEEDS_IN_DELIVERY){
+            return Promise.pure(badRequest(toJson(Error.TOO_MANY_ITEMS, DeliveryController.MAX_FEEDS_IN_DELIVERY)));
+        }
         TimeZone timezone = ZoneInfo.getTimeZone(subscription.timezone);
 
         SubscriptionEntity entity = new SubscriptionEntity();
