@@ -8,6 +8,10 @@ import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
 import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflowClient;
 import com.amazonaws.services.simpleworkflow.model.*;
+import com.amazonaws.services.stepfunctions.AWSStepFunctions;
+import com.amazonaws.services.stepfunctions.AWSStepFunctionsClient;
+import com.amazonaws.services.stepfunctions.model.StartExecutionRequest;
+import com.amazonaws.services.stepfunctions.model.StartExecutionResult;
 import com.amazonaws.util.json.Jackson;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.keendly.adaptors.model.FeedEntry;
@@ -46,6 +50,14 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
     public static int MAX_FEEDS_IN_DELIVERY = 25;
 
     private AmazonS3Client amazonS3Client = new AmazonS3Client();
+
+    private static AWSStepFunctions awsStepFunctionsClient = getStepFunctionsClient();
+
+    private static AWSStepFunctions getStepFunctionsClient() {
+        AWSStepFunctions awsStepFunctionsClient = new AWSStepFunctionsClient();
+        awsStepFunctionsClient.setRegion(Region.getRegion(Regions.EU_WEST_1));
+        return awsStepFunctionsClient;
+    }
 
     private DeliveryDao deliveryDao = new DeliveryDao();
     private DeliveryMapper deliveryMapper = new DeliveryMapper();
@@ -97,7 +109,7 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
 
             JPA.withTransaction(() ->  deliveryDao.createDelivery(deliveryEntity));
 
-//            // use old workflow manager or swf
+            // use old workflow manager or swf
 //            Random generator = new Random();
 //            double d = generator.nextDouble();
 //            if (d <= 0.5){
@@ -117,7 +129,7 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
 //                    return internalServerError();
 //                }
 //            } else {
-                // 30% SWF
+//                 30% SWF
                 try {
                     WorkflowType workflowType = getWorkflowType("DeliveryWorkflow.deliver", "1.3");
                     if (workflowType == null){
@@ -154,12 +166,38 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
 //                    LOG.debug("TEST workflow type {} version {}, started, runId: {}", workflowTypeTest.getName(),
 //                            workflowTypeTest.getVersion(), testRun.getRunId());
 
+                    try {
+                        // step functions dryRun = true
+                        request.dryRun = true;
+
+                        if (request.s3Items == null){
+                            String key = "messages/" + UUID.randomUUID().toString().replace("-", "") + ".json";
+                            amazonS3Client.putObject("keendly", key,
+                                    new ByteArrayInputStream(Jackson.toJsonString(request.items).getBytes()), new ObjectMetadata());
+                            request.items = null;
+                            S3Object items = new S3Object();
+                            items.bucket = "keendly";
+                            items.key = key;
+                            request.s3Items = items;
+                        }
+
+                        StartExecutionRequest startExecutionRequest = new StartExecutionRequest();
+                        startExecutionRequest.setInput(Jackson.toJsonString(request));
+                        startExecutionRequest.setStateMachineArn("arn:aws:states:eu-west-1:625416862388:stateMachine:Delivery5");
+                        StartExecutionResult result = awsStepFunctionsClient.startExecution(startExecutionRequest);
+                        LOG.debug("Started step functions execution: {}", result.getExecutionArn());
+                    } catch (Exception e){
+                        LOG.error("Error starting Step Functions execution", e);
+                    }
+
 
                 } catch (Exception e){
                     // catching everything for now, to avoid breaking due this
                     LOG.error("Error starting SWF workflow", e);
                 }
 //            }
+
+
 
 
 
