@@ -23,6 +23,7 @@ import com.keendly.model.*;
 import com.keendly.schema.DeliveryProtos;
 import com.keendly.schema.utils.Mapper;
 import com.keendly.utils.ConfigUtils;
+import com.keendly.utils.FeedUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import play.db.jpa.JPA;
 import play.libs.F.Promise;
@@ -48,6 +49,7 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
     private static String S3_PATH = ConfigUtils.parameter("s3.delivery_path");
 
     public static int MAX_FEEDS_IN_DELIVERY = 25;
+    private static int MAX_ARTICLES_IN_DELIVERY = 500;
 
     private AmazonS3Client amazonS3Client = new AmazonS3Client();
 
@@ -89,6 +91,15 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
 
         List<String> feedIds = delivery.items.stream().map(item -> item.feedId).collect(Collectors.toList());
         return getAdaptor().getUnread(feedIds).map(unread -> {
+
+            int allArticles = unread.values().stream()
+                    .mapToInt(Collection::size)
+                    .sum();
+
+            if (allArticles > MAX_ARTICLES_IN_DELIVERY){
+                LOG.warn("More than " + MAX_ARTICLES_IN_DELIVERY + " articles found");
+                unread = FeedUtils.getNewest(unread, MAX_ARTICLES_IN_DELIVERY);
+            }
 
             boolean found = false;
             for (Map.Entry<String, List<FeedEntry>> unreadFeed : unread.entrySet()){

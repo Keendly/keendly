@@ -114,7 +114,7 @@ public abstract class Adaptor {
         JsonNode j = node.get(field);
         if (j != null){
             Date d = new Date();
-            d.setTime(j.asLong());
+            d.setTime(j.asLong() * 1000);
             return d;
         }
         return null;

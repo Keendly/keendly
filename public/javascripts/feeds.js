@@ -515,12 +515,7 @@ var SelectedFeed_Simple = React.createClass({
           }
         }.call(this)
         }
-        {function(){
-          if (feed.unread > 100) {
-            return <i className="tiny material-icons error-icon tooltipped" data-position="left" data-delay="50" data-tooltip="Only 100 will be delivered">error_outline</i>
-          }
-        }.call(this)
-        }
+
         </div>
       </li>
     )
