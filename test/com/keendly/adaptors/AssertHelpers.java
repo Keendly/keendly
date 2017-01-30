@@ -27,14 +27,14 @@ public class AssertHelpers {
         return new BasicNameValuePair(key, value);
     }
 
-    public static void assertEntryCorrect(FeedEntry entry, String id, String title, String author, int published,
+    public static void assertEntryCorrect(FeedEntry entry, String id, String title, String author, long published,
                                     String url, String content){
         assertEquals(id , entry.getId());
         assertEquals(title, entry.getTitle());
         assertEquals(author, entry.getAuthor());
         assertEquals(url, entry.getUrl());
         assertEquals(content, entry.getContent());
-        assertEquals(published, entry.getPublished().getTime());
+        assertEquals(published * 1000, entry.getPublished().getTime());
     }
 
 

@@ -345,14 +345,14 @@ public class InoreaderAdaptorTest {
         String ID1 = "tag:google.com,2005:reader/item/00000000f8b9270e";
         String TITLE1 = "Through the Google lens: Search trends January 16-22";
         String AUTHOR1 = "Emily Wood";
-        int PUBLISHED1 = 1422046320;
+        long PUBLISHED1 = 1422046320;
         String URL1 = "http://feedproxy.google.com/~r/blogspot/MKuf/~3/_Hkdwh7yKMo/blabla.html";
         String CONTENT1 = "test_content";
 
         String ID2 = "tag:google.com,2005:reader/item/00000000f9ccc3f9";
         String TITLE2 = "Google Maps Engine deprecated";
         String AUTHOR2 = "Timothy Whitehead";
-        int PUBLISHED2 = 1422262271;
+        long PUBLISHED2 = 1422262271;
         String URL2 = "http://feedproxy.google.com/~r/GoogleEarthBlog/~3/HqKBr0Se8K8/google-maps-engine-deprecated.html";
         String CONTENT2 = "test_content2";
 
@@ -436,7 +436,7 @@ public class InoreaderAdaptorTest {
         String CONTINUATION = "trMnkg7wWT62";
 
         // given
-        JSONObject item1 =new FeedItem()
+        JSONObject item1 = new FeedItem()
                 .id(ID1)
                 .title(TITLE1)
                 .author(AUTHOR1)
@@ -583,7 +583,7 @@ public class InoreaderAdaptorTest {
     @Setter
     private class FeedItem {
         String id, title, author, url, content;
-        int published;
+        long published;
 
         JSONObject build() throws Exception {
             JSONObject item = new JSONObject();
