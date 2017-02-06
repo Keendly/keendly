@@ -194,7 +194,7 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
 
                         StartExecutionRequest startExecutionRequest = new StartExecutionRequest();
                         startExecutionRequest.setInput(Jackson.toJsonString(request));
-                        startExecutionRequest.setStateMachineArn("arn:aws:states:eu-west-1:625416862388:stateMachine:Delivery2");
+                        startExecutionRequest.setStateMachineArn("arn:aws:states:eu-west-1:625416862388:stateMachine:Delivery3");
                         StartExecutionResult result = awsStepFunctionsClient.startExecution(startExecutionRequest);
                         LOG.debug("Started step functions execution: {}", result.getExecutionArn());
                     } catch (Exception e){
