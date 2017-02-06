@@ -38,4 +38,10 @@ public class DeliveryEntity extends BaseEntity {
 
     @Column(name = "run_id")
     public String runId;
+
+    @Column(name = "execution")
+    public String execution;
+
+    @Column(name = "state_machine")
+    public String stateMachine;
 }

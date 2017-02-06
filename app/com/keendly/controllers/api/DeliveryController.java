@@ -51,6 +51,8 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
     public static int MAX_FEEDS_IN_DELIVERY = 25;
     private static int MAX_ARTICLES_IN_DELIVERY = 500;
 
+    private static final String STATE_MACHINE_ARN = "arn:aws:states:eu-west-1:625416862388:stateMachine:Delivery3";
+
     private AmazonS3Client amazonS3Client = new AmazonS3Client();
 
     private static AWSStepFunctions awsStepFunctionsClient = getStepFunctionsClient();
@@ -120,37 +122,32 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
 
             JPA.withTransaction(() ->  deliveryDao.createDelivery(deliveryEntity));
 
-            // use old workflow manager or swf
-//            Random generator = new Random();
-//            double d = generator.nextDouble();
-//            if (d <= 0.5){
-//                // 70% goes the old way
-//                DeliveryProtos.DeliveryRequest deliveryRequest
-//                        = Mapper.mapToDeliveryRequest(delivery, unread, deliveryEntity.id, deliveryEmail.toString(),
-//                        Long.parseLong(userId.toString()));
-//
-//                try {
-//                    String uid = generateDirName();
-//                    storeInS3(deliveryRequest, uid);
-//                    deliveryEntity.s3Dir = uid;
-//                    JPA.withTransaction(() -> deliveryDao.updateDelivery(deliveryEntity));
-//                    LOG.debug("Delivery request for id {} stored in s3 dir {}", deliveryEntity.id, uid);
-//                } catch (Exception e){
-//                    LOG.error("Error storing delivery to S3", e);
-//                    return internalServerError();
-//                }
-//            } else {
-//                 30% SWF
-                try {
-                    WorkflowType workflowType = getWorkflowType("DeliveryWorkflow.deliver", "1.3");
-                    if (workflowType == null){
-                        LOG.error("workflow type not found");
+            try {
+                WorkflowType workflowType = getWorkflowType("DeliveryWorkflow.deliver", "1.3");
+                if (workflowType == null){
+                    LOG.error("workflow type not found");
+                }
+                DeliveryRequest request = Mapper.toDeliveryRequest(delivery, unread, deliveryEntity.id, deliveryEmail.toString(),
+                        Long.parseLong(userId.toString()), Provider.valueOf(provider.toString()));
+
+                request.dryRun = false;
+
+                if (shouldRunStepFunctions(request)){
+                    try {
+                        StartExecutionRequest startExecutionRequest = new StartExecutionRequest();
+                        startExecutionRequest.setInput(Jackson.toJsonString(request));
+                        startExecutionRequest.setStateMachineArn(STATE_MACHINE_ARN);
+                        StartExecutionResult result = awsStepFunctionsClient.startExecution(startExecutionRequest);
+                        LOG.debug("Started step functions execution: {}", result.getExecutionArn());
+
+                        deliveryEntity.stateMachine = STATE_MACHINE_ARN;
+                        deliveryEntity.execution = result.getExecutionArn();
+                        JPA.withTransaction(() -> deliveryDao.updateDelivery(deliveryEntity));
+                    } catch (Exception e){
+                        LOG.error("Error starting Step Functions execution", e);
                     }
-                    DeliveryRequest request = Mapper.toDeliveryRequest(delivery, unread, deliveryEntity.id, deliveryEmail.toString(),
-                            Long.parseLong(userId.toString()), Provider.valueOf(provider.toString()));
 
-                    request.dryRun = false;
-
+                } else {
                     if (Jackson.toJsonString(request).length() > 32000){
                         String key = "messages/" + UUID.randomUUID().toString().replace("-", "") + ".json";
                         amazonS3Client.putObject("keendly", key,
@@ -194,28 +191,34 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
 
                         StartExecutionRequest startExecutionRequest = new StartExecutionRequest();
                         startExecutionRequest.setInput(Jackson.toJsonString(request));
-                        startExecutionRequest.setStateMachineArn("arn:aws:states:eu-west-1:625416862388:stateMachine:Delivery3");
+                        startExecutionRequest.setStateMachineArn(STATE_MACHINE_ARN);
                         StartExecutionResult result = awsStepFunctionsClient.startExecution(startExecutionRequest);
                         LOG.debug("Started step functions execution: {}", result.getExecutionArn());
                     } catch (Exception e){
                         LOG.error("Error starting Step Functions execution", e);
                     }
 
-
-                } catch (Exception e){
-                    // catching everything for now, to avoid breaking due this
-                    LOG.error("Error starting SWF workflow", e);
                 }
-//            }
 
-
-
-
-
-
+            } catch (Exception e){
+                // catching everything for now, to avoid breaking due this
+                LOG.error("Error starting SWF workflow", e);
+            }
 
            return ok(Json.toJson(deliveryMapper.toModel(deliveryEntity, MappingMode.SIMPLE)));
         });
+    }
+
+    private static boolean shouldRunStepFunctions(DeliveryRequest request){
+        if (request.email.equals("moomeen@kindle.com")){
+            return true;
+        }
+        return false;
+
+        //            Random generator = new Random();
+//            double d = generator.nextDouble();
+//            if (d <= 0.5){
+        //
     }
 
     private static final AmazonSimpleWorkflow swfClient = getSWFClient();
