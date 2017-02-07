@@ -134,6 +134,16 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
 
                 if (shouldRunStepFunctions(request)){
                     try {
+                        // store items list in s3
+                        String key = "messages/" + UUID.randomUUID().toString().replace("-", "") + ".json";
+                        amazonS3Client.putObject("keendly", key,
+                                new ByteArrayInputStream(Jackson.toJsonString(request.items).getBytes()), new ObjectMetadata());
+                        request.items = null;
+                        S3Object items = new S3Object();
+                        items.bucket = "keendly";
+                        items.key = key;
+                        request.s3Items = items;
+
                         StartExecutionRequest startExecutionRequest = new StartExecutionRequest();
                         startExecutionRequest.setInput(Jackson.toJsonString(request));
                         startExecutionRequest.setStateMachineArn(STATE_MACHINE_ARN);
