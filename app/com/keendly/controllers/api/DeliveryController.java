@@ -4,7 +4,6 @@ import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
 import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflowClient;
 import com.amazonaws.services.simpleworkflow.model.*;
@@ -18,13 +17,10 @@ import com.keendly.adaptors.model.FeedEntry;
 import com.keendly.controllers.api.error.Error;
 import com.keendly.dao.DeliveryDao;
 import com.keendly.entities.*;
+import com.keendly.mappers.Mapper;
 import com.keendly.mappers.MappingMode;
 import com.keendly.model.*;
-import com.keendly.schema.DeliveryProtos;
-import com.keendly.schema.utils.Mapper;
-import com.keendly.utils.ConfigUtils;
 import com.keendly.utils.FeedUtils;
-import org.apache.commons.lang3.RandomStringUtils;
 import play.db.jpa.JPA;
 import play.libs.F.Promise;
 import play.libs.Json;
@@ -32,10 +28,6 @@ import play.mvc.Result;
 import play.mvc.With;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -45,13 +37,10 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
 
     private static final play.Logger.ALogger LOG = play.Logger.of(DeliveryController.class);
 
-    private static String S3_BUCKET = ConfigUtils.parameter("s3.bucket_name");
-    private static String S3_PATH = ConfigUtils.parameter("s3.delivery_path");
-
     public static int MAX_FEEDS_IN_DELIVERY = 25;
     private static int MAX_ARTICLES_IN_DELIVERY = 500;
 
-    private static final String STATE_MACHINE_ARN = "arn:aws:states:eu-west-1:625416862388:stateMachine:Delivery3";
+    private static final String STATE_MACHINE_ARN = "arn:aws:states:eu-west-1:625416862388:stateMachine:Delivery1";
 
     private AmazonS3Client amazonS3Client = new AmazonS3Client();
 
@@ -150,7 +139,6 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
                         StartExecutionResult result = awsStepFunctionsClient.startExecution(startExecutionRequest);
                         LOG.debug("Started step functions execution: {}", result.getExecutionArn());
 
-                        deliveryEntity.stateMachine = STATE_MACHINE_ARN;
                         deliveryEntity.execution = result.getExecutionArn();
                         JPA.withTransaction(() -> deliveryDao.updateDelivery(deliveryEntity));
                     } catch (Exception e){
@@ -223,12 +211,14 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
         if (request.email.equals("moomeen@kindle.com")){
             return true;
         }
-        return false;
 
-        //            Random generator = new Random();
-//            double d = generator.nextDouble();
-//            if (d <= 0.5){
-        //
+        Random generator = new Random();
+        double d = generator.nextDouble();
+        if (d <= 0.1){
+            return true;
+        } else {
+            return false;
+        }
     }
 
     private static final AmazonSimpleWorkflow swfClient = getSWFClient();
@@ -276,20 +266,6 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
         map.put("code", error.name());
         map.put("description", String.format(error.getMessage(), msgParams));
         return Json.toJson(map);
-    }
-
-    private SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmssS");
-    private String generateDirName(){
-        String d = format.format(new Date());
-        return d + "_" + RandomStringUtils.randomAlphanumeric(5);
-    }
-
-    private void storeInS3(DeliveryProtos.DeliveryRequest deliveryRequest, String uid) throws IOException {
-        File f = new File("/tmp/" + uid);
-        f.createNewFile();
-        FileOutputStream fos = new FileOutputStream(f);
-        deliveryRequest.writeTo(fos);
-        amazonS3Client.putObject(new PutObjectRequest(S3_BUCKET, S3_PATH + "/" + uid + "/delivery.req", f));
     }
 
     public Promise<Result> updateDelivery(Long id) {
