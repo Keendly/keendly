@@ -121,6 +121,17 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
 
                 request.dryRun = false;
 
+                try {
+                    // store article urls - tmp for extracting investigation
+                    List<String> urls = toArticleList(request);
+                    String key = "articles/" + UUID.randomUUID().toString().replace("-", "") + ".json";
+                    amazonS3Client.putObject("keendly", key,
+                            new ByteArrayInputStream(Jackson.toJsonString(urls).getBytes()), new ObjectMetadata());
+
+                } catch (Exception e){
+                    LOG.warn("Error saving articles urls", e);
+                }
+
                 if (shouldRunStepFunctions(request)){
                     try {
                         // store items list in s3
@@ -208,17 +219,28 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
     }
 
     private static boolean shouldRunStepFunctions(DeliveryRequest request){
-        if (request.email.equals("moomeen@kindle.com")){
-            return true;
-        }
+        return true;
+//        if (request.email.equals("moomeen@kindle.com")){
+//            return true;
+//        }
+//
+//        Random generator = new Random();
+//        double d = generator.nextDouble();
+//        if (d <= 0.5){
+//            return true;
+//        } else {
+//            return false;
+//        }
+    }
 
-        Random generator = new Random();
-        double d = generator.nextDouble();
-        if (d <= 0.5){
-            return true;
-        } else {
-            return false;
+    private List<String> toArticleList(DeliveryRequest request){
+        List<String> urls = new ArrayList<>();
+        for (DeliveryItem item : request.items){
+            for (DeliveryArticle article : item.articles){
+                urls.add(article.url);
+            }
         }
+        return urls;
     }
 
     private static final AmazonSimpleWorkflow swfClient = getSWFClient();
