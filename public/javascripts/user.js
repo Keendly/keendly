@@ -7,8 +7,12 @@ var UserForm = React.createClass({
       data: JSON.stringify({"deliveryEmail": this.state.deliveryEmail}),
       contentType: "application/json; charset=utf-8",
       cache: false,
-      success: function() {
-        this.setState({ success: true, error: false})
+      success: function(data) {
+        this.setState({
+          success: true,
+          error: false,
+          deliverySender: data.deliverySender
+        })
       }.bind(this),
       error: function(xhr, status, err) {
         this.handleDeliveryError(xhr.responseJSON.description)
@@ -30,7 +34,8 @@ var UserForm = React.createClass({
    $.get(this.props.url, function(data) {
       if (this.isMounted()) {
         this.setState({
-          deliveryEmail: data.deliveryEmail
+          deliveryEmail: data.deliveryEmail,
+          deliverySender: data.deliverySender
         });
       }
     }.bind(this));
@@ -39,8 +44,11 @@ var UserForm = React.createClass({
     return (
      <div className="container">
       {this.state.error == true ? <div className='error_div'>{this.state.errorDescription}</div> : ''}
-      {this.state.success == true ? <div className='success_div'>Email saved.</div> : ''}
-      <div className='info_div'>Remember to add <i>kindle@keendly.com</i> to your <b>Approved Personal Document E-mail List</b>, you can do it <a href='https://www.amazon.com/mn/dcw/myx.html/ref=kinw_myk_surl_2#/home/settings/' target="_blank">here</a>.</div>
+      {this.state.success == true ? <div className='success_div'>Done!</div> : ''}
+      {this.state.deliverySender != null ? <div className='info_div'>Make sure to add <b>{this.state.deliverySender}</b> to your <b>Approved Personal Document E-mail List</b>, you can do it <a href='https://www.amazon.com/mn/dcw/myx.html/ref=kinw_myk_surl_2#/home/settings/' target="_blank">here</a>.</div> : '' }
+      {this.state.deliveryEmail != null && this.state.deliverySender == null ?
+        <div className='error_div'>Your personal sender email address is not set. Click <b>Save</b> to create it. Remember to add it to Approved Emails in Amazon settings afterwards.</div>
+        : '' }
       <form className="col s12" id="settings_form" method="POST" onSubmit={this.handleSubmit}>
           <div className="row">
               <div className="input-field col s12">

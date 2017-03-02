@@ -32,4 +32,7 @@ public class UserEntity extends BaseEntity {
 
     @Column(name = "last_login")
     public Date lastLogin;
+
+    @Column(name = "delivery_sender")
+    public String deliverySender;
 }

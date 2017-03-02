@@ -11,4 +11,5 @@ public class User {
     public String providerId;
     public String email;
     public String deliveryEmail;
+    public String deliverySender;
 }

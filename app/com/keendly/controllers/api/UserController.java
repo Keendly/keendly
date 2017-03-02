@@ -31,13 +31,7 @@ public class UserController extends AbstractController<User> {
             UserEntity userEntity = lookupUser(id);
 
             if (userEntity != null){
-                // TODO mapper
-                User user = new User();
-                user.id = userEntity.id;
-                user.email = userEntity.email;
-                user.deliveryEmail = userEntity.deliveryEmail;
-                user.provider = userEntity.provider;
-                user.providerId = userEntity.providerId;
+                User user = fromEntity(userEntity);
                 users.add(user);
             }
         });
@@ -51,10 +45,12 @@ public class UserController extends AbstractController<User> {
     @With(SecuredAction.class)
     public Result updateUser(String id) throws Throwable{
         User user = fromRequest();
+        List<User> users = new ArrayList<>();
         if (user.deliveryEmail != null){
-            if (!validateEmail(user.deliveryEmail)){
+            if (!validateDeliveryEmail(user.deliveryEmail)){
                 return badRequest(toJson(Error.WRONG_EMAIL, StringUtils.join(", ", ALLOWED_DOMAINS)));
             }
+            user.deliverySender = generateSenderEmail(user.deliveryEmail);
         }
         JPA.withTransaction(() -> {
             UserEntity userEntity = lookupUser(id);
@@ -65,9 +61,24 @@ public class UserController extends AbstractController<User> {
             if (user.email != null){
                 userEntity.email = user.email;
             }
-            userDao.updateUser(userEntity);
+            if (user.deliverySender != null){
+                userEntity.deliverySender = user.deliverySender;
+            }
+            UserEntity updated = userDao.updateUser(userEntity);
+            users.add(fromEntity(updated));
         });
-        return ok();
+        return ok(Json.toJson(users.get(0)));
+    }
+
+    private User fromEntity(UserEntity userEntity){
+        User user = new User();
+        user.id = userEntity.id;
+        user.email = userEntity.email;
+        user.deliveryEmail = userEntity.deliveryEmail;
+        user.deliverySender = userEntity.deliverySender;
+        user.provider = userEntity.provider;
+        user.providerId = userEntity.providerId;
+        return user;
     }
 
     private JsonNode toJson(Error error, Object... msgParams){
@@ -77,7 +88,7 @@ public class UserController extends AbstractController<User> {
         return Json.toJson(map);
     }
 
-    private boolean validateEmail(String email){
+    private boolean validateDeliveryEmail(String email){
         String[] split = email.split("\\@");
         if (split.length != 2){
             return false;
@@ -90,6 +101,11 @@ public class UserController extends AbstractController<User> {
             }
         }
         return valid;
+    }
+
+    private String generateSenderEmail(String deliveryEmail){
+        String[] split = deliveryEmail.split("\\@");
+        return split[0] + "@keendly.com";
     }
 
     /**

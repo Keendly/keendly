@@ -9,6 +9,7 @@ public class DeliveryRequest {
     public Long id;
     public Long userId;
     public Provider provider;
+    public String sender;
     public String email;
     public Long timestamp;
 

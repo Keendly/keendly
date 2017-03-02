@@ -58,18 +58,27 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
     public Promise<Result> createDelivery() {
         // HACK WARNING
         StringBuilder deliveryEmail = new StringBuilder();
+        StringBuilder deliverySender = new StringBuilder();
         StringBuilder userId = new StringBuilder();
         StringBuilder provider = new StringBuilder();
         JPA.withTransaction(() -> {
             UserEntity userEntity = new UserController().lookupUser("self");
             if (userEntity.deliveryEmail != null){
-                deliveryEmail.append(userEntity.deliveryEmail);
+                if (userEntity.deliveryEmail != null){
+                    deliveryEmail.append(userEntity.deliveryEmail);
+                }
+                if (userEntity.deliverySender != null){
+                    deliverySender.append(userEntity.deliverySender);
+                }
                 userId.append(userEntity.id);
                 provider.append(userEntity.provider.name());
             }
         });
         if (deliveryEmail.toString().isEmpty()){
             return Promise.pure(badRequest(toJson(Error.DELIVERY_EMAIL_NOT_CONFIGURED)));
+        }
+        if (deliverySender.toString().isEmpty()){
+            return Promise.pure(badRequest(toJson(Error.DELIVERY_SENDER_NOT_SET)));
         }
 
         Delivery delivery = fromRequest();
@@ -117,7 +126,7 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
                     LOG.error("workflow type not found");
                 }
                 DeliveryRequest request = Mapper.toDeliveryRequest(delivery, unread, deliveryEntity.id, deliveryEmail.toString(),
-                        Long.parseLong(userId.toString()), Provider.valueOf(provider.toString()));
+                        Long.parseLong(userId.toString()), Provider.valueOf(provider.toString()), deliverySender.toString());
 
                 request.dryRun = false;
 

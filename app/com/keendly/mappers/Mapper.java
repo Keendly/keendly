@@ -14,9 +14,10 @@ public class Mapper {
 
     public static com.keendly.model.DeliveryRequest toDeliveryRequest(Delivery delivery, Map<String, List<FeedEntry>> unread,
                                                                       long entityId, String deliveryEmail, long userId,
-                                                                      Provider provider){
+                                                                      Provider provider, String deliverySender){
         com.keendly.model.DeliveryRequest request = new com.keendly.model.DeliveryRequest();
         request.email = deliveryEmail;
+        request.sender = deliverySender;
         request.id = entityId;
         request.userId = userId;
         request.timestamp = System.currentTimeMillis();

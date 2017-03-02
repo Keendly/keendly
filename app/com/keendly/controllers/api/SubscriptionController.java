@@ -31,16 +31,26 @@ public class SubscriptionController extends AbstractController<Subscription> {
     public Promise<Result> createSubscription() {
         // HACK WARNING
         StringBuilder deliveryEmail = new StringBuilder();
+        StringBuilder deliverySender = new StringBuilder();
         StringBuilder userId = new StringBuilder();
         JPA.withTransaction(() -> {
             UserEntity userEntity = new UserController().lookupUser("self");
             if (userEntity.deliveryEmail != null){
-                deliveryEmail.append(userEntity.deliveryEmail);
+                if (userEntity.deliveryEmail != null){
+                    deliveryEmail.append(userEntity.deliveryEmail);
+                }
+                if (userEntity.deliverySender != null){
+                    deliverySender.append(userEntity.deliverySender);
+                }
                 userId.append(userEntity.id);
             }
         });
         if (deliveryEmail.toString().isEmpty()){
             return Promise.pure(badRequest(toJson(Error.DELIVERY_EMAIL_NOT_CONFIGURED)));
+        }
+
+        if (deliverySender.toString().isEmpty()){
+            return Promise.pure(badRequest(toJson(Error.DELIVERY_SENDER_NOT_SET)));
         }
 
         Subscription subscription = fromRequest();

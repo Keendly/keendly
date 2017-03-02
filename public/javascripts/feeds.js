@@ -38,27 +38,33 @@ var FeedBox = React.createClass({
     this.setState({deliverySuccess: true, error: false})
   },
   handleDeliveryError: function(code, description) {
-     this.setState({deliverySuccess: false, subscriptionSuccess: false, error: true, errorCode: code, errorDescription: description})
+    var message = description
+    if (code == 'DELIVERY_EMAIL_NOT_CONFIGURED' ){
+      message = '<b>Send-to-Kindle</b> email address not set, configure it in <a href="/user">settings</a>.'
+    } else if (code == 'DELIVERY_SENDER_NOT_SET'){
+      message = '<b>Sender email not set</b>, please do it in <a href="/user">settings</a>.'
+    }
+    this.setState({deliverySuccess: false, subscriptionSuccess: false, error: true, errorMessage: message})
   },
   handleSubscriptionSuccess: function() {
     this.setState({subscriptionSuccess: true, error: false})
     this.loadFeeds()
   },
   handleSubscriptionError: function(code, description) {
-     this.setState({deliverySuccess: false, subscriptionSuccess: false, error: true, errorCode: code, errorDescription: description})
+    var message = description
+    if (code == 'DELIVERY_EMAIL_NOT_CONFIGURED' ){
+      message = '<b>Send-to-Kindle</b> email address not set, configure it in <a href="/user">settings</a>.'
+    } else if (code == 'DELIVERY_SENDER_NOT_SET'){
+      message = '<b>Sender email not set</b>, please do it in <a href="/user">settings</a>.'
+    }
+     this.setState({deliverySuccess: false, subscriptionSuccess: false, error: true, errorMessage: message})
   },
   render: function() {
     return (
       <div className="container" id="subs-container">
         {
           this.state.error == true ?
-            (this.state.errorCode == 'DELIVERY_EMAIL_NOT_CONFIGURED' ?
-            <div className='error_div'>
-              <b>Send-to-Kindle</b> email address not set, configure it in <a href="/user">settings</a>.
-            </div> :
-            <div className='error_div'>
-              {this.state.errorDescription}
-            </div>)
+            <div className='error_div' dangerouslySetInnerHTML={{__html: this.state.errorMessage}}></div>
               : ''}
         {this.state.deliverySuccess == true ? <div className='success_div'>Delivery started :-) Give us few minutes to deliver articles to your Kindle.</div> : ''}
         {this.state.subscriptionSuccess == true ? <div className='success_div'>Done :-) your articles will be now delivered automatically.</div> : ''}
