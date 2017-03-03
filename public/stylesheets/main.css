@@ -46,6 +46,11 @@ body {
   background-image: url('/assets/images/login_oldreader.png');
 }
 
+.button.facebook {
+  background-color: #4267b2;
+  background-image: url('/assets/images/login_facebook.png');
+}
+
 #subscriptions label {
   height: 15px;
 }
@@ -150,7 +155,6 @@ body > #wrapper {
 
 .login_btns .disabled {
   opacity: .3;
-  cursor: default;
 }
 
 .logo_link {
@@ -196,6 +200,14 @@ span.badge {
 
 .old-save-btn {
   background-color: #30a67c
+}
+
+.feedly-close-btn {
+  background-color: #87BD4D
+}
+
+.facebook-send-btn {
+  background-color: #4267b2
 }
 
 .ino-save-btn {
