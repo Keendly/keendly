@@ -130,17 +130,6 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
 
                 request.dryRun = false;
 
-                try {
-                    // store article urls - tmp for extracting investigation
-                    List<String> urls = toArticleList(request);
-                    String key = "articles/" + UUID.randomUUID().toString().replace("-", "") + ".json";
-                    amazonS3Client.putObject("keendly", key,
-                            new ByteArrayInputStream(Jackson.toJsonString(urls).getBytes()), new ObjectMetadata());
-
-                } catch (Exception e){
-                    LOG.warn("Error saving articles urls", e);
-                }
-
                 if (shouldRunStepFunctions(request)){
                     try {
                         // store items list in s3
