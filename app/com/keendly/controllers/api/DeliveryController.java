@@ -4,9 +4,6 @@ import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflow;
-import com.amazonaws.services.simpleworkflow.AmazonSimpleWorkflowClient;
-import com.amazonaws.services.simpleworkflow.model.*;
 import com.amazonaws.services.stepfunctions.AWSStepFunctions;
 import com.amazonaws.services.stepfunctions.AWSStepFunctionsClient;
 import com.amazonaws.services.stepfunctions.model.StartExecutionRequest;
@@ -121,90 +118,36 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
             JPA.withTransaction(() ->  deliveryDao.createDelivery(deliveryEntity));
 
             try {
-                WorkflowType workflowType = getWorkflowType("DeliveryWorkflow.deliver", "1.3");
-                if (workflowType == null){
-                    LOG.error("workflow type not found");
-                }
                 DeliveryRequest request = Mapper.toDeliveryRequest(delivery, unread, deliveryEntity.id, deliveryEmail.toString(),
                         Long.parseLong(userId.toString()), Provider.valueOf(provider.toString()), deliverySender.toString());
 
                 request.dryRun = false;
 
-                if (shouldRunStepFunctions(request)){
-                    try {
-                        // store items list in s3
-                        String key = "messages/" + UUID.randomUUID().toString().replace("-", "") + ".json";
-                        amazonS3Client.putObject("keendly", key,
-                                new ByteArrayInputStream(Jackson.toJsonString(request.items).getBytes()), new ObjectMetadata());
-                        request.items = null;
-                        S3Object items = new S3Object();
-                        items.bucket = "keendly";
-                        items.key = key;
-                        request.s3Items = items;
+                try {
+                    // store items list in s3
+                    String key = "messages/" + UUID.randomUUID().toString().replace("-", "") + ".json";
+                    amazonS3Client.putObject("keendly", key,
+                            new ByteArrayInputStream(Jackson.toJsonString(request.items).getBytes()), new ObjectMetadata());
+                    request.items = null;
+                    S3Object items = new S3Object();
+                    items.bucket = "keendly";
+                    items.key = key;
+                    request.s3Items = items;
 
-                        StartExecutionRequest startExecutionRequest = new StartExecutionRequest();
-                        startExecutionRequest.setInput(Jackson.toJsonString(request));
+                    StartExecutionRequest startExecutionRequest = new StartExecutionRequest();
+                    startExecutionRequest.setInput(Jackson.toJsonString(request));
+                    if (runReadabilityExperiment(request)){
+                        startExecutionRequest.setStateMachineArn("arn:aws:states:eu-west-1:625416862388:stateMachine:Delivery3");
+                    } else {
                         startExecutionRequest.setStateMachineArn(STATE_MACHINE_ARN);
-                        StartExecutionResult result = awsStepFunctionsClient.startExecution(startExecutionRequest);
-                        LOG.debug("Started step functions execution: {}", result.getExecutionArn());
-
-                        deliveryEntity.execution = result.getExecutionArn();
-                        JPA.withTransaction(() -> deliveryDao.updateDelivery(deliveryEntity));
-                    } catch (Exception e){
-                        LOG.error("Error starting Step Functions execution", e);
                     }
+                    StartExecutionResult result = awsStepFunctionsClient.startExecution(startExecutionRequest);
+                    LOG.debug("Started step functions execution: {}", result.getExecutionArn());
 
-                } else {
-                    if (Jackson.toJsonString(request).length() > 32000){
-                        String key = "messages/" + UUID.randomUUID().toString().replace("-", "") + ".json";
-                        amazonS3Client.putObject("keendly", key,
-                                new ByteArrayInputStream(Jackson.toJsonString(request.items).getBytes()), new ObjectMetadata());
-                        request.items = null;
-                        S3Object items = new S3Object();
-                        items.bucket = "keendly";
-                        items.key = key;
-                        request.s3Items = items;
-                    }
-                    String workflowId = "Delivery_" + UUID.randomUUID().toString();
-                    Run run = runWorkflow(workflowType, workflowId, Jackson.toJsonString(request));
-                    LOG.debug("Workflow type {} version {}, started, runId: {}", workflowType.getName(),
-                            workflowType.getVersion(), run.getRunId());
-
-                    deliveryEntity.workflowId = workflowId;
-                    deliveryEntity.runId = run.getRunId();
+                    deliveryEntity.execution = result.getExecutionArn();
                     JPA.withTransaction(() -> deliveryDao.updateDelivery(deliveryEntity));
-
-                    // test delivery with dryRun = true
-//                    WorkflowType workflowTypeTest = getWorkflowType("DeliveryWorkflow.deliver", "1.3");
-//                    request.dryRun = true;
-//                    Run testRun = runWorkflow(workflowTypeTest, workflowId + "_test", Jackson.toJsonString(request));
-//                    LOG.debug("TEST workflow type {} version {}, started, runId: {}", workflowTypeTest.getName(),
-//                            workflowTypeTest.getVersion(), testRun.getRunId());
-
-                    try {
-                        // step functions dryRun = true
-                        request.dryRun = true;
-
-                        if (request.s3Items == null){
-                            String key = "messages/" + UUID.randomUUID().toString().replace("-", "") + ".json";
-                            amazonS3Client.putObject("keendly", key,
-                                    new ByteArrayInputStream(Jackson.toJsonString(request.items).getBytes()), new ObjectMetadata());
-                            request.items = null;
-                            S3Object items = new S3Object();
-                            items.bucket = "keendly";
-                            items.key = key;
-                            request.s3Items = items;
-                        }
-
-                        StartExecutionRequest startExecutionRequest = new StartExecutionRequest();
-                        startExecutionRequest.setInput(Jackson.toJsonString(request));
-                        startExecutionRequest.setStateMachineArn(STATE_MACHINE_ARN);
-                        StartExecutionResult result = awsStepFunctionsClient.startExecution(startExecutionRequest);
-                        LOG.debug("Started step functions execution: {}", result.getExecutionArn());
-                    } catch (Exception e){
-                        LOG.error("Error starting Step Functions execution", e);
-                    }
-
+                } catch (Exception e){
+                    LOG.error("Error starting Step Functions execution", e);
                 }
 
             } catch (Exception e){
@@ -216,69 +159,13 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
         });
     }
 
-    private static boolean shouldRunStepFunctions(DeliveryRequest request){
-        return true;
-//        if (request.email.equals("moomeen@kindle.com")){
-//            return true;
-//        }
-//
-//        Random generator = new Random();
-//        double d = generator.nextDouble();
-//        if (d <= 0.5){
-//            return true;
-//        } else {
-//            return false;
-//        }
-    }
-
-    private List<String> toArticleList(DeliveryRequest request){
-        List<String> urls = new ArrayList<>();
-        for (DeliveryItem item : request.items){
-            for (DeliveryArticle article : item.articles){
-                urls.add(article.url);
-            }
+    private boolean runReadabilityExperiment(DeliveryRequest request){
+        if (request.email.equals("moomeen@kindle.com")){
+            return true;
         }
-        return urls;
-    }
-
-    private static final AmazonSimpleWorkflow swfClient = getSWFClient();
-
-    private static WorkflowType getWorkflowType(String name, String version){
-        ListWorkflowTypesRequest req = new ListWorkflowTypesRequest();
-        req.setDomain("keendly");
-        req.setRegistrationStatus(RegistrationStatus.REGISTERED);
-        for (WorkflowTypeInfo info : swfClient.listWorkflowTypes(req).getTypeInfos()){
-            if (info.getWorkflowType().getName().equals(name) &&
-                    info.getWorkflowType().getVersion().equals(version)){
-                return info.getWorkflowType();
-            }
-        }
-
-        return null;
-    }
-
-    private static Run runWorkflow(WorkflowType type, String workflowId, String input){
-        StartWorkflowExecutionRequest startRequest = new StartWorkflowExecutionRequest();
-
-        // HACKY way to imitate the way Flow Framework starts workflows
-        List<String> objects = new ArrayList<>();
-        List<Object> parameters = new ArrayList<>();
-        objects.add(input);
-        parameters.add("[Ljava.lang.Object;");
-        parameters.add(objects);
-
-        startRequest.setDomain("keendly");
-        startRequest.setWorkflowId(workflowId);
-        startRequest.setWorkflowType(type);
-        startRequest.setInput(Jackson.toJsonString(parameters));
-        startRequest.setLambdaRole("arn:aws:iam::625416862388:role/swf_lambda_role");
-        return swfClient.startWorkflowExecution(startRequest);
-    }
-
-    private static AmazonSimpleWorkflow getSWFClient() {
-        AmazonSimpleWorkflow client = new AmazonSimpleWorkflowClient();
-        client.setRegion(Region.getRegion(Regions.EU_WEST_1));
-        return client;
+        Random generator = new Random();
+        double d = generator.nextDouble();
+        return d <= 0.2;
     }
 
     private JsonNode toJson(Error error, Object... msgParams){
