@@ -163,9 +163,10 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
         if (request.email.equals("moomeen@kindle.com")){
             return true;
         }
-        Random generator = new Random();
-        double d = generator.nextDouble();
-        return d <= 0.2;
+//        Random generator = new Random();
+//        double d = generator.nextDouble();
+//        return d <= 0.2;
+        return false;
     }
 
     private JsonNode toJson(Error error, Object... msgParams){
