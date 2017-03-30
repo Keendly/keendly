@@ -165,7 +165,7 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
         }
         Random generator = new Random();
         double d = generator.nextDouble();
-        return d <= 0.2;
+        return d <= 0.5;
     }
 
     private JsonNode toJson(Error error, Object... msgParams){
