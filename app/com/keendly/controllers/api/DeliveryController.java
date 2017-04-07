@@ -160,12 +160,16 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
     }
 
     private boolean runReadabilityExperiment(DeliveryRequest request){
-        if (request.email.equals("moomeen@kindle.com")){
-            return true;
+        switch (request.email){
+            case "moomeen@kindle.com":
+            case "m.uszpolewicz@kindle.com":
+            case "duszek00@kindle.com":
+                return true;
+            default:
+                Random generator = new Random();
+                double d = generator.nextDouble();
+                return d <= 0.2;
         }
-        Random generator = new Random();
-        double d = generator.nextDouble();
-        return d <= 0.2;
     }
 
     private JsonNode toJson(Error error, Object... msgParams){
