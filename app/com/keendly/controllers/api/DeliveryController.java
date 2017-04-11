@@ -137,7 +137,7 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
                     StartExecutionRequest startExecutionRequest = new StartExecutionRequest();
                     startExecutionRequest.setInput(Jackson.toJsonString(request));
                     if (runReadabilityExperiment(request)){
-                        startExecutionRequest.setStateMachineArn("arn:aws:states:eu-west-1:625416862388:stateMachine:Delivery3");
+                        startExecutionRequest.setStateMachineArn("arn:aws:states:eu-west-1:625416862388:stateMachine:Delivery4");
                     } else {
                         startExecutionRequest.setStateMachineArn(STATE_MACHINE_ARN);
                     }
