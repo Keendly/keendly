@@ -37,7 +37,7 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
     public static int MAX_FEEDS_IN_DELIVERY = 25;
     private static int MAX_ARTICLES_IN_DELIVERY = 500;
 
-    private static final String STATE_MACHINE_ARN = "arn:aws:states:eu-west-1:625416862388:stateMachine:Delivery2";
+    private static final String STATE_MACHINE_ARN = "arn:aws:states:eu-west-1:625416862388:stateMachine:Delivery4";
 
     private AmazonS3Client amazonS3Client = new AmazonS3Client();
 
@@ -136,11 +136,7 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
 
                     StartExecutionRequest startExecutionRequest = new StartExecutionRequest();
                     startExecutionRequest.setInput(Jackson.toJsonString(request));
-                    if (runReadabilityExperiment(request)){
-                        startExecutionRequest.setStateMachineArn("arn:aws:states:eu-west-1:625416862388:stateMachine:Delivery4");
-                    } else {
-                        startExecutionRequest.setStateMachineArn(STATE_MACHINE_ARN);
-                    }
+                    startExecutionRequest.setStateMachineArn(STATE_MACHINE_ARN);
                     StartExecutionResult result = awsStepFunctionsClient.startExecution(startExecutionRequest);
                     LOG.debug("Started step functions execution: {}", result.getExecutionArn());
 
@@ -157,19 +153,6 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
 
            return ok(Json.toJson(deliveryMapper.toModel(deliveryEntity, MappingMode.SIMPLE)));
         });
-    }
-
-    private boolean runReadabilityExperiment(DeliveryRequest request){
-        switch (request.email){
-            case "moomeen@kindle.com":
-            case "m.uszpolewicz@kindle.com":
-            case "duszek00@kindle.com":
-                return true;
-            default:
-                Random generator = new Random();
-                double d = generator.nextDouble();
-                return d <= 0.5;
-        }
     }
 
     private JsonNode toJson(Error error, Object... msgParams){
