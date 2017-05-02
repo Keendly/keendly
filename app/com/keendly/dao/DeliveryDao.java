@@ -39,9 +39,10 @@ public class DeliveryDao {
         JPA.em().persist(deliveryEntity);
     }
 
-    public DeliveryItemEntity getLastDeliveryItem(String feedId){
-        Query query = JPA.em().createQuery("select di from DeliveryItemEntity di where di.feedId = :feedId and di.delivery.date is not null order by di.delivery.date desc")
+    public DeliveryItemEntity getLastDeliveryItem(UserEntity user, String feedId){
+        Query query = JPA.em().createQuery("select di from DeliveryItemEntity di where di.delivery.user = :user and di.feedId = :feedId and di.delivery.date is not null order by di.delivery.date desc")
                 .setParameter("feedId", feedId)
+                .setParameter("user", user)
                 .setMaxResults(1);
 
         try {

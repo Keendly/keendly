@@ -71,7 +71,7 @@ public class FeedController extends AbstractController<Feed> {
                             }
                         }
 
-                        DeliveryItemEntity lastDeliveryItem = deliveryDao.getLastDeliveryItem(subscribedFeed.getFeedId());
+                        DeliveryItemEntity lastDeliveryItem = deliveryDao.getLastDeliveryItem(getUserEntity(), subscribedFeed.getFeedId());
                         if (lastDeliveryItem != null){
                             Delivery delivery = new Delivery();
                             delivery.id = lastDeliveryItem.delivery.id;
