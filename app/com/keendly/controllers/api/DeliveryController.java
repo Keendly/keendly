@@ -2,6 +2,8 @@ package com.keendly.controllers.api;
 
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
+import com.amazonaws.services.lambda.AWSLambdaClientBuilder;
+import com.amazonaws.services.lambda.invoke.LambdaInvokerFactory;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.stepfunctions.AWSStepFunctions;
@@ -18,6 +20,8 @@ import com.keendly.mappers.Mapper;
 import com.keendly.mappers.MappingMode;
 import com.keendly.model.*;
 import com.keendly.utils.FeedUtils;
+import com.keendly.veles.VelesRequest;
+import com.keendly.veles.VelesService;
 import play.db.jpa.JPA;
 import play.libs.F.Promise;
 import play.libs.Json;
@@ -49,15 +53,21 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
         return awsStepFunctionsClient;
     }
 
+    final VelesService velesService = LambdaInvokerFactory.builder()
+            .lambdaClient(AWSLambdaClientBuilder.defaultClient())
+            .build(VelesService.class);
+
     private DeliveryDao deliveryDao = new DeliveryDao();
     private DeliveryMapper deliveryMapper = new DeliveryMapper();
 
     public Promise<Result> createDelivery() {
         // HACK WARNING
         StringBuilder deliveryEmail = new StringBuilder();
+        StringBuilder userEmail = new StringBuilder();
         StringBuilder deliverySender = new StringBuilder();
         StringBuilder userId = new StringBuilder();
         StringBuilder provider = new StringBuilder();
+        StringBuilder notifyNoArticles = new StringBuilder();
         JPA.withTransaction(() -> {
             UserEntity userEntity = new UserController().lookupUser("self");
             if (userEntity.deliveryEmail != null){
@@ -69,6 +79,13 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
                 }
                 userId.append(userEntity.id);
                 provider.append(userEntity.provider.name());
+                if (userEntity.notifyNoArticles != null){
+                    notifyNoArticles.append(userEntity.notifyNoArticles ? "true" : "false");
+                } else {
+                    notifyNoArticles.append("false");
+                }
+
+                userEmail.append(userEntity.email);
             }
         });
         if (deliveryEmail.toString().isEmpty()){
@@ -112,6 +129,27 @@ public class DeliveryController extends com.keendly.controllers.api.AbstractCont
                 deliveryEntity.errorDescription = "NO ARTICLES";
                 JPA.withTransaction(() ->  deliveryDao.createDelivery(deliveryEntity));
                 LOG.warn("No items for delivery {}", deliveryEntity.id);
+                if (("true").equals(notifyNoArticles.toString())){
+
+                    LOG.debug("Sending no articles notification");
+                    VelesRequest request = new VelesRequest();
+                    request.sender = "contact@keendly.com";
+                    request.senderName = "Keendly Support";
+                    request.subject = "There was nothing to deliver this time";
+                    request.recipient = userEmail.toString();
+
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("<ul>");
+                    for (DeliveryItem item : delivery.items){
+                        sb.append("<li>");
+                        sb.append(item.title);
+                        sb.append("</li>");
+                    }
+                    sb.append("</ul>");
+                    request.message = VelesService.TEMPLATE.replace("{{FEEDS}}", sb.toString());
+
+                    velesService.sendEmail(request);
+                }
                 return ok(Json.toJson(deliveryMapper.toModel(deliveryEntity, MappingMode.SIMPLE)));
             }
 

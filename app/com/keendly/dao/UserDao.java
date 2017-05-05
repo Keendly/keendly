@@ -28,6 +28,7 @@ public class UserDao {
         user.providerId = id;
         user.provider = provider;
         user.email = email;
+        user.notifyNoArticles = true;
         JPA.em().persist(user);
         return user;
     }

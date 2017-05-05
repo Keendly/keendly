@@ -12,4 +12,5 @@ public class User {
     public String email;
     public String deliveryEmail;
     public String deliverySender;
+    public Boolean notifyNoArticles;
 }

@@ -35,4 +35,7 @@ public class UserEntity extends BaseEntity {
 
     @Column(name = "delivery_sender")
     public String deliverySender;
+
+    @Column(name = "notify_no_articles")
+    public Boolean notifyNoArticles;
 }

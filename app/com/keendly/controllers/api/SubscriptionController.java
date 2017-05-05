@@ -154,6 +154,7 @@ public class SubscriptionController extends AbstractController<Subscription> {
             user.email = entity.user.email;
             user.deliveryEmail = entity.user.deliveryEmail;
             user.provider = entity.user.provider;
+            user.notifyNoArticles = entity.user.notifyNoArticles;
             subscription.user = user;
         }
         return subscription;

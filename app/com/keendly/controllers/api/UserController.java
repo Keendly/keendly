@@ -64,6 +64,9 @@ public class UserController extends AbstractController<User> {
             if (user.deliverySender != null){
                 userEntity.deliverySender = user.deliverySender;
             }
+            if (user.notifyNoArticles != null){
+                userEntity.notifyNoArticles = user.notifyNoArticles;
+            }
             UserEntity updated = userDao.updateUser(userEntity);
             users.add(fromEntity(updated));
         });
@@ -78,6 +81,7 @@ public class UserController extends AbstractController<User> {
         user.deliverySender = userEntity.deliverySender;
         user.provider = userEntity.provider;
         user.providerId = userEntity.providerId;
+        user.notifyNoArticles = userEntity.notifyNoArticles;
         return user;
     }
 

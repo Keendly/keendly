@@ -4,7 +4,10 @@ var UserForm = React.createClass({
     $.ajax({
       url: this.props.url,
       type: 'PATCH',
-      data: JSON.stringify({"deliveryEmail": this.state.deliveryEmail}),
+      data: JSON.stringify({
+        "deliveryEmail": this.state.deliveryEmail,
+        "notifyNoArticles": this.state.notifyNoArticles
+      }),
       contentType: "application/json; charset=utf-8",
       cache: false,
       success: function(data) {
@@ -19,23 +22,31 @@ var UserForm = React.createClass({
       }.bind(this)
     });
   },
-  handleChange: function(event) {
+  handleEMailChange: function(event) {
+    console.log(event);
     this.setState({
       deliveryEmail: event.target.value
+    });
+  },
+  handleNotifyNoArticlesChange: function(event) {
+    console.log(event.target.checked);
+    this.setState({
+      notifyNoArticles: event.target.checked
     });
   },
   handleDeliveryError: function(description) {
      this.setState({success: false, error: true, errorDescription: description})
   },
   getInitialState: function() {
-    return {deliveryEmail: '', error: false, success: false};
+    return {deliveryEmail: '', notifyNoArticles: false, error: false, success: false};
   },
   componentDidMount: function() {
    $.get(this.props.url, function(data) {
       if (this.isMounted()) {
         this.setState({
           deliveryEmail: data.deliveryEmail,
-          deliverySender: data.deliverySender
+          deliverySender: data.deliverySender,
+          notifyNoArticles: data.notifyNoArticles,
         });
       }
     }.bind(this));
@@ -52,8 +63,18 @@ var UserForm = React.createClass({
       <form className="col s12" id="settings_form" method="POST" onSubmit={this.handleSubmit}>
           <div className="row">
               <div className="input-field col s12">
-                <input value={this.state.deliveryEmail} onChange={this.handleChange} name="email" id="email" type="email" className="validate"/>
+                <input value={this.state.deliveryEmail} onChange={this.handleEMailChange} name="email" id="email" type="email" className="validate"/>
                 <label className="active" htmlFor="email">Send-to-Kindle E-Mail</label>
+            </div>
+          </div>
+          <div className="row">
+              <div className="input-field col s12">
+              {this.state.notifyNoArticles == true ?
+                <input checked='checked' onChange={this.handleNotifyNoArticlesChange} name="notifyNoArticles" id="notifyNoArticles" type="checkbox"/>
+                  :
+                <input onChange={this.handleNotifyNoArticlesChange} name="notifyNoArticles" id="notifyNoArticles" type="checkbox"/>
+              }
+              <label className="active" htmlFor="notifyNoArticles">Notify me by email in case there was no articles to send in scheduled delivery</label>
             </div>
           </div>
           <button className="btn waves-effect waves-light" type="submit" name="action">Save

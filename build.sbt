@@ -18,6 +18,7 @@ libraryDependencies ++= Seq(
   "postgresql" % "postgresql" % "9.1-901.jdbc4",
   "io.jsonwebtoken" % "jjwt" % "0.6.0",
   "com.amazonaws" % "aws-java-sdk-s3" % "1.11.82",
+  "com.amazonaws" % "aws-java-sdk-lambda" % "1.11.82",
   "com.amazonaws" % "aws-java-sdk-stepfunctions" % "1.11.82",
   "com.github.tomakehurst" % "wiremock" % "1.58" % "test",
   "org.projectlombok" % "lombok" % "1.16.8" % "test"
