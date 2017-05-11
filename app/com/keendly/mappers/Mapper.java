@@ -46,6 +46,8 @@ public class Mapper {
             }
         }
 
+        request.timezone = delivery.timezone;
+
         return request;
     }
 }

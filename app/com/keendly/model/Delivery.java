@@ -15,4 +15,5 @@ public class Delivery {
     public Boolean manual;
     public Subscription subscription;
     public Date created;
+    public String timezone;
 }

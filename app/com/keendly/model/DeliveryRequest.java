@@ -16,4 +16,5 @@ public class DeliveryRequest {
     public List<DeliveryItem> items;
     public S3Object s3Items;
     public boolean dryRun;
+    public String timezone;
 }
