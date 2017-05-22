@@ -457,7 +457,7 @@ var SubscribeModal = React.createClass({
           </div>
           <div className="modal-footer">
               <a href="#!" className="modal-action modal-close waves-effect waves-red btn-flat">Cancel</a>
-              <a href="#!" onClick={this.handleSubmit} className="modal-action waves-effect waves-green btn-flat submit save" id="subscription_save_btn">Subscribe</a>
+              <a href="#!" onClick={this.handleSubmit} className="modal-action waves-effect waves-green btn-flat submit save" id="subscription_save_btn">Schedule</a>
           </div>
       </div>
     );
