@@ -7,7 +7,7 @@ public enum Error {
     TOO_MANY_ITEMS("Max number of feeds in single delivery: %d"),
     WRONG_EMAIL("Email address incorrect, allowed domains: %s"),
     NO_ARTICLES("No articles found"),
-    TOO_MANY_SUBSCRIPTIONS("Max number of active subscriptions: %d");
+    TOO_MANY_SUBSCRIPTIONS("Max number of scheduled deliveries: %d");
 
     private String message;
 
