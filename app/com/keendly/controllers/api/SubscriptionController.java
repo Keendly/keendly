@@ -24,6 +24,7 @@ import java.util.*;
 public class SubscriptionController extends AbstractController<Subscription> {
 
     private static final play.Logger.ALogger LOG = play.Logger.of(SubscriptionController.class);
+    private static final int MAX_SUBSCRIPTIONS_COUNT = 5;
 
 
     private SubscriptionDao subscriptionDao = new SubscriptionDao();
@@ -51,6 +52,16 @@ public class SubscriptionController extends AbstractController<Subscription> {
 
         if (deliverySender.toString().isEmpty()){
             return Promise.pure(badRequest(toJson(Error.DELIVERY_SENDER_NOT_SET)));
+        }
+
+        List<Long> subscriptionsCount = new ArrayList<>();
+        JPA.withTransaction(() -> {
+            long subscriptions = subscriptionDao.getSubscriptionsCount(getUserEntity());
+            subscriptionsCount.add(subscriptions);
+        });
+
+        if (subscriptionsCount.get(0) > MAX_SUBSCRIPTIONS_COUNT) {
+            return Promise.pure(badRequest(toJson(Error.TOO_MANY_SUBSCRIPTIONS, MAX_SUBSCRIPTIONS_COUNT)));
         }
 
         Subscription subscription = fromRequest();

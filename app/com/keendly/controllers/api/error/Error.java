@@ -6,7 +6,8 @@ public enum Error {
     DELIVERY_SENDER_NOT_SET("Sender email address not set"),
     TOO_MANY_ITEMS("Max number of feeds in single delivery: %d"),
     WRONG_EMAIL("Email address incorrect, allowed domains: %s"),
-    NO_ARTICLES("No articles found");
+    NO_ARTICLES("No articles found"),
+    TOO_MANY_SUBSCRIPTIONS("Max number of active subscriptions: %d");
 
     private String message;
 

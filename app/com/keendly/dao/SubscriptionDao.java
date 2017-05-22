@@ -53,6 +53,13 @@ public class SubscriptionDao {
         return query.getResultList();
     }
 
+    public long getSubscriptionsCount(UserEntity user) {
+        Query query = JPA.em().createQuery("select count(s) from SubscriptionEntity s where s.user = :user and s.active = TRUE and s.deleted = FALSE")
+                .setParameter("user", user);
+
+        return (long) query.getSingleResult();
+    }
+
     public List<SubscriptionEntity> getDailySubscriptionsToDeliver(){
         // TODO should probably take into account ones that DO have deliveries but were not actually delivered
         Query query = JPA.em()
