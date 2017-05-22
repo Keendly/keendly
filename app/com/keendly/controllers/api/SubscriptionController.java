@@ -60,7 +60,7 @@ public class SubscriptionController extends AbstractController<Subscription> {
             subscriptionsCount.add(subscriptions);
         });
 
-        if (subscriptionsCount.get(0) > MAX_SUBSCRIPTIONS_COUNT) {
+        if (subscriptionsCount.get(0) >= MAX_SUBSCRIPTIONS_COUNT) {
             return Promise.pure(badRequest(toJson(Error.TOO_MANY_SUBSCRIPTIONS, MAX_SUBSCRIPTIONS_COUNT)));
         }
 
