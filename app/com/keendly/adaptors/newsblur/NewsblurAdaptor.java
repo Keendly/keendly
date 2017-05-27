@@ -29,6 +29,8 @@ public class NewsblurAdaptor extends Adaptor {
 
     private static final Logger.ALogger LOG = Logger.of(NewsblurAdaptor.class);
 
+    private static final int TIMEOUT = 10000;
+
 
     enum NewsblurParam {
         URL,
@@ -71,6 +73,7 @@ public class NewsblurAdaptor extends Adaptor {
     protected Promise<Token> doLogin(Credentials credentials) {
         return client.url(config.get(URL) + "/oauth/token")
                 .setContentType("application/x-www-form-urlencoded; charset=utf-8")
+                .setRequestTimeout(TIMEOUT)
                 .post(String.format("code=%s&" +
                                 "redirect_uri=%s&" +
                                 "client_id=%s&" +
@@ -296,7 +299,7 @@ public class NewsblurAdaptor extends Adaptor {
                 request.setQueryParameter(param.getKey(), val);
             }
         }
-        return request.get();
+        return request.setRequestTimeout(TIMEOUT).get();
     }
 
     protected <T> Promise<T> get(String url, Function<JsonNode, T> callback){
