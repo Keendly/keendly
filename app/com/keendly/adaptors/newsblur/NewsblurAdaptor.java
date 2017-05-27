@@ -29,7 +29,7 @@ public class NewsblurAdaptor extends Adaptor {
 
     private static final Logger.ALogger LOG = Logger.of(NewsblurAdaptor.class);
 
-    private static final int TIMEOUT = 10000;
+    private static final int TIMEOUT = 5000;
 
 
     enum NewsblurParam {
