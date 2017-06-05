@@ -24,6 +24,7 @@
 
     <script type='text/javascript' src='@routes.Assets.at("javascripts/3rdparty/moment.js")'></script>
     <script type='text/javascript' src='@routes.Assets.at("javascripts/3rdparty/moment-timezone-with-data.min.js")'></script>
+    <script src="https://donorbox.org/install-popup-button.js" type="text/javascript" defer></script>
 </head>
 <body>
     <div id="wrapper">
@@ -36,6 +37,7 @@
                         <li><a href="feeds"><i class="material-icons left">home</i>Home</a></li>
                         <li><a href="subscriptions"><i class="material-icons left">av_timer</i>Scheduled</a></li>
                         <li><a href="deliveries"><i class="material-icons left">list</i>History</a></li>
+                        <li><a class="dbox-donation-button" href="https://donorbox.org/keendly" style="background:#5cb85c;"><i class="material-icons left">loyalty</i> Donate</a></li>
                     </ul>
                     <ul class="hide-on-large-only">
                         <a href="/" class="brand-logo logo_link"><img src="assets/images/logo_nav.png" style="vertical-align: middle; width: 80px"></a>
@@ -47,6 +49,12 @@
                         <li><a class="dropdown-button" href="#!" data-activates="dropdown1"><i class="material-icons left">settings</i>@session.get("displayName")<i class="material-icons right">arrow_drop_down</i></a></li>
                     </ul>
 
+                    <ul class="right hide-on-small-only hide-on-large-only">
+                        <!--   <li><a href="home"><i class="material-icons left">home</i>Home</a></li>
+                           <li><a href="history"><i class="material-icons left">list</i>History</a></li> -->
+                        <li><a class="dbox-donation-button" href="https://donorbox.org/keendly" style="background:#5cb85c;"><i class="material-icons left">loyalty</i> Donate</a></li>
+                    </ul>
+
                     <ul id="dropdown1" class="dropdown-content">
                         <li><a href="user">Settings</a></li>
                         <li><a href="logout">Logout</a></li>
@@ -56,6 +64,7 @@
                         <li><a href="subscriptions">Scheduled</a></li>
                         <li><a href="deliveries">History</a></li>
                         <li><a href="user">Settings</a></li>
+                        <li><a class="dbox-donation-button hide-on-med-and-up" href="https://donorbox.org/keendly" style="background:#5cb85c;">Donate</a></li>
                         <li><a href="logout">Logout</a></li>
                     </ul>
                 </div>
