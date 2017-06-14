@@ -1,7 +1,11 @@
 var DeliveryBox = React.createClass({
   loadFeeds: function(page) {
+    var token = this.getCookie('k33ndly_535510n');
     $.ajax({
       url: this.props.url + '?page=' + page +'&pageSize=20',
+      headers: {
+        'Authorization': token
+      },
       dataType: 'json',
       cache: false,
       success: function(data) {
@@ -23,6 +27,10 @@ var DeliveryBox = React.createClass({
       page: newPage
     });
     this.loadFeeds(newPage);
+  },
+  getCookie: function (a) {
+      var b = document.cookie.match('(^|;)\\s*' + a + '\\s*=\\s*([^;]+)');
+      return b ? b.pop() : '';
   },
   render: function() {
     return (
@@ -151,6 +159,6 @@ var PageNumber = React.createClass({
 })
 
 ReactDOM.render(
-  <DeliveryBox url="api/deliveries" />,
+  <DeliveryBox url="https://m1ndoce0cl.execute-api.eu-west-1.amazonaws.com/v1/deliveries" />,
   document.getElementById('content')
 );
