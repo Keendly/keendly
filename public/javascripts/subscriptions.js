@@ -1,7 +1,11 @@
 var DeliveryBox = React.createClass({
   loadSubscriptions: function(page) {
+    var token = this.getCookie('k33ndly_535510n');
     $.ajax({
       url: this.props.url + '?page=' + page +'&pageSize=20',
+      headers: {
+        'Authorization': token
+      },
       dataType: 'json',
       cache: false,
       success: function(data) {
@@ -39,6 +43,10 @@ var DeliveryBox = React.createClass({
   handleError: function(code, description) {
      this.setState({success: false, error: true, errorDescription: description})
   },
+  getCookie: function (a) {
+      var b = document.cookie.match('(^|;)\\s*' + a + '\\s*=\\s*([^;]+)');
+      return b ? b.pop() : '';
+  },
   render: function() {
     return (
       <div className="container">
@@ -61,6 +69,7 @@ var DeleteModal = React.createClass({
     return {subscriptions: this.getSelectedSubscriptions()};
   },
   handleSubmit: function() {
+    var token = this.getCookie('k33ndly_535510n');
      var subscriptionsLength = this.state.subscriptions.length;
      var error = false;
      var errorDescription;
@@ -68,6 +77,9 @@ var DeleteModal = React.createClass({
            $.ajax({
              url: this.props.url + "/" + this.state.subscriptions[i],
              type: "DELETE",
+              headers: {
+                'Authorization': token
+              },
              success: function(data) {
                this.props.success()
              }.bind(this),
@@ -83,6 +95,10 @@ var DeleteModal = React.createClass({
      } else {
         this.props.error(errorDescription)
      }
+  },
+  getCookie: function (a) {
+      var b = document.cookie.match('(^|;)\\s*' + a + '\\s*=\\s*([^;]+)');
+      return b ? b.pop() : '';
   },
   getSelectedSubscriptions: function() {
     var checkbox, columns, id, i, j, ref, results, subscription, subscriptions, subscriptionsLength, title;
@@ -241,6 +257,6 @@ var PageNumber = React.createClass({
 })
 
 ReactDOM.render(
-  <DeliveryBox url="api/subscriptions" />,
+  <DeliveryBox url="https://m1ndoce0cl.execute-api.eu-west-1.amazonaws.com/v1/subscriptions" />,
   document.getElementById('content')
 );
