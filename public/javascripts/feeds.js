@@ -1,7 +1,11 @@
 var FeedBox = React.createClass({
   loadFeeds: function() {
+  var token = this.getCookie('k33ndly_535510n');
     $.ajax({
       url: this.props.url,
+      headers: {
+        'Authorization': token
+      },
       dataType: 'json',
       cache: false,
       success: function(data) {
@@ -11,6 +15,10 @@ var FeedBox = React.createClass({
         window.location.replace("login");
       }.bind(this)
     });
+  },
+  getCookie: function (a) {
+      var b = document.cookie.match('(^|;)\\s*' + a + '\\s*=\\s*([^;]+)');
+      return b ? b.pop() : '';
   },
   getInitialState: function() {
     return {data: []};
@@ -583,7 +591,7 @@ var ModeSwitch = React.createClass({
 });
 
 ReactDOM.render(
-  <FeedBox url="api/feeds" />,
+  <FeedBox url="https://m1ndoce0cl.execute-api.eu-west-1.amazonaws.com/v1/feeds" />,
   document.getElementById('content')
 );
 
