@@ -166,8 +166,11 @@ var DeliverModal = React.createClass({
       return; // 2 minutes
     }
     $.ajax({
-      url: "api/deliveries/" + id,
+      url: "https://m1ndoce0cl.execute-api.eu-west-1.amazonaws.com/v1/deliveries/" + id,
       dataType: 'json',
+       headers: {
+         'Authorization': this.getCookie('k33ndly_535510n')
+       },
       cache: false,
       global: false,
       success: function(data) {
