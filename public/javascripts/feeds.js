@@ -29,7 +29,7 @@ var FeedBox = React.createClass({
   deliverButtonClick: function() {
     var timestamp = Date.now()
     ReactDOM.render(
-      <DeliverModal url="https://m1ndoce0cl.execute-api.eu-west-1.amazonaws.com/v1/deliveries" key={timestamp} success={this.handleDeliverySuccess} error={this.handleDeliveryError}/>,
+      <DeliverModal url='api/deliveries' key={timestamp} success={this.handleDeliverySuccess} error={this.handleDeliveryError}/>,
       document.getElementById('modal')
     );
     $('#delivery_modal').openModal()
@@ -198,12 +198,8 @@ var DeliverModal = React.createClass({
           feed['markAsRead'] = $('#mark_as_read').is(':checked');
         });
      }
-     var token = this.getCookie('k33ndly_535510n');
      $.ajax({
        url: this.props.url,
-       headers: {
-         'Authorization': token
-       },
        type: "POST",
        data: JSON.stringify({
           'timezone': moment.tz.guess(),
@@ -221,10 +217,6 @@ var DeliverModal = React.createClass({
          this.props.error(xhr.responseJSON.code, xhr.responseJSON.description)
        }.bind(this)
      });
-  },
-  getCookie: function (a) {
-      var b = document.cookie.match('(^|;)\\s*' + a + '\\s*=\\s*([^;]+)');
-      return b ? b.pop() : '';
   },
   getSelectedFeeds: function() {
     var checkbox, columns, feed_id, i, j, ref, results, subscription, subscriptions, subscriptionsLength, title;
