@@ -18,5 +18,4 @@ public enum Error {
     public String getMessage(){
         return message;
     }
-
 }

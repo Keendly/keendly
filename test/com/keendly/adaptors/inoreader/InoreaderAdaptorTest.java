@@ -766,8 +766,8 @@ public class InoreaderAdaptorTest {
 
         // given
         JSONObject response = new JSONObject();
-        JSONObject feed1 = new Feed().id(FEED_ID1).title(FEED_TITLE1).build();
-        JSONObject feed2 = new Feed().id(FEED_ID2).title(FEED_TITLE2).build();
+        JSONObject feed1 = feed(FEED_ID1, FEED_TITLE1);
+        JSONObject feed2 = feed(FEED_ID2, FEED_TITLE2);
         response.put("subscriptions", asList(feed1, feed2));
 
         givenThat(get(urlEqualTo("/subscription/list"))
@@ -788,17 +788,11 @@ public class InoreaderAdaptorTest {
                 .withHeader("Authorization", equalTo("Bearer " + ACCESS_TOKEN)));
     }
 
-    @Accessors(fluent = true)
-    @Setter
-    private class Feed {
-        String title, id;
-
-        JSONObject build() throws Exception {
-            JSONObject item = new JSONObject();
-            item.put("title", title);
-            item.put("id", id);
-            return item;
-        }
+    private JSONObject feed(String id, String title) throws Exception {
+        JSONObject item = new JSONObject();
+        item.put("title", title);
+        item.put("id", id);
+        return item;
     }
 
     @Test
