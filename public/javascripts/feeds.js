@@ -37,7 +37,7 @@ var FeedBox = React.createClass({
   subscribeButtonClick: function() {
     var timestamp = Date.now()
     ReactDOM.render(
-      <SubscribeModal url='api/subscriptions' key={timestamp} success={this.handleSubscriptionSuccess} error={this.handleSubscriptionError}/>,
+      <SubscribeModal url='https://m1ndoce0cl.execute-api.eu-west-1.amazonaws.com/v1//subscriptions' key={timestamp} success={this.handleSubscriptionSuccess} error={this.handleSubscriptionError}/>,
       document.getElementById('modal')
     );
     $('#subscription_modal').openModal()
@@ -359,6 +359,10 @@ var SubscribeModal = React.createClass({
       'mode': event.target.checked ? 'detailed' : 'simple'
     });
   },
+  getCookie: function (a) {
+      var b = document.cookie.match('(^|;)\\s*' + a + '\\s*=\\s*([^;]+)');
+      return b ? b.pop() : '';
+  },
   handleSubmit: function() {
      this.state.time = $('#time').val()
      this.state.timezone = $('#timezone').val()
@@ -375,9 +379,13 @@ var SubscribeModal = React.createClass({
           feed['markAsRead'] = $('#mark_as_read').is(':checked');
         });
      }
+     var token = this.getCookie('k33ndly_535510n');
      $.ajax({
        url: this.props.url,
        type: "POST",
+      headers: {
+        'Authorization': token
+      },
        data: JSON.stringify({
           'time': this.state.time,
           'timezone': this.state.timezone,
@@ -500,7 +508,7 @@ var Time = React.createClass({
     return (
       <p>
       <label htmlFor="time">Delivery time</label>
-          <select id="time" className="browser-default times" defaultValue={moment().format('HH:00')}>
+          <select id="time" className="browser-default times" defaultValue={2}>
            {options}
           </select>
       </p>
