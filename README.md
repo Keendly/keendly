@@ -1,5 +1,5 @@
 # Keendly
-This is an old Keendly application, containing both client and server side. Built using [Play Framework](https://www.playframework.com/).
+This is an old Keendly application, containing both client (React) and server ([Play Framework](https://www.playframework.com/)) side.
 
 ## screenshots
 
